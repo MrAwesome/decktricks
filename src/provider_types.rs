@@ -1,9 +1,16 @@
 //use crate::prelude::*;
 
+pub struct DefaultState;
+pub struct InstalledState;
+pub struct InstallableState;
+pub struct RunnableState;
+pub struct RunningState;
+pub struct AddableToSteamState;
+
 #[derive(Debug)]
 pub struct PLACEHOLDER {}
 
-pub trait ProviderChecks {
+pub trait ProviderChecks<'a> {
     fn installable(&self) -> Result<impl Installable, PLACEHOLDER>;
     fn installed(&self) -> Result<impl Installed, PLACEHOLDER>;
     fn runnable(&self) -> Result<impl Runnable, PLACEHOLDER>;
@@ -31,4 +38,6 @@ pub trait Installed {
 
 pub trait AddableToSteam {
     fn add_to_steam(&self) -> Result<(), PLACEHOLDER>;
+    //TODO: someday
+    //fn remove_from_steam(&self) -> Result<(), PLACEHOLDER>;
 }
