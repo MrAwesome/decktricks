@@ -1,8 +1,14 @@
 use decktricks::prelude::*;
-use decktricks::providers::flatpak::FlatpakProvider;
 
 fn main() {
-    let prov = FlatpakProvider::new("net.davidotek.pupgui2");
-    prov.runnable().unwrap().run().unwrap();
+    let prov = Provider::flatpak("net.davidotek.pupgui2", true);
+
+    dbg!(prov.running().is_ok());
+
+    // TODO: unit test this logic, mocking return values
+    let _ = prov.running().is_err().then(|| prov.runnable().and_then(|p| p.run()));
+
+    dbg!(prov.running().is_ok());
+
 }
 

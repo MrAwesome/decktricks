@@ -1,4 +1,9 @@
 use std::process::{Command, Stdio};
+use std::process;
+use std::io;
+
+// TODO: prevent command usage in tests
+// TODO: redirect
 
 pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>, debug: bool) -> bool {
 
@@ -24,5 +29,10 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>, debug: bo
 pub fn spawn_system_command(cmdname: &str, args: Vec<&str>) {
     Command::new(cmdname)
         .args(args)
-        .spawn();
+        .spawn().unwrap();
+}
+
+pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> io::Result<process::Output> {
+    Command::new(cmdname).args(args).output()
+
 }

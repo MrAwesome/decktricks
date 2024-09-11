@@ -1,7 +1,3 @@
-// Algo:
-// [] read in tricks config
-// [] error checking
-// [] write flatpak provider
 {
     "tricks": [
         "lutris": {
