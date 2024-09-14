@@ -1,8 +1,0 @@
-General
-[] check that Rc usage isn't causing memory leaks using Rc::strong_count()
-
-CLI
-[] just read config file once at start, calling function from lib.rs
-
-GUI
-[] restart/refresh if config file hash changes?
