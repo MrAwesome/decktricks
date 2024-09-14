@@ -1,5 +1,5 @@
 {
-    "tricks": [
+    "tricks": {
         "lutris": {
             "provider": "flatpak",
             "display_name": "Lutris",
@@ -27,5 +27,5 @@
             // TODO: downloading this is prerequisite for running install, update, or remove
             "download": "https://decky.xyz/download"
         }
-    ]
+    }
 }

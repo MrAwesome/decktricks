@@ -1,23 +1,21 @@
-use std::rc::Rc;
+use std::time::Duration;
+use std::thread;
 use decktricks::prelude::*;
+use std::sync::mpsc;
+use decktricks::read_tricks_config::read_tricks_config;
 
 fn main() {
-    let prov = Provider::flatpak("net.davidotek.pupgui2", true);
-    let _k = Rc::clone(&prov.data);
-
-    println!("Reference count = {}", Rc::strong_count(&prov.data));
-    dbg!(prov.is_running().is_ok());
-
-    let _ = prov.is_runnable().and_then(|p| {
-        println!("Reference count = {}", Rc::strong_count(&prov.data));
-        Ok(p)
-    });
-
-    // TODO: unit test this logic, mocking return values
-    //let _ = prov.running().is_err().then(|| prov.runnable().and_then(|p| p.run()));
-
-    dbg!(prov.is_running().is_ok());
-    println!("Reference count = {}", Rc::strong_count(&prov.data));
+//    let (sender, receiver) = mpsc::channel();
+//
+//    thread::spawn(move || {
+//        let flatpak_name = receiver.recv();
+//        let prov = Provider::flatpak("net.davidotek.pupgui2", true);
+//        prov.is_runnable().and_then(|p| p.run());
+//    });
+//
+//    thread::sleep(Duration::from_secs(1));
+//    sender.send("net.davidotek.pupgui2");
+//    println!("llllll");
+//    thread::sleep(Duration::from_secs(4));
 
 }
-
