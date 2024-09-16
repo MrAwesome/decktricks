@@ -2,7 +2,6 @@ use std::time::Duration;
 use std::thread;
 use decktricks::prelude::*;
 use std::sync::mpsc;
-use decktricks::read_tricks_config::read_tricks_config;
 
 fn main() {
 //    let (sender, receiver) = mpsc::channel();
