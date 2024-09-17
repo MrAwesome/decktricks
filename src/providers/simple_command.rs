@@ -3,15 +3,25 @@ use crate::prelude::*;
 use std::rc::Rc;
 
 #[derive(Debug, Copy, Clone)]
-pub struct SimpleCommandProviderData {}
+pub struct SimpleCommandProviderData;
+
+pub type SimpleCommandProvider = Provider<SimpleCommandProviderData>;
 
 #[allow(refining_impl_trait)]
-impl<'a, State: KnownState> ProviderChecks<'a, SimpleCommandProviderData> for Provider<SimpleCommandProviderData, State> {
-    fn is_installable(&self) -> Result<Provider<SimpleCommandProviderData, IsInstallable>, PLACEHOLDER> {
+impl<State: KnownState> ProviderChecks<SimpleCommandProviderData>
+    for Provider<SimpleCommandProviderData, State>
+where
+    State: KnownState,
+{
+    fn is_installable(
+        &self,
+    ) -> Result<Provider<SimpleCommandProviderData, IsInstallable>, PLACEHOLDER> {
         success_provider!(self, SimpleCommandProvider)
     }
 
-    fn is_installed(&self) -> Result<Provider<SimpleCommandProviderData, IsInstalled>, PLACEHOLDER> {
+    fn is_installed(
+        &self,
+    ) -> Result<Provider<SimpleCommandProviderData, IsInstalled>, PLACEHOLDER> {
         success_provider!(self, SimpleCommandProvider)
     }
     fn is_runnable(&self) -> Result<Provider<SimpleCommandProviderData, IsRunnable>, PLACEHOLDER> {
@@ -20,7 +30,9 @@ impl<'a, State: KnownState> ProviderChecks<'a, SimpleCommandProviderData> for Pr
     fn is_running(&self) -> Result<Provider<SimpleCommandProviderData, IsRunning>, PLACEHOLDER> {
         success_provider!(self, SimpleCommandProvider)
     }
-    fn is_addable_to_steam(&self) -> Result<Provider<SimpleCommandProviderData, IsAddableToSteam>, PLACEHOLDER> {
+    fn is_addable_to_steam(
+        &self,
+    ) -> Result<Provider<SimpleCommandProviderData, IsAddableToSteam>, PLACEHOLDER> {
         success_provider!(self, SimpleCommandProvider)
     }
 }

@@ -1,9 +1,11 @@
-use std::time::Duration;
-use std::thread;
-use decktricks::prelude::*;
-use std::sync::mpsc;
+//use std::time::Duration;
+//use std::thread;
+//use decktricks::prelude::*;
+//use std::sync::mpsc;
+use decktricks::tricks_config::TricksConfig;
+use clap::Parser;
+use decktricks::actions::Cli;
 
-fn main() {
 //    let (sender, receiver) = mpsc::channel();
 //
 //    thread::spawn(move || {
@@ -17,4 +19,12 @@ fn main() {
 //    println!("llllll");
 //    thread::sleep(Duration::from_secs(4));
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = TricksConfig::from_default_config()?;
+    let cli = Cli::parse();
+    let action = &cli.command;
+
+    action.run(config);
+    
+    Ok(())
 }

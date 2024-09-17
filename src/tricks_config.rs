@@ -2,10 +2,12 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::HashMap;
 use std::collections::hash_map::Iter;
-use std::fs::File;
-use std::io::BufReader;
+//use std::fs::File;
+//use std::io::BufReader;
 
-const DEFAULT_CONFIG_LOCATION: &str = "config.json";
+// TODO: place this in the correct XDG dir and read from there, default to a compiled-in version
+const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
+//const DEFAULT_CONFIG_LOCATION: &str = "config.json";
 type ProviderID = String;
 
 #[derive(Debug, Deserialize)]
@@ -15,9 +17,11 @@ pub struct TricksConfig {
 
 impl TricksConfig {
     pub fn from_default_config() -> Result<TricksConfig, Box<dyn std::error::Error>> {
-        let file = File::open(DEFAULT_CONFIG_LOCATION)?;
-        let reader = BufReader::new(file);
-        Ok(serde_json::from_reader(reader)?)
+        // TODO: allow for reading in from alternate config
+        //let file = File::open(DEFAULT_CONFIG_LOCATION)?;
+        //let reader = BufReader::new(file);
+        //Ok(serde_json::from_reader(reader)?)
+        Ok(serde_json::from_str(DEFAULT_CONFIG_CONTENTS)?)
     }
 
     pub fn get_trick(&self, maybe_id: &str) -> Option<&Trick> {
@@ -33,9 +37,9 @@ impl TricksConfig {
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Trick {
-    provider_config: ProviderConfig,
-    display_name: String,
-    always_present_on_steamdeck: Option<bool>,
+    pub provider_config: ProviderConfig,
+    pub display_name: String,
+    pub always_present_on_steamdeck: Option<bool>,
     //download: Option<String>,
     //command_before: Option<String>,
     //command_after: Option<String>,
@@ -45,8 +49,9 @@ pub struct Trick {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
-enum ProviderConfig {
+pub enum ProviderConfig {
     Flatpak(Flatpak),
+    SimpleCommand,
     //SystemPackage(SystemPackage)
     Custom,
 }
@@ -57,8 +62,8 @@ enum ProviderConfig {
 //}
 
 #[derive(Debug, Deserialize, Serialize)]
-struct Flatpak {
-    id: String,
+pub struct Flatpak {
+    pub id: String,
 }
 
 //#[derive(Debug, Deserialize, Serialize)]

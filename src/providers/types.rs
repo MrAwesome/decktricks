@@ -1,7 +1,14 @@
 //use crate::prelude::*;
 
+use crate::providers::simple_command::SimpleCommandProvider;
+use crate::providers::flatpak::FlatpakProvider;
+use crate::providers::simple_command::SimpleCommandProviderData;
+use crate::tricks_config::ProviderConfig;
+use crate::tricks_config::Trick;
 use std::marker::PhantomData;
 use std::rc::Rc;
+
+use super::flatpak::new_flatpak_provider;
 
 // These are the states that any given trick can be in.
 // They can be thought of as tags - any trick can be in multiple states
@@ -39,12 +46,51 @@ pub struct PLACEHOLDER {}
 
 // Data: any data your provider wants to keep track of internally
 // State: one of the listed states above
-pub struct Provider<Data, State: KnownState> {
+pub struct Provider<Data, State: KnownState = DefaultState> {
     pub data: Rc<Data>,
     pub state: PhantomData<State>,
 }
 
-pub trait ProviderChecks<'a, Data> {
+//struct FlatpakProviderEnum;
+//
+//enum KnownProvider {
+//    FlatpakProviderEnum,
+//}
+//
+//
+//trait KnownProviderTraits {}
+
+//impl KnownProviderTraits for FlatpakProviderEnum {}
+
+//fn lol() {
+//    let fp = KnownProvider::from(FlatpakProviderEnum);
+//    let x: KnownProvider = fp.into();
+//}
+
+//impl<Data, State: KnownState> Provider<Data, State>
+//where
+//    State: KnownState,
+//    FlatpakProvider: ProviderChecks<Data>,
+//    SimpleCommandProvider: ProviderChecks<Data>,
+//{
+pub fn provider_from_trick<Data>(trick: &Trick) -> Box<dyn ProviderChecks<Data>> 
+where
+    FlatpakProvider: ProviderChecks<Data>,
+    //SimpleCommandProvider: ProviderChecks<Data>,
+    {
+    match &trick.provider_config {
+        // TODO: fix clone
+        ProviderConfig::Flatpak(flatpak) => Box::new(new_flatpak_provider(flatpak.id.clone())),
+//        ProviderConfig::SimpleCommand => Box::new(Provider {
+//            data: Rc::new(SimpleCommandProviderData),
+//            state: PhantomData::<DefaultState>,
+//        }),
+        _ => unimplemented!(),
+    }
+}
+//}
+
+pub trait ProviderChecks<Data> {
     fn is_installable(&self) -> Result<Provider<Data, IsInstallable>, PLACEHOLDER>;
     fn is_installed(&self) -> Result<Provider<Data, IsInstalled>, PLACEHOLDER>;
     fn is_runnable(&self) -> Result<Provider<Data, IsRunnable>, PLACEHOLDER>;
@@ -75,3 +121,5 @@ pub trait AddableToSteam {
     //TODO: someday
     //fn remove_from_steam(&self) -> Result<(), PLACEHOLDER>;
 }
+
+//pub trait ProviderActions: Runnable + Running + Installable + Installed + AddableToSteam {}

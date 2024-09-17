@@ -7,25 +7,36 @@ use std::rc::Rc;
 
 use std::marker::PhantomData;
 
+// TODO: use Trick -- Flatpak(Flatpak) instead?
 #[derive(Debug, Clone)]
-pub struct FlatpakProviderData<'a> {
-    id: &'a str,
-    debug: bool,
+pub struct FlatpakProviderData {
+    id: String,
 }
 
-impl<'a> Provider<FlatpakProviderData<'a>, DefaultState> {
-    pub fn flatpak(id: &'a str, debug: bool) -> Provider<FlatpakProviderData<'a>, DefaultState> {
-        Provider {
-            data: Rc::new(FlatpakProviderData { id, debug }),
-            state: PhantomData::<DefaultState>,
-        }
+pub type FlatpakProvider = Provider<FlatpakProviderData>;
+
+pub fn new_flatpak_provider(id: String) -> FlatpakProvider {
+    Provider {
+        data: Rc::new(FlatpakProviderData { id }),
+        state: PhantomData::<DefaultState>,
     }
 }
 
+//impl<State: KnownState> ProviderActions for Provider<FlatpakProviderData, State> where Provider<FlatpakProviderData, State>: Runnable + Running + Installed + Installable + AddableToSteam { }
+
+//impl<State: KnownState> Provider<FlatpakProviderData, State> {
+//    pub fn flatpak(id: String) -> Provider<FlatpakProviderData, DefaultState> {
+//        Provider {
+//            data: Rc::new(FlatpakProviderData { id }),
+//            state: PhantomData::<DefaultState>,
+//        }
+//    }
+//}
+//
 // NOTE: could separate into self.checks and self.actions
 
 #[cfg(not(test))]
-impl<'a, State: KnownState> Provider<FlatpakProviderData<'a>, State> {
+impl<State: KnownState> Provider<FlatpakProviderData, State> {
     fn is_pkg_installed(&self) -> bool {
         system_command_ran_successfully("flatpak", vec!["info", &self.data.id], false)
     }
@@ -40,25 +51,19 @@ impl<'a, State: KnownState> Provider<FlatpakProviderData<'a>, State> {
     fn get_running_flatpak_applications(&self) -> Result<Vec<String>, PLACEHOLDER> {
         // TODO: error handling
         let res = system_command_output("flatpak", vec!["ps", "--columns=application"]);
-        if self.data.debug {
-            dbg!(&res);
-        }
 
         match &res {
             Ok(output_obj) => {
                 let text = String::from_utf8_lossy(&output_obj.stdout);
                 let lines = text.trim().split("\n").map(|s| s.to_string()).collect();
-                if self.data.debug {
-                    dbg!(&lines);
-                }
                 return Ok(lines);
             }
-            Err(_) => Err(PLACEHOLDER{}),
+            Err(_) => Err(PLACEHOLDER {}),
         }
     }
 }
 
-impl<'a, State: KnownState> Provider<FlatpakProviderData<'a>, State> {
+impl<State: KnownState> Provider<FlatpakProviderData, State> {
     fn is_pkg_running(&self) -> bool {
         // TODO: error handling
         for line in self.get_running_flatpak_applications().unwrap() {
@@ -71,7 +76,7 @@ impl<'a, State: KnownState> Provider<FlatpakProviderData<'a>, State> {
 }
 
 #[cfg(test)]
-impl<'a, State: KnownState> Provider<FlatpakProviderData<'a>, State> {
+impl<State: KnownState> Provider<FlatpakProviderData, State> {
     fn is_pkg_installed(&self) -> bool {
         self.data.id == "test_pkg_installed"
     }
@@ -86,13 +91,17 @@ impl<'a, State: KnownState> Provider<FlatpakProviderData<'a>, State> {
 }
 
 #[allow(refining_impl_trait)]
-impl<'a, State: KnownState> ProviderChecks<'a, FlatpakProviderData<'a>> for Provider<FlatpakProviderData<'a>, State> {
-    fn is_installable(&self) -> Result<Provider<FlatpakProviderData<'a>, IsInstallable>, PLACEHOLDER> {
+impl<State: KnownState> ProviderChecks<FlatpakProviderData> 
+    for Provider<FlatpakProviderData, State>
+where
+    State: KnownState,
+{
+    fn is_installable(&self) -> Result<Provider<FlatpakProviderData, IsInstallable>, PLACEHOLDER> {
         // Any flatpaks we explicitly list will be installable.
         success_provider!(self, FlatpakProvider)
     }
 
-    fn is_installed(&self) -> Result<Provider<FlatpakProviderData<'a>, IsInstalled>, PLACEHOLDER> {
+    fn is_installed(&self) -> Result<Provider<FlatpakProviderData, IsInstalled>, PLACEHOLDER> {
         if self.is_pkg_installed() {
             success_provider!(self, FlatpakProvider)
         } else {
@@ -100,7 +109,7 @@ impl<'a, State: KnownState> ProviderChecks<'a, FlatpakProviderData<'a>> for Prov
         }
     }
 
-    fn is_runnable(&self) -> Result<Provider<FlatpakProviderData<'a>, IsRunnable>, PLACEHOLDER> {
+    fn is_runnable(&self) -> Result<Provider<FlatpakProviderData, IsRunnable>, PLACEHOLDER> {
         if self.is_installed().is_ok() {
             success_provider!(self, FlatpakProvider)
         } else {
@@ -108,7 +117,7 @@ impl<'a, State: KnownState> ProviderChecks<'a, FlatpakProviderData<'a>> for Prov
         }
     }
 
-    fn is_running(&self) -> Result<Provider<FlatpakProviderData<'a>, IsRunning>, PLACEHOLDER> {
+    fn is_running(&self) -> Result<Provider<FlatpakProviderData, IsRunning>, PLACEHOLDER> {
         if self.is_pkg_running() {
             success_provider!(self, FlatpakProvider)
         } else {
@@ -116,13 +125,15 @@ impl<'a, State: KnownState> ProviderChecks<'a, FlatpakProviderData<'a>> for Prov
         }
     }
 
-    fn is_addable_to_steam(&self) -> Result<Provider<FlatpakProviderData<'a>, IsAddableToSteam>, PLACEHOLDER> {
+    fn is_addable_to_steam(
+        &self,
+    ) -> Result<Provider<FlatpakProviderData, IsAddableToSteam>, PLACEHOLDER> {
         // Flatpaks are always addable to Steam.
         success_provider!(self, FlatpakProvider)
     }
 }
 
-impl<'a> Installed for Provider<FlatpakProviderData<'a>, IsInstalled> {
+impl Installed for Provider<FlatpakProviderData, IsInstalled> {
     fn update(&self) -> Result<(), PLACEHOLDER> {
         Err(PLACEHOLDER {})
     }
@@ -136,13 +147,13 @@ impl<'a> Installed for Provider<FlatpakProviderData<'a>, IsInstalled> {
     }
 }
 
-impl<'a> Installable for Provider<FlatpakProviderData<'a>, IsInstallable> {
+impl Installable for Provider<FlatpakProviderData, IsInstallable> {
     fn install(&self) -> Result<(), PLACEHOLDER> {
         Err(PLACEHOLDER {})
     }
 }
 
-impl<'a> Runnable for Provider<FlatpakProviderData<'a>, IsRunnable> {
+impl Runnable for Provider<FlatpakProviderData, IsRunnable> {
     fn run(&self) -> Result<(), PLACEHOLDER> {
         // TODO: check return status and return Err if appropriate
         self.flatpak_run();
@@ -150,14 +161,14 @@ impl<'a> Runnable for Provider<FlatpakProviderData<'a>, IsRunnable> {
     }
 }
 
-impl<'a> Running for Provider<FlatpakProviderData<'a>, IsRunning> {
+impl Running for Provider<FlatpakProviderData, IsRunning> {
     fn kill(&self) -> Result<(), PLACEHOLDER> {
         // TODO: run 'flatpak kill <id>' here
         Err(PLACEHOLDER {})
     }
 }
 
-impl<'a> AddableToSteam for Provider<FlatpakProviderData<'a>, IsAddableToSteam> {
+impl AddableToSteam for Provider<FlatpakProviderData, IsAddableToSteam> {
     fn add_to_steam(&self) -> Result<(), PLACEHOLDER> {
         Err(PLACEHOLDER {})
     }
@@ -169,40 +180,39 @@ mod tests {
 
     #[test]
     fn test_new_flatpak_provider() {
-        let provider = Provider::flatpak("test_pkg", true);
+        let provider = new_flatpak_provider("test_pkg".into());
 
         assert_eq!(provider.data.id, "test_pkg");
     }
 
     #[test]
     fn test_is_pkg_installed_true() {
-        let provider = Provider::flatpak("test_pkg_installed", true);
+        let provider = new_flatpak_provider("test_pkg_installed".into());
         assert!(provider.is_installed().is_ok());
     }
 
     #[test]
     fn test_is_pkg_installed_false() {
-        let provider = Provider::flatpak("test_pkg_not_installed", true);
+        let provider = new_flatpak_provider("test_pkg_not_installed".into());
         assert!(!provider.is_installed().is_ok());
     }
 
     #[test]
     fn test_installable() {
-        let provider = Provider::flatpak("test_pkg", true);
+        let provider = new_flatpak_provider("test_pkg".into());
         let installable = provider.is_installable();
         assert!(installable.is_ok());
     }
 
     #[test]
     fn test_is_pkg_running_true() {
-        let provider = Provider::flatpak("test_pkg", true);
-        let _ = provider.data.debug;
+        let provider = new_flatpak_provider("test_pkg".into());
         assert!(provider.is_running().is_ok());
     }
 
     #[test]
     fn test_is_pkg_running_false() {
-        let provider = Provider::flatpak("jfdklsajfds", true);
+        let provider = new_flatpak_provider("jfdklsajfds".into());
         assert!(!provider.is_running().is_ok());
     }
 }

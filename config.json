@@ -1,6 +1,6 @@
 {
     "tricks": {
-        "protonup_qt": {
+        "protonup-qt": {
             "provider_config": {
                 "type": "flatpak",
                 "id": "net.davidotek.pupgui2"
@@ -19,7 +19,7 @@
             "display_name": "Lutris",
             "description": "Game launcher for GOG, Ubisoft, Humble, Epic, and more."
         },
-        "dolphin_emu": {
+        "dolphin-emu": {
             "provider_config": {
                 "type": "flatpak",
                 "id": "org.DolphinEmu.dolphin-emu"
