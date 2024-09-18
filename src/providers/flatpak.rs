@@ -73,47 +73,6 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
     }
 }
 
-#[cfg(test)]
-impl<State: KnownState> Provider<FlatpakProviderData, State> {
-    fn is_pkg_installed(&self) -> bool {
-        self.data.id == "test_pkg_installed"
-    }
-
-    fn flatpak_run(&self) -> io::Result<process::Output> {
-        Ok(
-            process::Output {
-                status: process::ExitStatus::default(),
-                stdout: "flatpak run success in test".as_bytes().into(),
-                stderr: [].into(),
-            }
-        )
-    }
-
-    fn flatpak_install(&self) -> io::Result<process::Output> {
-        Ok(
-            process::Output {
-                status: process::ExitStatus::default(),
-                stdout: "flatpak install success in test".as_bytes().into(),
-                stderr: [].into(),
-            }
-        )
-    }
-
-    fn flatpak_uninstall(&self) -> io::Result<process::Output> {
-        Ok(
-            process::Output {
-                status: process::ExitStatus::default(),
-                stdout: "flatpak uninstall success in test".as_bytes().into(),
-                stderr: [].into(),
-            }
-        )
-    }
-
-    fn get_running_flatpak_applications(&self) -> Result<Vec<String>, PLACEHOLDER> {
-        Ok(vec!["test_pkg".into(), "test_pkg2".into()])
-    }
-}
-
 #[allow(refining_impl_trait)]
 impl<State: KnownState> ProviderChecks<FlatpakProviderData> 
     for Provider<FlatpakProviderData, State>
@@ -202,6 +161,48 @@ impl AddableToSteam for Provider<FlatpakProviderData, IsAddableToSteam> {
         unimplemented!()
     }
 }
+
+#[cfg(test)]
+impl<State: KnownState> Provider<FlatpakProviderData, State> {
+    fn is_pkg_installed(&self) -> bool {
+        self.data.id == "test_pkg_installed"
+    }
+
+    fn flatpak_run(&self) -> io::Result<process::Output> {
+        Ok(
+            process::Output {
+                status: process::ExitStatus::default(),
+                stdout: "flatpak run success in test".as_bytes().into(),
+                stderr: [].into(),
+            }
+        )
+    }
+
+    fn flatpak_install(&self) -> io::Result<process::Output> {
+        Ok(
+            process::Output {
+                status: process::ExitStatus::default(),
+                stdout: "flatpak install success in test".as_bytes().into(),
+                stderr: [].into(),
+            }
+        )
+    }
+
+    fn flatpak_uninstall(&self) -> io::Result<process::Output> {
+        Ok(
+            process::Output {
+                status: process::ExitStatus::default(),
+                stdout: "flatpak uninstall success in test".as_bytes().into(),
+                stderr: [].into(),
+            }
+        )
+    }
+
+    fn get_running_flatpak_applications(&self) -> Result<Vec<String>, PLACEHOLDER> {
+        Ok(vec!["test_pkg".into(), "test_pkg2".into()])
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
