@@ -1,8 +1,7 @@
 //use crate::prelude::*;
 
-use crate::providers::simple_command::SimpleCommandProvider;
+use crate::actions::ActionErrorTEMPORARY;
 use crate::providers::flatpak::FlatpakProvider;
-use crate::providers::simple_command::SimpleCommandProviderData;
 use crate::tricks_config::ProviderConfig;
 use crate::tricks_config::Trick;
 use std::marker::PhantomData;
@@ -41,8 +40,7 @@ impl KnownState for IsRunnable {}
 impl KnownState for IsRunning {}
 impl KnownState for IsAddableToSteam {}
 
-#[derive(Debug)]
-pub struct PLACEHOLDER {}
+pub type PLACEHOLDER = ActionErrorTEMPORARY;
 
 // Data: any data your provider wants to keep track of internally
 // State: one of the listed states above
@@ -73,14 +71,14 @@ pub struct Provider<Data, State: KnownState = DefaultState> {
 //    FlatpakProvider: ProviderChecks<Data>,
 //    SimpleCommandProvider: ProviderChecks<Data>,
 //{
-pub fn provider_from_trick<Data>(trick: &Trick) -> Box<dyn ProviderChecks<Data>> 
+pub fn provider_from_trick<Data>(trick: &Trick) -> Result<Box<dyn ProviderChecks<Data>>, Box<dyn std::error::Error>>
 where
     FlatpakProvider: ProviderChecks<Data>,
     //SimpleCommandProvider: ProviderChecks<Data>,
     {
     match &trick.provider_config {
         // TODO: fix clone
-        ProviderConfig::Flatpak(flatpak) => Box::new(new_flatpak_provider(flatpak.id.clone())),
+        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(new_flatpak_provider(flatpak.id.clone()))),
 //        ProviderConfig::SimpleCommand => Box::new(Provider {
 //            data: Rc::new(SimpleCommandProviderData),
 //            state: PhantomData::<DefaultState>,
@@ -99,27 +97,27 @@ pub trait ProviderChecks<Data> {
 }
 
 pub trait Runnable {
-    fn run(&self) -> Result<(), PLACEHOLDER>;
+    fn run(&self) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait Running {
-    fn kill(&self) -> Result<(), PLACEHOLDER>;
+    fn kill(&self) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait Installable {
-    fn install(&self) -> Result<(), PLACEHOLDER>;
+    fn install(&self) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait Installed {
-    fn update(&self) -> Result<(), PLACEHOLDER>;
-    fn remove(&self) -> Result<(), PLACEHOLDER>;
-    fn force_reinstall(&self) -> Result<(), PLACEHOLDER>;
+    fn update(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn remove(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn force_reinstall(&self) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait AddableToSteam {
-    fn add_to_steam(&self) -> Result<(), PLACEHOLDER>;
+    fn add_to_steam(&self) -> Result<(), Box<dyn std::error::Error>>;
     //TODO: someday
-    //fn remove_from_steam(&self) -> Result<(), PLACEHOLDER>;
+    //fn remove_from_steam(&self) -> Result<(), Box<dyn std::error::Error>>>;
 }
 
 //pub trait ProviderActions: Runnable + Running + Installable + Installed + AddableToSteam {}

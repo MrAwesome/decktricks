@@ -28,6 +28,16 @@
             "display_name": "Dolphin Emulator",
             "description": "Gamecube/Wii emulator. Great support for Gamecube controllers over USB."
         },
+        "test-package": {
+            "provider_config": {
+                "type": "flatpak",
+                "id": "io.github.erkin.ponysay"
+            },
+            "icon": "XXX",
+            "hidden": true,
+            "display_name": "Test Package (Ignore)",
+            "description": "A small package used in testing."
+        },
         "heroic": {
             "provider_config": {
                 "type": "flatpak",

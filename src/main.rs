@@ -24,7 +24,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     let action = &cli.command;
 
-    action.run(config);
+    let action_success = action.run_action(config)?;
+
+    if let Some(message) = action_success.message {
+        println!("{}", message);
+    }
     
     Ok(())
 }

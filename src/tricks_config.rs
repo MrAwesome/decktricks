@@ -1,7 +1,8 @@
+use crate::actions::ActionErrorTEMPORARY;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::collections::HashMap;
 use std::collections::hash_map::Iter;
+use std::collections::HashMap;
 //use std::fs::File;
 //use std::io::BufReader;
 
@@ -24,15 +25,22 @@ impl TricksConfig {
         Ok(serde_json::from_str(DEFAULT_CONFIG_CONTENTS)?)
     }
 
-    pub fn get_trick(&self, maybe_id: &str) -> Option<&Trick> {
-        self.tricks.get(maybe_id)
+    pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, Box<dyn std::error::Error>> {
+        let maybe_trick = self.tricks.get(maybe_id);
+        match maybe_trick {
+            Some(trick) => Ok(trick),
+            None => {
+                return Err(Box::new(ActionErrorTEMPORARY {
+                    message: format!("Trick not known: {maybe_id}"),
+                }))
+            }
+        }
     }
 
     pub fn get_all_tricks(&self) -> Iter<ProviderID, Trick> {
         self.tricks.iter()
     }
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize)]
@@ -77,9 +85,7 @@ pub struct Flatpak {
 fn reconvert_providerconfig() -> Result<(), Box<dyn std::error::Error>> {
     let id = "net.davidotek.pupgui2";
     let trick = Trick {
-        provider_config: ProviderConfig::Flatpak(Flatpak {
-            id: id.into(),
-        }),
+        provider_config: ProviderConfig::Flatpak(Flatpak { id: id.into() }),
         display_name: "ProtonUp-Qt".into(),
         always_present_on_steamdeck: None,
     };

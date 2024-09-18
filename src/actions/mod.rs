@@ -17,6 +17,10 @@ pub enum Action {
     Install {
         id: String,
     },
+    #[clap(alias = "remove")]
+    Uninstall {
+        id: String,
+    },
     List {
         #[clap(long)]
         installed: bool,
@@ -29,13 +33,13 @@ pub enum Action {
 }
 
 pub struct ActionSuccess {
-    message: Option<String>
+    pub message: Option<String>
 }
 
 // TODO: have full list of errors
 #[derive(Debug)]
 pub struct ActionErrorTEMPORARY {
-    message: String,
+    pub message: String,
 }
 
 impl std::fmt::Display for ActionErrorTEMPORARY {
@@ -47,33 +51,35 @@ impl std::fmt::Display for ActionErrorTEMPORARY {
 impl std::error::Error for ActionErrorTEMPORARY {}
 
 impl Action {
-    pub fn run(&self, config: TricksConfig) -> Result<ActionSuccess, Box<dyn std::error::Error>> {
+    pub fn run_action(&self, config: TricksConfig) -> Result<ActionSuccess, Box<dyn std::error::Error>> {
         match &self {
             Action::Run { id } => {
-                // TODO: return errors from here, do not treat this as console code
-                // don't get the config every time?
-                //
-                //let all_tricks = config.get_all_tricks();
-                //dbg!(&all_tricks);
+                let trick = config.get_trick(id)?;
+                let provider = provider_from_trick(trick)?;
 
-                let maybe_trick = config.get_trick(id);
-                // TODO: provider_from_id
-
-                let trick = match maybe_trick {
-                    Some(trick) => trick,
-                    None => return Err(Box::new(ActionErrorTEMPORARY { message: format!("Trick not known: {id}") }))
-                };
-
-                let provider = provider_from_trick(trick);
-                //unimplemented!();
-
-                provider.is_runnable().unwrap().run();
+                provider.is_runnable()?.run()?;
 
                 Ok(ActionSuccess { message: None })
+            },
+            Action::Install { id } => {
+                let trick = config.get_trick(id)?;
+                let provider = provider_from_trick(trick)?;
 
+                provider.is_installable()?.install()?;
+
+                let message = Some(format!("Trick \"{id}\" installed successfully!"));
+                Ok(ActionSuccess { message })
+            },
+            Action::Uninstall { id } => {
+                let trick = config.get_trick(id)?;
+                let provider = provider_from_trick(trick)?;
+
+                provider.is_installed()?.remove()?;
+
+                let message = Some(format!("Trick \"{id}\" removed successfully!"));
+                Ok(ActionSuccess { message })
             }
             _ => {
-                // XXX
                 unimplemented!()
             }
         }

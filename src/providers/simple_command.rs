@@ -38,39 +38,39 @@ where
 }
 
 impl Installed for Provider<SimpleCommandProviderData, IsInstalled> {
-    fn update(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 
-    fn remove(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn remove(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 
-    fn force_reinstall(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn force_reinstall(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
 
 impl Installable for Provider<SimpleCommandProviderData, IsInstallable> {
-    fn install(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn install(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
 
 impl Runnable for Provider<SimpleCommandProviderData, IsRunnable> {
-    fn run(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
 
 impl Running for Provider<SimpleCommandProviderData, IsRunning> {
-    fn kill(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn kill(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
 
 impl AddableToSteam for Provider<SimpleCommandProviderData, IsAddableToSteam> {
-    fn add_to_steam(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn add_to_steam(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }

@@ -1,7 +1,10 @@
+use crate::actions::ActionErrorTEMPORARY;
+use std::process;
+use std::io;
 use crate::prelude::*;
 #[cfg(not(test))]
 use crate::run_system_command::{
-    spawn_system_command, system_command_output, system_command_ran_successfully,
+    system_command_output, system_command_ran_successfully,
 };
 use std::rc::Rc;
 
@@ -43,8 +46,16 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
 
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
-    fn flatpak_run(&self) {
-        spawn_system_command("flatpak", vec!["run", &self.data.id])
+    fn flatpak_run(&self) -> io::Result<process::Output> {
+        system_command_output("flatpak", vec!["run", &self.data.id])
+    }
+
+    fn flatpak_install(&self) -> io::Result<process::Output> {
+        system_command_output("flatpak", vec!["install", "-y", &self.data.id])
+    }
+
+    fn flatpak_uninstall(&self) -> io::Result<process::Output> {
+        system_command_output("flatpak", vec!["uninstall", "-y", &self.data.id])
     }
 
     // TODO: unit test this logic directly
@@ -58,7 +69,7 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
                 let lines = text.trim().split("\n").map(|s| s.to_string()).collect();
                 return Ok(lines);
             }
-            Err(_) => Err(PLACEHOLDER {}),
+            Err(_) => unimplemented!()
         }
     }
 }
@@ -81,8 +92,34 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
         self.data.id == "test_pkg_installed"
     }
 
-    fn flatpak_run(&self) {
-        println!("Running flatpak for {}", self.data.id);
+    fn flatpak_run(&self) -> io::Result<process::Output> {
+        Ok(
+            process::Output {
+                status: process::ExitStatus::default(),
+                stdout: "flatpak run success in test".as_bytes().into(),
+                stderr: [].into(),
+            }
+        )
+    }
+
+    fn flatpak_install(&self) -> io::Result<process::Output> {
+        Ok(
+            process::Output {
+                status: process::ExitStatus::default(),
+                stdout: "flatpak install success in test".as_bytes().into(),
+                stderr: [].into(),
+            }
+        )
+    }
+
+    fn flatpak_uninstall(&self) -> io::Result<process::Output> {
+        Ok(
+            process::Output {
+                status: process::ExitStatus::default(),
+                stdout: "flatpak uninstall success in test".as_bytes().into(),
+                stderr: [].into(),
+            }
+        )
     }
 
     fn get_running_flatpak_applications(&self) -> Result<Vec<String>, PLACEHOLDER> {
@@ -105,7 +142,8 @@ where
         if self.is_pkg_installed() {
             success_provider!(self, FlatpakProvider)
         } else {
-            Err(PLACEHOLDER {})
+            // TODO: will these errors ever be seen? or can this just return an Err(()) or such?
+            Err(ActionErrorTEMPORARY{ message: format!("Package {} not installed!", self.data.id)})
         }
     }
 
@@ -113,7 +151,7 @@ where
         if self.is_installed().is_ok() {
             success_provider!(self, FlatpakProvider)
         } else {
-            Err(PLACEHOLDER {})
+            Err(ActionErrorTEMPORARY{ message: format!("Package {} not runnable!", self.data.id)})
         }
     }
 
@@ -121,7 +159,7 @@ where
         if self.is_pkg_running() {
             success_provider!(self, FlatpakProvider)
         } else {
-            Err(PLACEHOLDER {})
+            Err(ActionErrorTEMPORARY{ message: format!("Package {} not running!", self.data.id)})
         }
     }
 
@@ -134,43 +172,47 @@ where
 }
 
 impl Installed for Provider<FlatpakProviderData, IsInstalled> {
-    fn update(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    // NOTE!!!!! update takes user input on the command line (so pass -y)
+    // , and *often will require a second run* if doing a full update of all packages
+    fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 
-    fn remove(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn remove(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.flatpak_uninstall()?;
+        Ok(())
     }
 
-    fn force_reinstall(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn force_reinstall(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
 
 impl Installable for Provider<FlatpakProviderData, IsInstallable> {
-    fn install(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn install(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.flatpak_install()?;
+        Ok(())
     }
 }
 
 impl Runnable for Provider<FlatpakProviderData, IsRunnable> {
-    fn run(&self) -> Result<(), PLACEHOLDER> {
+    fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         // TODO: check return status and return Err if appropriate
-        self.flatpak_run();
+        self.flatpak_run()?;
         Ok(())
     }
 }
 
 impl Running for Provider<FlatpakProviderData, IsRunning> {
-    fn kill(&self) -> Result<(), PLACEHOLDER> {
+    fn kill(&self) -> Result<(), Box<dyn std::error::Error>> {
         // TODO: run 'flatpak kill <id>' here
-        Err(PLACEHOLDER {})
+        unimplemented!()
     }
 }
 
 impl AddableToSteam for Provider<FlatpakProviderData, IsAddableToSteam> {
-    fn add_to_steam(&self) -> Result<(), PLACEHOLDER> {
-        Err(PLACEHOLDER {})
+    fn add_to_steam(&self) -> Result<(), Box<dyn std::error::Error>> {
+        unimplemented!()
     }
 }
 
