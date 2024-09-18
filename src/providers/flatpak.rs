@@ -150,9 +150,17 @@ impl Runnable for Provider<FlatpakProviderData, IsRunnable> {
 }
 
 impl Running for Provider<FlatpakProviderData, IsRunning> {
+    #[cfg(not(test))]
     fn kill(&self) -> Result<(), DynamicError> {
         // TODO: run 'flatpak kill <id>' here
-        unimplemented!()
+        system_command_output("flatpak", vec!["kill", &self.data.id])?;
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn kill(&self) -> Result<(), DynamicError> {
+        // TODO: any further testing needed here?
+        Ok(())
     }
 }
 

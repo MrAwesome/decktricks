@@ -18,6 +18,9 @@ pub enum Action {
     Install {
         id: String,
     },
+    Kill {
+        id: String,
+    },
     #[clap(alias = "remove")]
     Uninstall {
         id: String,
@@ -96,6 +99,14 @@ impl Action {
                 let message = Some(format!("{tricks_newline_delineated}"));
                 Ok(ActionSuccess { message })
             },
+            Action::Kill { id } => {
+                let trick = config.get_trick(id)?;
+                let provider = provider_from_trick(trick)?;
+
+                provider.is_running()?.kill()?;
+
+                Ok(ActionSuccess { message: None })
+            }
             Action::AddToSteam { name, id } => {
                 unimplemented!()
             }
