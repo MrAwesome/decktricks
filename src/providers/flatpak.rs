@@ -1,20 +1,20 @@
+use crate::prelude::*;
 use crate::actions::ActionErrorTEMPORARY;
 use std::process;
 use std::io;
-use crate::prelude::*;
 #[cfg(not(test))]
 use crate::run_system_command::{
     system_command_output, system_command_ran_successfully,
 };
 use std::rc::Rc;
-
 use std::marker::PhantomData;
 
-// TODO: use Trick -- Flatpak(Flatpak) instead?
 #[derive(Debug, Clone)]
 pub struct FlatpakProviderData {
     id: String,
 }
+
+impl KnownProviderData for FlatpakProviderData {}
 
 pub type FlatpakProvider = Provider<FlatpakProviderData>;
 
@@ -24,19 +24,6 @@ pub fn new_flatpak_provider(id: String) -> FlatpakProvider {
         state: PhantomData::<DefaultState>,
     }
 }
-
-//impl<State: KnownState> ProviderActions for Provider<FlatpakProviderData, State> where Provider<FlatpakProviderData, State>: Runnable + Running + Installed + Installable + AddableToSteam { }
-
-//impl<State: KnownState> Provider<FlatpakProviderData, State> {
-//    pub fn flatpak(id: String) -> Provider<FlatpakProviderData, DefaultState> {
-//        Provider {
-//            data: Rc::new(FlatpakProviderData { id }),
-//            state: PhantomData::<DefaultState>,
-//        }
-//    }
-//}
-//
-// NOTE: could separate into self.checks and self.actions
 
 #[cfg(not(test))]
 impl<State: KnownState> Provider<FlatpakProviderData, State> {
@@ -135,12 +122,12 @@ where
 {
     fn is_installable(&self) -> Result<Provider<FlatpakProviderData, IsInstallable>, PLACEHOLDER> {
         // Any flatpaks we explicitly list will be installable.
-        success_provider!(self, FlatpakProvider)
+        success!(self)
     }
 
     fn is_installed(&self) -> Result<Provider<FlatpakProviderData, IsInstalled>, PLACEHOLDER> {
         if self.is_pkg_installed() {
-            success_provider!(self, FlatpakProvider)
+            success!(self)
         } else {
             // TODO: will these errors ever be seen? or can this just return an Err(()) or such?
             Err(ActionErrorTEMPORARY{ message: format!("Package {} not installed!", self.data.id)})
@@ -149,7 +136,7 @@ where
 
     fn is_runnable(&self) -> Result<Provider<FlatpakProviderData, IsRunnable>, PLACEHOLDER> {
         if self.is_installed().is_ok() {
-            success_provider!(self, FlatpakProvider)
+            success!(self)
         } else {
             Err(ActionErrorTEMPORARY{ message: format!("Package {} not runnable!", self.data.id)})
         }
@@ -157,7 +144,7 @@ where
 
     fn is_running(&self) -> Result<Provider<FlatpakProviderData, IsRunning>, PLACEHOLDER> {
         if self.is_pkg_running() {
-            success_provider!(self, FlatpakProvider)
+            success!(self)
         } else {
             Err(ActionErrorTEMPORARY{ message: format!("Package {} not running!", self.data.id)})
         }
@@ -167,36 +154,36 @@ where
         &self,
     ) -> Result<Provider<FlatpakProviderData, IsAddableToSteam>, PLACEHOLDER> {
         // Flatpaks are always addable to Steam.
-        success_provider!(self, FlatpakProvider)
+        success!(self)
     }
 }
 
 impl Installed for Provider<FlatpakProviderData, IsInstalled> {
     // NOTE!!!!! update takes user input on the command line (so pass -y)
     // , and *often will require a second run* if doing a full update of all packages
-    fn update(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn update(&self) -> Result<(), DynamicError> {
         unimplemented!()
     }
 
-    fn remove(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn remove(&self) -> Result<(), DynamicError> {
         self.flatpak_uninstall()?;
         Ok(())
     }
 
-    fn force_reinstall(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn force_reinstall(&self) -> Result<(), DynamicError> {
         unimplemented!()
     }
 }
 
 impl Installable for Provider<FlatpakProviderData, IsInstallable> {
-    fn install(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn install(&self) -> Result<(), DynamicError> {
         self.flatpak_install()?;
         Ok(())
     }
 }
 
 impl Runnable for Provider<FlatpakProviderData, IsRunnable> {
-    fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn run(&self) -> Result<(), DynamicError> {
         // TODO: check return status and return Err if appropriate
         self.flatpak_run()?;
         Ok(())
@@ -204,14 +191,14 @@ impl Runnable for Provider<FlatpakProviderData, IsRunnable> {
 }
 
 impl Running for Provider<FlatpakProviderData, IsRunning> {
-    fn kill(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn kill(&self) -> Result<(), DynamicError> {
         // TODO: run 'flatpak kill <id>' here
         unimplemented!()
     }
 }
 
 impl AddableToSteam for Provider<FlatpakProviderData, IsAddableToSteam> {
-    fn add_to_steam(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn add_to_steam(&self) -> Result<(), DynamicError> {
         unimplemented!()
     }
 }

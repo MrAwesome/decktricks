@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use crate::actions::ActionErrorTEMPORARY;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -17,7 +18,7 @@ pub struct TricksConfig {
 }
 
 impl TricksConfig {
-    pub fn from_default_config() -> Result<TricksConfig, Box<dyn std::error::Error>> {
+    pub fn from_default_config() -> Result<TricksConfig, DynamicError> {
         // TODO: allow for reading in from alternate config
         //let file = File::open(DEFAULT_CONFIG_LOCATION)?;
         //let reader = BufReader::new(file);
@@ -25,7 +26,7 @@ impl TricksConfig {
         Ok(serde_json::from_str(DEFAULT_CONFIG_CONTENTS)?)
     }
 
-    pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, Box<dyn std::error::Error>> {
+    pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, DynamicError> {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
@@ -82,7 +83,7 @@ pub struct Flatpak {
 
 // Tests a write/read cycle of config objects to the config file format
 #[test]
-fn reconvert_providerconfig() -> Result<(), Box<dyn std::error::Error>> {
+fn reconvert_providerconfig() -> Result<(), DynamicError> {
     let id = "net.davidotek.pupgui2";
     let trick = Trick {
         provider_config: ProviderConfig::Flatpak(Flatpak { id: id.into() }),
@@ -101,7 +102,7 @@ fn reconvert_providerconfig() -> Result<(), Box<dyn std::error::Error>> {
 
 // Integration test of the actual config
 #[test]
-fn integration_check_default_config() -> Result<(), Box<dyn std::error::Error>> {
+fn integration_check_default_config() -> Result<(), DynamicError> {
     let config = TricksConfig::from_default_config()?;
     let prov = &config.get_trick("lutris").unwrap().provider_config;
 

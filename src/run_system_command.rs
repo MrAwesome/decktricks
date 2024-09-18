@@ -28,6 +28,8 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>, debug: bo
 // TODO: run in a thread and report back (for gui), run and wait (for CLI)
 // TODO: return child process info, store it with provider?
 // TODO: pass Result back to calling functions
+//
+// https://doc.rust-lang.org/std/process/struct.Child.html#method.try_wait
 pub fn spawn_system_command(cmdname: &str, args: Vec<&str>) {
     Command::new(cmdname)
         .args(args)

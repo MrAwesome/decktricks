@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use crate::providers::types::*;
 use crate::tricks_config::TricksConfig;
 use clap::{Parser, Subcommand};
@@ -51,7 +52,7 @@ impl std::fmt::Display for ActionErrorTEMPORARY {
 impl std::error::Error for ActionErrorTEMPORARY {}
 
 impl Action {
-    pub fn run_action(&self, config: TricksConfig) -> Result<ActionSuccess, Box<dyn std::error::Error>> {
+    pub fn run_action(&self, config: TricksConfig) -> Result<ActionSuccess, DynamicError> {
         match &self {
             Action::Run { id } => {
                 let trick = config.get_trick(id)?;

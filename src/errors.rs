@@ -1,3 +1,5 @@
+pub type DynamicError = Box<dyn std::error::Error>;
+
 // NOTE: set to pub(crate) temporarily to find unused values
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq)]

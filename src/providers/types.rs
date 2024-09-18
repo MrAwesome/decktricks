@@ -1,4 +1,4 @@
-//use crate::prelude::*;
+use crate::prelude::*;
 
 use crate::actions::ActionErrorTEMPORARY;
 use crate::providers::flatpak::FlatpakProvider;
@@ -8,6 +8,8 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 use super::flatpak::new_flatpak_provider;
+
+pub trait KnownProviderData {}
 
 // These are the states that any given trick can be in.
 // They can be thought of as tags - any trick can be in multiple states
@@ -49,44 +51,25 @@ pub struct Provider<Data, State: KnownState = DefaultState> {
     pub state: PhantomData<State>,
 }
 
-//struct FlatpakProviderEnum;
-//
-//enum KnownProvider {
-//    FlatpakProviderEnum,
-//}
-//
-//
-//trait KnownProviderTraits {}
-
-//impl KnownProviderTraits for FlatpakProviderEnum {}
-
-//fn lol() {
-//    let fp = KnownProvider::from(FlatpakProviderEnum);
-//    let x: KnownProvider = fp.into();
-//}
-
-//impl<Data, State: KnownState> Provider<Data, State>
-//where
-//    State: KnownState,
-//    FlatpakProvider: ProviderChecks<Data>,
-//    SimpleCommandProvider: ProviderChecks<Data>,
-//{
-pub fn provider_from_trick<Data>(trick: &Trick) -> Result<Box<dyn ProviderChecks<Data>>, Box<dyn std::error::Error>>
+pub fn provider_from_trick<Data: KnownProviderData>(
+    trick: &Trick,
+) -> Result<Box<dyn ProviderChecks<Data>>, DynamicError>
 where
+    // TODO: figure out why this trait bound does not work
+    //Provider<Data>: ProviderChecks<Data>
     FlatpakProvider: ProviderChecks<Data>,
     //SimpleCommandProvider: ProviderChecks<Data>,
-    {
+{
     match &trick.provider_config {
         // TODO: fix clone
         ProviderConfig::Flatpak(flatpak) => Ok(Box::new(new_flatpak_provider(flatpak.id.clone()))),
-//        ProviderConfig::SimpleCommand => Box::new(Provider {
-//            data: Rc::new(SimpleCommandProviderData),
-//            state: PhantomData::<DefaultState>,
-//        }),
+        //        ProviderConfig::SimpleCommand => Box::new(Provider {
+        //            data: Rc::new(SimpleCommandProviderData),
+        //            state: PhantomData::<DefaultState>,
+        //        }),
         _ => unimplemented!(),
     }
 }
-//}
 
 pub trait ProviderChecks<Data> {
     fn is_installable(&self) -> Result<Provider<Data, IsInstallable>, PLACEHOLDER>;
@@ -96,28 +79,29 @@ pub trait ProviderChecks<Data> {
     fn is_addable_to_steam(&self) -> Result<Provider<Data, IsAddableToSteam>, PLACEHOLDER>;
 }
 
+
 pub trait Runnable {
-    fn run(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn run(&self) -> Result<(), DynamicError>;
 }
 
 pub trait Running {
-    fn kill(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn kill(&self) -> Result<(), DynamicError>;
 }
 
 pub trait Installable {
-    fn install(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn install(&self) -> Result<(), DynamicError>;
 }
 
 pub trait Installed {
-    fn update(&self) -> Result<(), Box<dyn std::error::Error>>;
-    fn remove(&self) -> Result<(), Box<dyn std::error::Error>>;
-    fn force_reinstall(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn update(&self) -> Result<(), DynamicError>;
+    fn remove(&self) -> Result<(), DynamicError>;
+    fn force_reinstall(&self) -> Result<(), DynamicError>;
 }
 
 pub trait AddableToSteam {
-    fn add_to_steam(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn add_to_steam(&self) -> Result<(), DynamicError>;
     //TODO: someday
-    //fn remove_from_steam(&self) -> Result<(), Box<dyn std::error::Error>>>;
+    //fn remove_from_steam(&self) -> Result<(), DynamicError>>;
 }
 
-//pub trait ProviderActions: Runnable + Running + Installable + Installed + AddableToSteam {}
+pub trait ProviderActions: Runnable + Running + Installable + Installed + AddableToSteam {}

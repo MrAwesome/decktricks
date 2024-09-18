@@ -1,6 +1,6 @@
 //use std::time::Duration;
 //use std::thread;
-//use decktricks::prelude::*;
+use decktricks::prelude::*;
 //use std::sync::mpsc;
 use decktricks::tricks_config::TricksConfig;
 use clap::Parser;
@@ -19,7 +19,7 @@ use decktricks::actions::Cli;
 //    println!("llllll");
 //    thread::sleep(Duration::from_secs(4));
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), DynamicError> {
     let config = TricksConfig::from_default_config()?;
     let cli = Cli::parse();
     let action = &cli.command;
