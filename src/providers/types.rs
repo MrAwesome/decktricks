@@ -1,13 +1,17 @@
+//use crate::providers::decky_installer::DeckyInstallerProviderData;
+//use crate::providers::flatpak::FlatpakProviderData;
 use crate::prelude::*;
 
 use crate::actions::ActionErrorTEMPORARY;
-use crate::providers::flatpak::FlatpakProvider;
 use crate::tricks_config::ProviderConfig;
 use crate::tricks_config::Trick;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
+//use super::decky_installer::DeckyInstallerProvider;
+use super::flatpak::FlatpakProvider;
 use super::flatpak::new_flatpak_provider;
+//use super::decky_installer::new_decky_installer_provider;
 
 pub trait KnownProviderData {}
 
@@ -46,23 +50,26 @@ pub type PLACEHOLDER = ActionErrorTEMPORARY;
 
 // Data: any data your provider wants to keep track of internally
 // State: one of the listed states above
-pub struct Provider<Data, State: KnownState = DefaultState> {
-    pub data: Rc<Data>,
+pub struct Provider<Data: ?Sized, State: KnownState = DefaultState> {
     pub state: PhantomData<State>,
+    pub data: Rc<Data>,
 }
 
-pub fn provider_from_trick<Data: KnownProviderData>(
+pub fn provider_from_trick<Data: KnownProviderData + ?Sized>(
     trick: &Trick,
 ) -> Result<Box<dyn ProviderChecks<Data>>, DynamicError>
 where
-    // TODO: figure out why this trait bound does not work
-    //Provider<Data>: ProviderChecks<Data>
+    //TODO: figure out why this trait bound does not work
     FlatpakProvider: ProviderChecks<Data>,
+    //DeckyInstallerProvider: ProviderChecks<Data>,
     //SimpleCommandProvider: ProviderChecks<Data>,
 {
     match &trick.provider_config {
         // TODO: fix clone
         ProviderConfig::Flatpak(flatpak) => Ok(Box::new(new_flatpak_provider(flatpak.id.clone()))),
+//        ProviderConfig::DeckyInstaller => Ok(Box::new(
+//            new_decky_installer_provider(),
+//        )),
         //        ProviderConfig::SimpleCommand => Box::new(Provider {
         //            data: Rc::new(SimpleCommandProviderData),
         //            state: PhantomData::<DefaultState>,
@@ -71,14 +78,13 @@ where
     }
 }
 
-pub trait ProviderChecks<Data> {
+pub trait ProviderChecks<Data: ?Sized> {
     fn is_installable(&self) -> Result<Provider<Data, IsInstallable>, PLACEHOLDER>;
     fn is_installed(&self) -> Result<Provider<Data, IsInstalled>, PLACEHOLDER>;
     fn is_runnable(&self) -> Result<Provider<Data, IsRunnable>, PLACEHOLDER>;
     fn is_running(&self) -> Result<Provider<Data, IsRunning>, PLACEHOLDER>;
     fn is_addable_to_steam(&self) -> Result<Provider<Data, IsAddableToSteam>, PLACEHOLDER>;
 }
-
 
 pub trait Runnable {
     fn run(&self) -> Result<(), DynamicError>;

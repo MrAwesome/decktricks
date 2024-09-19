@@ -107,7 +107,7 @@ impl Action {
 
                 Ok(ActionSuccess { message: None })
             }
-            Action::AddToSteam { name, id } => {
+            Action::AddToSteam { name: _, id: _ } => {
                 unimplemented!()
             }
 

@@ -4,7 +4,10 @@ General
 [] Pull command running logic over from ruwi? or will the "run as root" guardrails be too intense?
 [] bring in config data for creating the various providers
 [] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
+[] check for unwraps and change to ?
 
+Idea
+[] web frontend that just constructs a list of desired tricks and generates a .desktop that installs decktricks cli and uses it to install everything in one go
 
 CLI
 [] just read config file once at start, calling function from lib.rs

@@ -6,7 +6,13 @@
                 "id": "net.davidotek.pupgui2"
             },
             "icon": "XXX",
-            "tags": ["openmw", "daggerfall-unity", "protonup", "compatibility", "stalker"],
+            "tags": [
+                "openmw",
+                "daggerfall-unity",
+                "protonup",
+                "compatibility",
+                "stalker"
+            ],
             "display_name": "ProtonUp-Qt",
             "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
         },
@@ -46,6 +52,15 @@
             "icon": "XXX",
             "display_name": "Heroic",
             "description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
+        },
+        "decky": {
+            "provider_config": {
+                "type": "decky_installer"
+            },
+            "icon": "XXX",
+            "display_name": "Decky Loader",
+            "description": "Homebrew plugin launcher for the Steam Deck.",
+            "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         }
     }
 }

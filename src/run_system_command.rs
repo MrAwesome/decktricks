@@ -5,19 +5,21 @@ use std::io;
 // TODO: prevent command usage in tests
 // TODO: redirect
 
-pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>, debug: bool) -> bool {
+const DEBUG: bool = false;
+
+pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> bool {
 
     let mut cmd = Command::new(cmdname);
     cmd.args(args.clone());
 
-    if !debug {
+    if !DEBUG {
         cmd.stdout(Stdio::null())
             .stderr(Stdio::null());
     }
 
     let res = cmd.status().is_ok_and(|x| x.success());
 
-    if debug {
+    if DEBUG {
         println!("== EXTERNAL COMMAND STATUS: {} {:?} {}", cmdname, args, res);
     }
 

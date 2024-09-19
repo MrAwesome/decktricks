@@ -60,6 +60,7 @@ pub struct Trick {
 #[serde(tag = "type")]
 pub enum ProviderConfig {
     Flatpak(Flatpak),
+    DeckyInstaller,
     SimpleCommand,
     //SystemPackage(SystemPackage)
     Custom,

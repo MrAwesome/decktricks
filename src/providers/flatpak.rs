@@ -1,13 +1,11 @@
-use crate::prelude::*;
 use crate::actions::ActionErrorTEMPORARY;
-use std::process;
-use std::io;
+use crate::prelude::*;
 #[cfg(not(test))]
-use crate::run_system_command::{
-    system_command_output, system_command_ran_successfully,
-};
-use std::rc::Rc;
+use crate::run_system_command::{system_command_output, system_command_ran_successfully};
+use std::io;
 use std::marker::PhantomData;
+use std::process;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct FlatpakProviderData {
@@ -28,7 +26,7 @@ pub fn new_flatpak_provider(id: String) -> FlatpakProvider {
 #[cfg(not(test))]
 impl<State: KnownState> Provider<FlatpakProviderData, State> {
     fn is_pkg_installed(&self) -> bool {
-        system_command_ran_successfully("flatpak", vec!["info", &self.data.id], false)
+        system_command_ran_successfully("flatpak", vec!["info", &self.data.id])
     }
 
     // NOTE: Can handle/track child pid status here, but
@@ -56,7 +54,7 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
                 let lines = text.trim().split("\n").map(|s| s.to_string()).collect();
                 return Ok(lines);
             }
-            Err(_) => unimplemented!()
+            Err(_) => unimplemented!(),
         }
     }
 }
@@ -74,8 +72,7 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
 }
 
 #[allow(refining_impl_trait)]
-impl<State: KnownState> ProviderChecks<FlatpakProviderData> 
-    for Provider<FlatpakProviderData, State>
+impl<State: KnownState> ProviderChecks<FlatpakProviderData> for Provider<FlatpakProviderData, State>
 where
     State: KnownState,
 {
@@ -89,7 +86,9 @@ where
             success!(self)
         } else {
             // TODO: will these errors ever be seen? or can this just return an Err(()) or such?
-            Err(ActionErrorTEMPORARY{ message: format!("Package {} not installed!", self.data.id)})
+            Err(ActionErrorTEMPORARY {
+                message: format!("Package {} not installed!", self.data.id),
+            })
         }
     }
 
@@ -97,7 +96,9 @@ where
         if self.is_installed().is_ok() {
             success!(self)
         } else {
-            Err(ActionErrorTEMPORARY{ message: format!("Package {} not runnable!", self.data.id)})
+            Err(ActionErrorTEMPORARY {
+                message: format!("Package {} not runnable!", self.data.id),
+            })
         }
     }
 
@@ -105,7 +106,9 @@ where
         if self.is_pkg_running() {
             success!(self)
         } else {
-            Err(ActionErrorTEMPORARY{ message: format!("Package {} not running!", self.data.id)})
+            Err(ActionErrorTEMPORARY {
+                message: format!("Package {} not running!", self.data.id),
+            })
         }
     }
 
@@ -177,40 +180,33 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
     }
 
     fn flatpak_run(&self) -> io::Result<process::Output> {
-        Ok(
-            process::Output {
-                status: process::ExitStatus::default(),
-                stdout: "flatpak run success in test".as_bytes().into(),
-                stderr: [].into(),
-            }
-        )
+        Ok(process::Output {
+            status: process::ExitStatus::default(),
+            stdout: "flatpak run success in test".as_bytes().into(),
+            stderr: [].into(),
+        })
     }
 
     fn flatpak_install(&self) -> io::Result<process::Output> {
-        Ok(
-            process::Output {
-                status: process::ExitStatus::default(),
-                stdout: "flatpak install success in test".as_bytes().into(),
-                stderr: [].into(),
-            }
-        )
+        Ok(process::Output {
+            status: process::ExitStatus::default(),
+            stdout: "flatpak install success in test".as_bytes().into(),
+            stderr: [].into(),
+        })
     }
 
     fn flatpak_uninstall(&self) -> io::Result<process::Output> {
-        Ok(
-            process::Output {
-                status: process::ExitStatus::default(),
-                stdout: "flatpak uninstall success in test".as_bytes().into(),
-                stderr: [].into(),
-            }
-        )
+        Ok(process::Output {
+            status: process::ExitStatus::default(),
+            stdout: "flatpak uninstall success in test".as_bytes().into(),
+            stderr: [].into(),
+        })
     }
 
     fn get_running_flatpak_applications(&self) -> Result<Vec<String>, PLACEHOLDER> {
         Ok(vec!["test_pkg".into(), "test_pkg2".into()])
     }
 }
-
 
 #[cfg(test)]
 mod tests {
