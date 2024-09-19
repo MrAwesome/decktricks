@@ -1,5 +1,9 @@
 //use crate::providers::decky_installer::DeckyInstallerProviderData;
 //use crate::providers::flatpak::FlatpakProviderData;
+//use crate::providers::flatpak::FlatpakProviderData;
+//use crate::providers::decky_installer::DeckyInstallerProviderData;
+use crate::providers::decky_installer::new_decky_installer_provider;
+use crate::providers::decky_installer::DeckyInstallerProvider;
 use crate::prelude::*;
 
 use crate::actions::ActionErrorTEMPORARY;
@@ -9,8 +13,8 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 //use super::decky_installer::DeckyInstallerProvider;
-use super::flatpak::FlatpakProvider;
-use super::flatpak::new_flatpak_provider;
+//use super::flatpak::FlatpakProvider;
+//use super::flatpak::new_flatpak_provider;
 //use super::decky_installer::new_decky_installer_provider;
 
 pub trait KnownProviderData {}
@@ -55,25 +59,28 @@ pub struct Provider<Data: ?Sized, State: KnownState = DefaultState> {
     pub data: Rc<Data>,
 }
 
+//pub enum ProviderTypes {
+//    Flatpak(Provider<FlatpakProviderData>),
+//    DeckyInstaller(Provider<DeckyInstallerProviderData>),
+//}
+
+// TODO: fix clone
 pub fn provider_from_trick<Data: KnownProviderData + ?Sized>(
     trick: &Trick,
 ) -> Result<Box<dyn ProviderChecks<Data>>, DynamicError>
 where
-    //TODO: figure out why this trait bound does not work
-    FlatpakProvider: ProviderChecks<Data>,
-    //DeckyInstallerProvider: ProviderChecks<Data>,
-    //SimpleCommandProvider: ProviderChecks<Data>,
+    //FlatpakProvider: ProviderChecks<Data>,
+    DeckyInstallerProvider: ProviderChecks<Data>,
+//where
+//    Box<dyn ProviderChecks<Data>>: From<FlatpakProvider>,
+//    Box<dyn ProviderChecks<Data>>: From<DeckyInstallerProvider>
 {
     match &trick.provider_config {
-        // TODO: fix clone
-        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(new_flatpak_provider(flatpak.id.clone()))),
-//        ProviderConfig::DeckyInstaller => Ok(Box::new(
-//            new_decky_installer_provider(),
-//        )),
-        //        ProviderConfig::SimpleCommand => Box::new(Provider {
-        //            data: Rc::new(SimpleCommandProviderData),
-        //            state: PhantomData::<DefaultState>,
-        //        }),
+//        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(
+//                new_flatpak_provider(flatpak.id.clone()))),
+        ProviderConfig::DeckyInstaller => Ok(Box::new(
+            new_decky_installer_provider(),
+        )),
         _ => unimplemented!(),
     }
 }
