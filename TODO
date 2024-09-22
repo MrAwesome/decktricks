@@ -15,3 +15,7 @@ CLI
 
 GUI
 [] restart/refresh if config file hash changes?
+
+Providers
+[] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
+    [] individual launchers from within this?

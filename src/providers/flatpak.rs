@@ -52,7 +52,7 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
             Ok(output_obj) => {
                 let text = String::from_utf8_lossy(&output_obj.stdout);
                 let lines = text.trim().split("\n").map(|s| s.to_string()).collect();
-                return Ok(lines);
+                Ok(lines)
             }
             Err(_) => unimplemented!(),
         }
@@ -67,7 +67,7 @@ impl<State: KnownState> Provider<FlatpakProviderData, State> {
                 return true;
             }
         }
-        return false;
+        false
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::actions::ActionErrorTEMPORARY;
 use crate::prelude::*;
 
 use std::rc::Rc;
@@ -15,24 +16,24 @@ where
 {
     fn is_installable(
         &self,
-    ) -> Result<Provider<SimpleCommandProviderData, IsInstallable>, PLACEHOLDER> {
+    ) -> Result<Provider<SimpleCommandProviderData, IsInstallable>, ActionErrorTEMPORARY> {
         success!(self)
     }
 
     fn is_installed(
         &self,
-    ) -> Result<Provider<SimpleCommandProviderData, IsInstalled>, PLACEHOLDER> {
+    ) -> Result<Provider<SimpleCommandProviderData, IsInstalled>, ActionErrorTEMPORARY> {
         success!(self)
     }
-    fn is_runnable(&self) -> Result<Provider<SimpleCommandProviderData, IsRunnable>, PLACEHOLDER> {
+    fn is_runnable(&self) -> Result<Provider<SimpleCommandProviderData, IsRunnable>, ActionErrorTEMPORARY> {
         success!(self)
     }
-    fn is_running(&self) -> Result<Provider<SimpleCommandProviderData, IsRunning>, PLACEHOLDER> {
+    fn is_running(&self) -> Result<Provider<SimpleCommandProviderData, IsRunning>, ActionErrorTEMPORARY> {
         success!(self)
     }
     fn is_addable_to_steam(
         &self,
-    ) -> Result<Provider<SimpleCommandProviderData, IsAddableToSteam>, PLACEHOLDER> {
+    ) -> Result<Provider<SimpleCommandProviderData, IsAddableToSteam>, ActionErrorTEMPORARY> {
         success!(self)
     }
 }

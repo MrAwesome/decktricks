@@ -8,8 +8,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
 use std::rc::Rc;
 
-const DECKY_DOWNLOAD_URL: &str = "https://decky.xyz/download";
-//const DECKY_DOWNLOAD_URL: &str = "http://gleesus.net:8858/lawl.sh";
+//const DECKY_DOWNLOAD_URL: &str = "https://decky.xyz/download";
+const DECKY_DOWNLOAD_URL: &str = "http://gleesus.net:8858/lawl.sh";
 
 #[derive(Debug, Copy, Clone)]
 pub struct DeckyInstallerProviderData;
@@ -33,40 +33,40 @@ where
 {
     fn is_installable(
         &self,
-    ) -> Result<Provider<DeckyInstallerProviderData, IsInstallable>, PLACEHOLDER> {
+    ) -> Result<Provider<DeckyInstallerProviderData, IsInstallable>, ActionErrorTEMPORARY> {
         success!(self)
     }
 
     fn is_installed(
         &self,
-    ) -> Result<Provider<DeckyInstallerProviderData, IsInstalled>, PLACEHOLDER> {
+    ) -> Result<Provider<DeckyInstallerProviderData, IsInstalled>, ActionErrorTEMPORARY> {
         if system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"]) {
             success!(self)
         } else {
             Err(ActionErrorTEMPORARY {
-                message: format!("Decky not installed!"),
+                message: "Decky not installed!".into(),
             })
         }
     }
-    fn is_runnable(&self) -> Result<Provider<DeckyInstallerProviderData, IsRunnable>, PLACEHOLDER> {
+    fn is_runnable(&self) -> Result<Provider<DeckyInstallerProviderData, IsRunnable>, ActionErrorTEMPORARY> {
         Err(ActionErrorTEMPORARY {
-            message: format!("Decky is not runnable."),
+            message: "Decky is not runnable.".into(),
         })
     }
-    fn is_running(&self) -> Result<Provider<DeckyInstallerProviderData, IsRunning>, PLACEHOLDER> {
+    fn is_running(&self) -> Result<Provider<DeckyInstallerProviderData, IsRunning>, ActionErrorTEMPORARY> {
         if system_command_ran_successfully("systemctl", vec!["is-running", "plugin_loader"]) {
             success!(self)
         } else {
             Err(ActionErrorTEMPORARY {
-                message: format!("Decky not running!"),
+                message: "Decky not running!".into(),
             })
         }
     }
     fn is_addable_to_steam(
         &self,
-    ) -> Result<Provider<DeckyInstallerProviderData, IsAddableToSteam>, PLACEHOLDER> {
+    ) -> Result<Provider<DeckyInstallerProviderData, IsAddableToSteam>, ActionErrorTEMPORARY> {
         Err(ActionErrorTEMPORARY {
-            message: format!("Decky is automatically added to Steam."),
+            message: "Decky is automatically added to Steam.".into(),
         })
     }
 }

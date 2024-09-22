@@ -1,5 +1,5 @@
-use crate::prelude::*;
 use crate::actions::ActionErrorTEMPORARY;
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::hash_map::Iter;
@@ -30,11 +30,9 @@ impl TricksConfig {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
-            None => {
-                return Err(Box::new(ActionErrorTEMPORARY {
-                    message: format!("Trick not known: {maybe_id}"),
-                }))
-            }
+            None => Err(Box::new(ActionErrorTEMPORARY {
+                message: format!("Trick not known: {maybe_id}"),
+            })),
         }
     }
 

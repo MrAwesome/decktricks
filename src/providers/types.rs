@@ -2,8 +2,10 @@
 //use crate::providers::flatpak::FlatpakProviderData;
 //use crate::providers::flatpak::FlatpakProviderData;
 //use crate::providers::decky_installer::DeckyInstallerProviderData;
-use crate::providers::decky_installer::new_decky_installer_provider;
-use crate::providers::decky_installer::DeckyInstallerProvider;
+use crate::providers::flatpak::FlatpakProvider;
+use crate::providers::flatpak::new_flatpak_provider;
+//use crate::providers::decky_installer::new_decky_installer_provider;
+//use crate::providers::decky_installer::DeckyInstallerProvider;
 use crate::prelude::*;
 
 use crate::actions::ActionErrorTEMPORARY;
@@ -69,18 +71,18 @@ pub fn provider_from_trick<Data: KnownProviderData + ?Sized>(
     trick: &Trick,
 ) -> Result<Box<dyn ProviderChecks<Data>>, DynamicError>
 where
-    //FlatpakProvider: ProviderChecks<Data>,
-    DeckyInstallerProvider: ProviderChecks<Data>,
+    FlatpakProvider: ProviderChecks<Data>,
+    //DeckyInstallerProvider: ProviderChecks<Data>,
 //where
 //    Box<dyn ProviderChecks<Data>>: From<FlatpakProvider>,
 //    Box<dyn ProviderChecks<Data>>: From<DeckyInstallerProvider>
 {
     match &trick.provider_config {
-//        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(
-//                new_flatpak_provider(flatpak.id.clone()))),
-        ProviderConfig::DeckyInstaller => Ok(Box::new(
-            new_decky_installer_provider(),
-        )),
+        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(
+                new_flatpak_provider(flatpak.id.clone()))),
+//        ProviderConfig::DeckyInstaller => Ok(Box::new(
+//            new_decky_installer_provider(),
+//        )),
         _ => unimplemented!(),
     }
 }

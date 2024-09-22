@@ -96,7 +96,7 @@ impl Action {
 
                 let tricks_newline_delineated = tricks_names.join("\n");
 
-                let message = Some(format!("{tricks_newline_delineated}"));
+                let message = Some(tricks_newline_delineated);
                 Ok(ActionSuccess { message })
             },
             Action::Kill { id } => {
