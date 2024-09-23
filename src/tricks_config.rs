@@ -1,4 +1,3 @@
-use crate::actions::ActionErrorTEMPORARY;
 use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -10,11 +9,11 @@ use std::collections::HashMap;
 // TODO: place this in the correct XDG dir and read from there, default to a compiled-in version
 const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
 //const DEFAULT_CONFIG_LOCATION: &str = "config.json";
-type ProviderID = String;
+pub type TrickID = String;
 
 #[derive(Debug, Deserialize)]
 pub struct TricksConfig {
-    tricks: HashMap<ProviderID, Trick>,
+    tricks: HashMap<TrickID, Trick>,
 }
 
 impl TricksConfig {
@@ -36,7 +35,7 @@ impl TricksConfig {
         }
     }
 
-    pub fn get_all_tricks(&self) -> Iter<ProviderID, Trick> {
+    pub fn get_all_tricks(&self) -> Iter<TrickID, Trick> {
         self.tricks.iter()
     }
 }
@@ -50,7 +49,7 @@ pub struct Trick {
     //download: Option<String>,
     //command_before: Option<String>,
     //command_after: Option<String>,
-    //depends: Vec<ProviderID>,
+    //depends: Vec<TrickID>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

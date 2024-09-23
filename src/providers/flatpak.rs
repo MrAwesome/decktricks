@@ -7,6 +7,12 @@ use std::marker::PhantomData;
 use std::process;
 use std::rc::Rc;
 
+struct Flatpak {
+    id: String,
+}
+
+
+
 #[derive(Debug, Clone)]
 pub struct FlatpakProviderData {
     id: String,
