@@ -1,9 +1,10 @@
-use crate::{actions::TrickActionID, prelude::*};
+use crate::actions::ActionSuccess;
+use crate::prelude::*;
 //use crate::tricks_config::TricksConfig;
 //use serde::Serialize;
 
 // XXX
-//pub mod flatpak;
+pub mod flatpak;
 //pub mod simple_command;
 //pub mod decky_installer;
 
@@ -26,15 +27,15 @@ struct ProviderInfo {
 
 
 pub trait Provider: ProviderChecks + ProviderActions {
-    fn get_provider_info(&self) -> ProviderInfo;
-    fn specific_actions(&self) -> Vec<TrickActionID>;
-    fn always_allowed_actions(&self) -> Vec<TrickActionID> {
-        vec![TrickActionID::Info]
-    }
-
-    fn possible(&self) -> Vec<TrickActionID> {
-        [self.specific_actions(), self.always_allowed_actions()].concat()
-    }
+//    fn get_provider_info(&self) -> ProviderInfo;
+//    fn specific_actions(&self) -> Vec<TrickActionID>;
+//    fn always_allowed_actions(&self) -> Vec<TrickActionID> {
+//        vec![TrickActionID::Info]
+//    }
+//
+//    fn possible(&self) -> Vec<TrickActionID> {
+//        [self.specific_actions(), self.always_allowed_actions()].concat()
+//    }
 }
 
 pub trait ProviderChecks {

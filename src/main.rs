@@ -1,35 +1,20 @@
-//use std::time::Duration;
-//use std::thread;
+use decktricks::run::run_action_with_config;
 use decktricks::prelude::*;
-//use std::sync::mpsc;
-//use decktricks::tricks_config::TricksConfig;
-//use clap::Parser;
-//use decktricks::actions::Cli;
-
-//    let (sender, receiver) = mpsc::channel();
-//
-//    thread::spawn(move || {
-//        let flatpak_name = receiver.recv();
-//        let prov = Provider::flatpak("net.davidotek.pupgui2", true);
-//        prov.is_runnable().and_then(|p| p.run());
-//    });
-//
-//    thread::sleep(Duration::from_secs(1));
-//    sender.send("net.davidotek.pupgui2");
-//    println!("llllll");
-//    thread::sleep(Duration::from_secs(4));
+use decktricks::tricks_config::TricksConfig;
+use clap::Parser;
+use decktricks::actions::Cli;
 
 fn main() -> Result<(), DynamicError> {
-//    let config = TricksConfig::from_default_config()?;
-//    let cli = Cli::parse();
-//    let action = &cli.command;
-//
-//    let action_success = action.run_action(config)?;
-//
+    let config = TricksConfig::from_default_config()?;
+    let cli = Cli::parse();
+    let action = &cli.command;
+
+    let action_success = run_action_with_config(action, &config)?;
+
 //    if let Some(message) = action_success.message {
 //        println!("{}", message);
 //    }
-//    
+    
     Ok(())
 }
 

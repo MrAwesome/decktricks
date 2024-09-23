@@ -23,10 +23,6 @@ pub enum Action {
     Uninstall {
         id: String,
     },
-    List {
-        #[clap(long)]
-        installed: bool,
-    },
     AddToSteam {
         #[clap(long)]
         name: Option<String>,
@@ -34,6 +30,11 @@ pub enum Action {
     },
     Info {
         id: String,
+    },
+    // Items below do not take trick ids, and function differently.
+    List {
+        #[clap(long)]
+        installed: bool,
     },
 }
 
@@ -62,7 +63,6 @@ pub struct ActionSuccess {
     pub message: Option<String>
 }
 
-
 #[derive(Debug, Serialize, Eq, PartialEq, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum TrickActionID {
@@ -83,6 +83,12 @@ pub enum GeneralActionID {
 pub enum ActionID {
     Individual(TrickActionID),
     General(GeneralActionID),
+}
+
+#[test]
+fn verify_cli() {
+    use clap::CommandFactory;
+    Cli::command().debug_assert();
 }
 
 #[test]

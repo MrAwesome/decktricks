@@ -7,6 +7,7 @@ use std::io;
 
 const DEBUG: bool = false;
 
+// TODO: should maybe have this return a Result?
 pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> bool {
 
     let mut cmd = Command::new(cmdname);
