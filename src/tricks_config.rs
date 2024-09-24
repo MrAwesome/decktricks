@@ -17,21 +17,24 @@ pub struct TricksConfig {
 }
 
 impl TricksConfig {
-    pub fn from_default_config() -> Result<TricksConfig, DynamicError> {
+    pub fn from_default_config() -> Result<TricksConfig, KnownError> {
         // TODO: allow for reading in from alternate config
         //let file = File::open(DEFAULT_CONFIG_LOCATION)?;
         //let reader = BufReader::new(file);
         //Ok(serde_json::from_reader(reader)?)
-        Ok(serde_json::from_str(DEFAULT_CONFIG_CONTENTS)?)
+        Ok(
+            serde_json::from_str(DEFAULT_CONFIG_CONTENTS)
+                .map_err(|e| KnownError::ConfigParsing(e))?,
+        )
     }
 
-    pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, DynamicError> {
+    pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, KnownError> {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
-            None => Err(Box::new(ActionErrorTEMPORARY {
+            None => Err(KnownError::UnknownTrickID(Box::new(ActionErrorTEMPORARY {
                 message: format!("Trick not known: {maybe_id}"),
-            })),
+            }))),
         }
     }
 
@@ -87,7 +90,7 @@ pub struct SimpleCommand {
 
 // Tests a write/read cycle of config objects to the config file format
 #[test]
-fn reconvert_providerconfig() -> Result<(), DynamicError> {
+fn reconvert_providerconfig() -> Result<(), KnownError> {
     let id = "net.davidotek.pupgui2";
     let trick = Trick {
         provider_config: ProviderConfig::Flatpak(Flatpak { id: id.into() }),
@@ -106,7 +109,7 @@ fn reconvert_providerconfig() -> Result<(), DynamicError> {
 
 // Integration test of the actual config
 #[test]
-fn integration_check_default_config() -> Result<(), DynamicError> {
+fn integration_check_default_config() -> Result<(), KnownError> {
     let config = TricksConfig::from_default_config()?;
     let prov = &config.get_trick("lutris").unwrap().provider_config;
 

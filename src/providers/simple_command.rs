@@ -20,7 +20,10 @@ where
     fn is_installable(
         &self,
     ) -> Result<Provider<SimpleCommandProviderData, IsInstallable>, ActionErrorTEMPORARY> {
-        success!(self)
+        // TODO: boxing up an error just to say the same thing every time is Bad, should switch to
+        // using enum errors and just have a general error catchall for boxed errors, so that
+        // functions like this can just return IsNotInstalledError
+        Err(Errs::IsNotInstalledError)
     }
 
     fn is_installed(

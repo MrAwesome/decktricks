@@ -2,7 +2,19 @@ use crate::prelude::*;
 use std::{backtrace::Backtrace, fmt::Debug};
 use urlencoding::encode;
 
+//pub type KnownError = Box<dyn std::error::Error>;
+
 pub type DynamicError = Box<dyn std::error::Error>;
+
+#[derive(Debug)]
+pub enum KnownError {
+    ConfigParsing(serde_json::Error),
+    Dynamic(DynamicError),
+    SeriousError(SeriousError),
+    SystemCommandParse(DynamicError),
+    SystemCommandRun(std::io::Error),
+    UnknownTrickID(DynamicError),
+}
 
 // NOTE: set to pub(crate) temporarily to find unused values
 #[non_exhaustive]

@@ -4,7 +4,7 @@ use decktricks::tricks_config::TricksConfig;
 use clap::Parser;
 use decktricks::actions::Cli;
 
-fn main() -> Result<(), DynamicError> {
+fn main() -> Result<(), KnownError> {
     let config = TricksConfig::from_default_config()?;
     let cli = Cli::parse();
     let action = &cli.command;

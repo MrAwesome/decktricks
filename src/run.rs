@@ -7,7 +7,7 @@ use crate::tricks_config::TrickID;
 use crate::tricks_config::TricksConfig;
 use crate::tricks_config::Flatpak;
 
-fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, DynamicError> {
+fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, KnownError> {
     match &trick.provider_config {
         ProviderConfig::Flatpak(flatpak) => Ok(Box::new(Flatpak::new(flatpak.id.clone()))),
         _ => unimplemented!()
@@ -24,7 +24,7 @@ fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, DynamicError>
 pub fn run_action_with_config(
     action: &Action,
     config: &TricksConfig,
-) -> Result<ActionSuccess, DynamicError> {
+) -> Result<ActionSuccess, KnownError> {
     let maybe_trick_id = action.get_trick_id();
     match maybe_trick_id {
         Some(trick_id) => run_trick_action(trick_id.to_owned(), action, config),
@@ -35,7 +35,7 @@ pub fn run_action_with_config(
 fn run_general_action(
     action: &Action,
     config: &TricksConfig,
-) -> Result<ActionSuccess, DynamicError> {
+) -> Result<ActionSuccess, KnownError> {
     match action {
         Action::List { installed } => {
             let tricks = config.get_all_tricks();
@@ -67,7 +67,7 @@ fn run_general_action(
                 "Individual action type was passed to general type function! Type: {:?}",
                 action
             );
-            Err(Box::new(SeriousError::new(error_type, location, &message)))
+            Err(KnownError::SeriousError(SeriousError::new(error_type, location, &message)))
         }
     }
 }
@@ -77,7 +77,7 @@ fn run_trick_action(
     trick_id: TrickID,
     action: &Action,
     config: &TricksConfig,
-) -> Result<ActionSuccess, DynamicError> {
+) -> Result<ActionSuccess, KnownError> {
     let trick = config.get_trick(trick_id.as_ref())?;
     let provider = provider_from_trick(trick)?;
 
@@ -116,7 +116,7 @@ fn run_trick_action(
                 "General action type was passed to individual type function! Type: {:?}",
                 action
             );
-            Err(Box::new(SeriousError::new(error_type, location, &message)))
+            Err(KnownError::SeriousError(SeriousError::new(error_type, location, &message)))
         }
     }
 }

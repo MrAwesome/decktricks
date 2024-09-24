@@ -1,14 +1,10 @@
+use crate::prelude::KnownError;
 use std::process::{Command, Stdio};
 use std::process;
-use std::io;
-
-// TODO: prevent command usage in tests
-// TODO: redirect
 
 const DEBUG: bool = false;
 
-// TODO: should maybe have this return a Result?
-pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> bool {
+pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> Result<bool, KnownError> {
 
     let mut cmd = Command::new(cmdname);
     cmd.args(args.clone());
@@ -18,13 +14,13 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> bool {
             .stderr(Stdio::null());
     }
 
-    let res = cmd.status().is_ok_and(|x| x.success());
+    let res = cmd.status();
 
     if DEBUG {
-        println!("== EXTERNAL COMMAND STATUS: {} {:?} {}", cmdname, args, res);
+        println!("== EXTERNAL COMMAND STATUS: {} {:?} {:?}", cmdname, args, res);
     }
 
-    res
+    res.map(|x| x.success()).map_err(|e| KnownError::SystemCommandRun(e))
 }
 
 // For now, return nothing.
@@ -39,7 +35,7 @@ pub fn spawn_system_command(cmdname: &str, args: Vec<&str>) {
         .spawn().unwrap();
 }
 
-pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> io::Result<process::Output> {
-    Command::new(cmdname).args(args).output()
-
+pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> Result<process::Output, KnownError> {
+    let output = Command::new(cmdname).args(args).output();
+    output.map_err(|e| KnownError::SystemCommandRun(e))
 }

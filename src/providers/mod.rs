@@ -22,21 +22,21 @@ pub trait Provider: ProviderChecks + ProviderActions + Debug {
 }
 
 pub trait ProviderChecks {
-    fn is_installable(&self) -> Result<(), DynamicError>;
-    fn is_installed(&self) -> Result<(), DynamicError>;
-    fn is_runnable(&self) -> Result<(), DynamicError>;
-    fn is_running(&self) -> Result<(), DynamicError>;
-    fn is_addable_to_steam(&self) -> Result<(), DynamicError>;
+    fn is_installable(&self) -> Result<bool, KnownError>;
+    fn is_installed(&self) -> Result<bool, KnownError>;
+    fn is_runnable(&self) -> Result<bool, KnownError>;
+    fn is_running(&self) -> Result<bool, KnownError>;
+    fn is_addable_to_steam(&self) -> Result<bool, KnownError>;
 }
 
 pub trait ProviderActions {
-    fn run(&self) -> Result<ActionSuccess, DynamicError>;
-    fn kill(&self) -> Result<ActionSuccess, DynamicError>;
-    fn install(&self) -> Result<ActionSuccess, DynamicError>;
-    fn update(&self) -> Result<ActionSuccess, DynamicError>;
-    fn uninstall(&self) -> Result<ActionSuccess, DynamicError>;
-    fn force_reinstall(&self) -> Result<ActionSuccess, DynamicError>;
-    fn add_to_steam(&self) -> Result<ActionSuccess, DynamicError>;
+    fn run(&self) -> Result<ActionSuccess, KnownError>;
+    fn kill(&self) -> Result<ActionSuccess, KnownError>;
+    fn install(&self) -> Result<ActionSuccess, KnownError>;
+    fn update(&self) -> Result<ActionSuccess, KnownError>;
+    fn uninstall(&self) -> Result<ActionSuccess, KnownError>;
+    fn force_reinstall(&self) -> Result<ActionSuccess, KnownError>;
+    fn add_to_steam(&self) -> Result<ActionSuccess, KnownError>;
     //TODO: someday
     //fn remove_from_steam(&self) -> Result<ActionSuccess, DynamicError>>;
 }
