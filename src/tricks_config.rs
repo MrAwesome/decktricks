@@ -58,7 +58,7 @@ pub struct Trick {
 pub enum ProviderConfig {
     Flatpak(Flatpak),
     DeckyInstaller,
-    SimpleCommand,
+    SimpleCommand(SimpleCommand),
     //SystemPackage(SystemPackage)
     Custom,
 }
@@ -71,6 +71,12 @@ pub enum ProviderConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Flatpak {
     pub id: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SimpleCommand {
+    command: String,
+    args: Vec<String>,
 }
 
 //#[derive(Debug, Deserialize, Serialize)]

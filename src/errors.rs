@@ -80,6 +80,5 @@ fn test_serious_error() {
         "i am a very serious lowercase error message",
     );
 
-    println!("{}", se);
-    panic!()
+    assert!(se.link().contains("i%20am"));
 }

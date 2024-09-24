@@ -4,7 +4,10 @@ use crate::prelude::*;
 use std::rc::Rc;
 
 #[derive(Debug, Copy, Clone)]
-pub struct SimpleCommandProviderData;
+pub struct SimpleCommandProvider {
+    command: String,
+    args: Vec<String>,
+}
 
 pub type SimpleCommandProvider = Provider<SimpleCommandProviderData>;
 
@@ -39,39 +42,39 @@ where
 }
 
 impl Installed for Provider<SimpleCommandProviderData, IsInstalled> {
-    fn update(&self) -> Result<(), DynamicError> {
+    fn update(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 
-    fn remove(&self) -> Result<(), DynamicError> {
+    fn remove(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 
-    fn force_reinstall(&self) -> Result<(), DynamicError> {
+    fn force_reinstall(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 }
 
 impl Installable for Provider<SimpleCommandProviderData, IsInstallable> {
-    fn install(&self) -> Result<(), DynamicError> {
+    fn install(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 }
 
 impl Runnable for Provider<SimpleCommandProviderData, IsRunnable> {
-    fn run(&self) -> Result<(), DynamicError> {
+    fn run(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 }
 
 impl Running for Provider<SimpleCommandProviderData, IsRunning> {
-    fn kill(&self) -> Result<(), DynamicError> {
+    fn kill(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 }
 
 impl AddableToSteam for Provider<SimpleCommandProviderData, IsAddableToSteam> {
-    fn add_to_steam(&self) -> Result<(), DynamicError> {
+    fn add_to_steam(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 }

@@ -1,3 +1,4 @@
+use crate::actions::ActionSuccess;
 use crate::prelude::*;
 #[cfg(not(test))]
 use crate::run_system_command::{system_command_output, system_command_ran_successfully};
@@ -6,9 +7,9 @@ use std::process;
 use crate::tricks_config::Flatpak;
 
 impl Flatpak {
-    pub fn new(id: String) -> Self {
+    pub fn new<S: Into<String>>(id: S) -> Self {
         Flatpak {
-            id
+            id: id.into()
         }
     }
 }
@@ -25,22 +26,6 @@ impl Provider for Flatpak {
     //}
 }
 
-//#[derive(Debug, Clone)]
-//pub struct FlatpakProviderData {
-//    id: String,
-//}
-//
-//impl KnownProviderData for FlatpakProviderData {}
-//
-//pub type FlatpakProvider = FIXME;
-//
-//pub fn new_flatpak_provider(id: String) -> FlatpakProvider {
-//    Provider {
-//        data: Rc::new(FlatpakProviderData { id }),
-//        state: PhantomData::<DefaultState>,
-//    }
-//}
-//
 #[cfg(not(test))]
 impl Flatpak {
     fn is_pkg_installed(&self) -> bool {
@@ -76,8 +61,7 @@ impl Flatpak {
         }
     }
 }
-//
-//impl<State: KnownState> FIXME {
+
 impl Flatpak {
     fn is_pkg_running(&self) -> Result<bool, DynamicError> {
         // TODO: error handling
@@ -89,12 +73,7 @@ impl Flatpak {
         Ok(false)
     }
 }
-//
-//#[allow(refining_impl_trait)]
-//impl<State: KnownState> ProviderChecks<FlatpakProviderData> for FIXME
-//where
-//    State: KnownState,
-//{
+
 impl ProviderChecks for Flatpak {
     fn is_installable(&self) -> Result<(), DynamicError> {
         // Any flatpaks we explicitly list will be installable.
@@ -143,44 +122,44 @@ impl ProviderChecks for Flatpak {
 impl ProviderActions for Flatpak {
     // NOTE!!!!! update takes user input on the command line (so pass -y)
     // , and *often will require a second run* if doing a full update of all packages
-    fn update(&self) -> Result<(), DynamicError> {
+    fn update(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 
-    fn uninstall(&self) -> Result<(), DynamicError> {
+    fn uninstall(&self) -> Result<ActionSuccess, DynamicError> {
         self.flatpak_uninstall()?;
-        Ok(())
+        success!("\"{}\" uninstalled successfully.", self.id)
     }
 
-    fn force_reinstall(&self) -> Result<(), DynamicError> {
+    fn force_reinstall(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 
-    fn install(&self) -> Result<(), DynamicError> {
+    fn install(&self) -> Result<ActionSuccess, DynamicError> {
         self.flatpak_install()?;
-        Ok(())
+        success!("\"{}\" installed successfully.", self.id)
     }
 
-    fn run(&self) -> Result<(), DynamicError> {
+    fn run(&self) -> Result<ActionSuccess, DynamicError> {
         // TODO: check return status and return Err if appropriate
         self.flatpak_run()?;
-        Ok(())
+        success!()
     }
 
     #[cfg(not(test))]
-    fn kill(&self) -> Result<(), DynamicError> {
+    fn kill(&self) -> Result<ActionSuccess, DynamicError> {
         // TODO: run 'flatpak kill <id>' here
         system_command_output("flatpak", vec!["kill", &self.id])?;
-        Ok(())
+        success!()
     }
 
     #[cfg(test)]
-    fn kill(&self) -> Result<(), DynamicError> {
+    fn kill(&self) -> Result<ActionSuccess, DynamicError> {
         // TODO: any further testing needed here?
-        Ok(())
+        success!()
     }
 
-    fn add_to_steam(&self) -> Result<(), DynamicError> {
+    fn add_to_steam(&self) -> Result<ActionSuccess, DynamicError> {
         unimplemented!()
     }
 }
@@ -220,45 +199,45 @@ impl Flatpak {
     }
 }
 
-//#[cfg(test)]
-//mod tests {
-//    use super::*;
-//
-//    #[test]
-//    fn test_new_flatpak_provider() {
-//        let provider = new_flatpak_provider("test_pkg".into());
-//
-//        assert_eq!(provider.id, "test_pkg");
-//    }
-//
-//    #[test]
-//    fn test_is_pkg_installed_true() {
-//        let provider = new_flatpak_provider("test_pkg_installed".into());
-//        assert!(provider.is_installed().is_ok());
-//    }
-//
-//    #[test]
-//    fn test_is_pkg_installed_false() {
-//        let provider = new_flatpak_provider("test_pkg_not_installed".into());
-//        assert!(!provider.is_installed().is_ok());
-//    }
-//
-//    #[test]
-//    fn test_installable() {
-//        let provider = new_flatpak_provider("test_pkg".into());
-//        let installable = provider.is_installable();
-//        assert!(installable.is_ok());
-//    }
-//
-//    #[test]
-//    fn test_is_pkg_running_true() {
-//        let provider = new_flatpak_provider("test_pkg".into());
-//        assert!(provider.is_running().is_ok());
-//    }
-//
-//    #[test]
-//    fn test_is_pkg_running_false() {
-//        let provider = new_flatpak_provider("jfdklsajfds".into());
-//        assert!(!provider.is_running().is_ok());
-//    }
-//}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_flatpak_provider() {
+        let provider = Flatpak::new("test_pkg");
+
+        assert_eq!(provider.id, "test_pkg");
+    }
+
+    #[test]
+    fn test_is_pkg_installed_true() {
+        let provider = Flatpak::new("test_pkg_installed");
+        assert!(provider.is_installed().is_ok());
+    }
+
+    #[test]
+    fn test_is_pkg_installed_false() {
+        let provider = Flatpak::new("test_pkg_not_installed");
+        assert!(!provider.is_installed().is_ok());
+    }
+
+    #[test]
+    fn test_installable() {
+        let provider = Flatpak::new("test_pkg");
+        let installable = provider.is_installable();
+        assert!(installable.is_ok());
+    }
+
+    #[test]
+    fn test_is_pkg_running_true() {
+        let provider = Flatpak::new("test_pkg");
+        assert!(provider.is_running().is_ok());
+    }
+
+    #[test]
+    fn test_is_pkg_running_false() {
+        let provider = Flatpak::new("jfdklsajfds");
+        assert!(!provider.is_running().is_ok());
+    }
+}

@@ -7,8 +7,6 @@ use crate::tricks_config::TrickID;
 use crate::tricks_config::TricksConfig;
 use crate::tricks_config::Flatpak;
 
-type ActionSuccessTEMPORARY = ();
-
 fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, DynamicError> {
     match &trick.provider_config {
         ProviderConfig::Flatpak(flatpak) => Ok(Box::new(Flatpak::new(flatpak.id.clone()))),
@@ -26,7 +24,7 @@ fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, DynamicError>
 pub fn run_action_with_config(
     action: &Action,
     config: &TricksConfig,
-) -> Result<ActionSuccessTEMPORARY, DynamicError> {
+) -> Result<ActionSuccess, DynamicError> {
     let maybe_trick_id = action.get_trick_id();
     match maybe_trick_id {
         Some(trick_id) => run_trick_action(trick_id.to_owned(), action, config),
@@ -37,26 +35,25 @@ pub fn run_action_with_config(
 fn run_general_action(
     action: &Action,
     config: &TricksConfig,
-) -> Result<ActionSuccessTEMPORARY, DynamicError> {
+) -> Result<ActionSuccess, DynamicError> {
     match action {
         Action::List { installed } => {
             let tricks = config.get_all_tricks();
 
             let tricks_names: Vec<&str> = match installed {
-                false => tricks.map(|nat| nat.0.as_str()).collect(),
+                false => tricks.map(|name_and_trick| name_and_trick.0.as_str()).collect(),
                 true => tricks
-                    .filter(|nat| {
-                        provider_from_trick(nat.1).is_ok_and(|t| t.is_installed().is_ok())
+                    .filter(|name_and_trick| {
+                        provider_from_trick(name_and_trick.1).is_ok_and(|t| t.is_installed().is_ok())
                     })
-                    .map(|nat| nat.0.as_str())
+                    .map(|name_and_trick| name_and_trick.0.as_str())
                     .collect(),
             };
 
             let tricks_newline_delineated = tricks_names.join("\n");
 
             let message = Some(tricks_newline_delineated);
-            //Ok(ActionSuccess { message })
-            Ok(())
+            Ok(ActionSuccess { message })
         }
         Action::Run { .. }
         | Action::Kill { .. }
@@ -80,7 +77,7 @@ fn run_trick_action(
     trick_id: TrickID,
     action: &Action,
     config: &TricksConfig,
-) -> Result<ActionSuccessTEMPORARY, DynamicError> {
+) -> Result<ActionSuccess, DynamicError> {
     let trick = config.get_trick(trick_id.as_ref())?;
     let provider = provider_from_trick(trick)?;
 
@@ -105,8 +102,11 @@ fn run_trick_action(
             .. } => provider.add_to_steam(),
         Action::Kill { .. } => provider.kill(),
 
-        // TODO: this is provider-agnostic, just run code here
-        Action::Info { .. } => unimplemented!(),
+        // TODO: this is provider-agnostic, just run code here and return ActionSuccess with the
+        // string
+        Action::Info { .. } => {
+            success!("{:?}", provider)
+        },
 
         // All general actions should be caught here
         Action::List { .. } => {

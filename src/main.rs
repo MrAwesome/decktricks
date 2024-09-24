@@ -11,9 +11,9 @@ fn main() -> Result<(), DynamicError> {
 
     let action_success = run_action_with_config(action, &config)?;
 
-//    if let Some(message) = action_success.message {
-//        println!("{}", message);
-//    }
+    if let Some(message) = action_success.message {
+        println!("{}", message);
+    }
     
     Ok(())
 }
