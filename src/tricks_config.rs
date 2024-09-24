@@ -55,7 +55,7 @@ pub struct Trick {
     //depends: Vec<TrickID>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
 pub enum ProviderConfig {
@@ -71,15 +71,15 @@ pub enum ProviderConfig {
 //    "decky" => { blah },
 //}
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Flatpak {
     pub id: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SimpleCommand {
-    command: String,
-    args: Vec<String>,
+    pub command: String,
+    pub args: Vec<String>,
 }
 
 //#[derive(Debug, Deserialize, Serialize)]

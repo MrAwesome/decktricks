@@ -2,17 +2,11 @@ use crate::prelude::*;
 
 fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, KnownError> {
     match &trick.provider_config {
-        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(Flatpak::new(flatpak.id.clone()))),
+        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(flatpak.clone())),
+        ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(simple_command.clone())),
         _ => unimplemented!()
     }
 }
-    //let provider: dyn Provider = provider_from_trick(trick)?;
-////    match &trick.provider_config {
-////        ProviderConfig::Flatpak(flatpak) => Ok(Box::new(new_flatpak_provider(flatpak.id.clone()))),
-////        //        ProviderConfig::DeckyInstaller => Ok(Box::new(
-////        //            new_decky_installer_provider(),
-////        //        )),
-////        _ => unimplemented!(),
 
 pub fn run_action_with_config(
     action: &Action,
