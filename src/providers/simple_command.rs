@@ -1,46 +1,30 @@
-use crate::actions::ActionErrorTEMPORARY;
 use crate::prelude::*;
 
-use std::rc::Rc;
-
-#[derive(Debug, Copy, Clone)]
-pub struct SimpleCommandProvider {
-    command: String,
-    args: Vec<String>,
-}
-
-pub type SimpleCommandProvider = Provider<SimpleCommandProviderData>;
-
-#[allow(refining_impl_trait)]
-impl<State: KnownState> ProviderChecks<SimpleCommandProviderData>
-    for Provider<SimpleCommandProviderData, State>
-where
-    State: KnownState,
-{
+impl ProviderChecks for SimpleCommand {
     fn is_installable(
         &self,
-    ) -> Result<Provider<SimpleCommandProviderData, IsInstallable>, ActionErrorTEMPORARY> {
-        // TODO: boxing up an error just to say the same thing every time is Bad, should switch to
-        // using enum errors and just have a general error catchall for boxed errors, so that
-        // functions like this can just return IsNotInstalledError
-        Err(Errs::IsNotInstalledError)
+    ) -> Result<bool, KnownError> {
+        // These are meant to be simple system commands which are always known to be installed
+        Ok(false)
     }
 
     fn is_installed(
         &self,
-    ) -> Result<Provider<SimpleCommandProviderData, IsInstalled>, ActionErrorTEMPORARY> {
-        success!(self)
+    ) -> Result<bool, KnownError> {
+        Ok(false)
     }
-    fn is_runnable(&self) -> Result<Provider<SimpleCommandProviderData, IsRunnable>, ActionErrorTEMPORARY> {
-        success!(self)
+    fn is_runnable(&self) -> Result<bool, KnownError> {
+        Ok(true)
     }
-    fn is_running(&self) -> Result<Provider<SimpleCommandProviderData, IsRunning>, ActionErrorTEMPORARY> {
-        success!(self)
+    fn is_running(&self) -> Result<bool, KnownError> {
+        // NOTE: for now, we aren't going to implement this until it's needed
+        Ok(false)
     }
     fn is_addable_to_steam(
         &self,
-    ) -> Result<Provider<SimpleCommandProviderData, IsAddableToSteam>, ActionErrorTEMPORARY> {
-        success!(self)
+    ) -> Result<bool, KnownError> {
+        // For now, we'll assume these aren't commands people will want to run through Steam
+        Ok(false)
     }
 }
 

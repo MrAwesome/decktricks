@@ -1,11 +1,4 @@
-use crate::tricks_config::ProviderConfig;
-use crate::tricks_config::Trick;
-use crate::actions::*;
 use crate::prelude::*;
-use crate::providers::Provider;
-use crate::tricks_config::TrickID;
-use crate::tricks_config::TricksConfig;
-use crate::tricks_config::Flatpak;
 
 fn provider_from_trick(trick: &Trick) -> Result<Box<dyn Provider>, KnownError> {
     match &trick.provider_config {

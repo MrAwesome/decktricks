@@ -1,24 +1,23 @@
-use std::fmt::Debug;
-use crate::actions::ActionSuccess;
 use crate::prelude::*;
+use std::fmt::Debug;
 //use crate::tricks_config::TricksConfig;
 //use serde::Serialize;
 
 // XXX
 pub mod flatpak;
-//pub mod simple_command;
+pub mod simple_command;
 //pub mod decky_installer;
 
 pub trait Provider: ProviderChecks + ProviderActions + Debug {
-//    fn get_provider_info(&self) -> ProviderInfo;
-//    fn specific_actions(&self) -> Vec<TrickActionID>;
-//    fn always_allowed_actions(&self) -> Vec<TrickActionID> {
-//        vec![TrickActionID::Info]
-//    }
-//
-//    fn possible(&self) -> Vec<TrickActionID> {
-//        [self.specific_actions(), self.always_allowed_actions()].concat()
-//    }
+    //    fn get_provider_info(&self) -> ProviderInfo;
+    //    fn specific_actions(&self) -> Vec<TrickActionID>;
+    //    fn always_allowed_actions(&self) -> Vec<TrickActionID> {
+    //        vec![TrickActionID::Info]
+    //    }
+    //
+    //    fn possible(&self) -> Vec<TrickActionID> {
+    //        [self.specific_actions(), self.always_allowed_actions()].concat()
+    //    }
 }
 
 pub trait ProviderChecks {

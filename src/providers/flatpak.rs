@@ -1,8 +1,6 @@
-use crate::actions::ActionSuccess;
 use crate::prelude::*;
 #[cfg(not(test))]
 use crate::run_system_command::{system_command_output, system_command_ran_successfully};
-use crate::tricks_config::Flatpak;
 use std::process;
 
 impl Flatpak {
