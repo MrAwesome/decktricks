@@ -79,6 +79,10 @@ impl ProviderChecks for Flatpak {
         Ok(true)
     }
 
+    fn is_uninstallable(&self) -> Result<bool, KnownError> {
+        self.is_installed()
+    }
+
     fn is_installed(&self) -> Result<bool, KnownError> {
         self.is_pkg_installed()
     }
@@ -89,6 +93,10 @@ impl ProviderChecks for Flatpak {
 
     fn is_running(&self) -> Result<bool, KnownError> {
         Ok(self.is_pkg_running()?)
+    }
+
+    fn is_killable(&self) -> Result<bool, KnownError> {
+        self.is_running()
     }
 
     fn is_addable_to_steam(&self) -> Result<bool, KnownError> {

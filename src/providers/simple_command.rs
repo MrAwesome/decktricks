@@ -20,6 +20,10 @@ impl ProviderChecks for SimpleCommand {
         Ok(false)
     }
 
+    fn is_uninstallable(&self) -> Result<bool, KnownError> {
+        Ok(false)
+    }
+
     fn is_installed(&self) -> Result<bool, KnownError> {
         Ok(false)
     }
@@ -31,6 +35,10 @@ impl ProviderChecks for SimpleCommand {
         // (an easy way to implement this would be to have 'unique_grep_regex' for each command)
         Ok(false)
     }
+    fn is_killable(&self) -> Result<bool, KnownError> {
+        self.is_running()
+    }
+
     fn is_addable_to_steam(&self) -> Result<bool, KnownError> {
         // For now, we'll assume these aren't commands people will want to run through Steam
         Ok(false)
