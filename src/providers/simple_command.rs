@@ -66,3 +66,13 @@ impl ProviderActions for SimpleCommand {
         unimplemented!()
     }
 }
+
+#[test]
+fn basic_expectations() {
+    let sc = SimpleCommand::new("echo", vec!["lol"]);
+    assert!(sc.is_installable().is_ok_and(|r| !r));
+    assert!(sc.is_installed().is_ok_and(|r| !r));
+    assert!(sc.is_runnable().is_ok_and(|r| r));
+    assert!(sc.is_running().is_ok_and(|r| !r));
+    assert!(sc.is_addable_to_steam().is_ok_and(|r| !r));
+}
