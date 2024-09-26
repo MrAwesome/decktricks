@@ -1,4 +1,3 @@
-use decktricks::run::run_action_with_config;
 use decktricks::prelude::*;
 use decktricks::tricks_config::TricksConfig;
 use clap::Parser;
@@ -9,9 +8,9 @@ fn main() -> Result<(), KnownError> {
     let cli = Cli::parse();
     let action = &cli.command;
 
-    let action_success = run_action_with_config(action, &config)?;
+    let action_success = action.run(&config)?;
 
-    if let Some(message) = action_success.message {
+    if let Some(message) = action_success.get_message() {
         println!("{}", message);
     }
     

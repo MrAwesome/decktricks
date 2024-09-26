@@ -1,12 +1,12 @@
 #[macro_export(local_inner_macros)]
 macro_rules! success {
-    ($s:expr, $($arg:tt)*) => {
-        Ok(ActionSuccess::new(Some(::std::format!($s, $($arg)*))))
+    ($msg:expr, $($arg:tt)*) => {
+        Ok(ActionSuccess::success(Some(::std::format!($msg, $($arg)*))))
     };
-    ($s:expr) => {
-        Ok(ActionSuccess::new(Some($s)))
+    ($msg:expr) => {
+        Ok(ActionSuccess::success(Some($msg)))
     };
     () => {
-        Ok(ActionSuccess::new::<&str>(None))
+        Ok(ActionSuccess::success(None as Option<String>))
     };
 }

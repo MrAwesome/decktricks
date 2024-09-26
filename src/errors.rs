@@ -8,6 +8,7 @@ pub type DynamicError = Box<dyn std::error::Error>;
 
 #[derive(Debug)]
 pub enum KnownError {
+    CheckFailure(String),
     ConfigParsing(serde_json::Error),
     Dynamic(DynamicError),
     SeriousError(SeriousError),
