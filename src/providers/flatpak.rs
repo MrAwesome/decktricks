@@ -85,8 +85,7 @@ impl Flatpak {
 
 impl ProviderChecks for Flatpak {
     fn is_installable(&self) -> Result<bool, KnownError> {
-        // Any flatpaks we explicitly list will be installable.
-        Ok(true)
+        Ok(!self.is_installed()?)
     }
 
     fn is_uninstallable(&self) -> Result<bool, KnownError> {
@@ -113,10 +112,8 @@ impl ProviderChecks for Flatpak {
         self.is_installed()
     }
 
-
     fn is_addable_to_steam(&self) -> Result<bool, KnownError> {
-        // Flatpaks are always addable to Steam.
-        Ok(true)
+        self.is_installed()
     }
 }
 
