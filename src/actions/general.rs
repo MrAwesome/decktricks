@@ -45,13 +45,9 @@ impl GeneralAction {
             }
             Self::SeeAllAvailableActions => {
                 let mut all_available = vec![];
-                let tricks = loader.get_hashmap();
+                let results = get_all_available_actions_for_all_tricks(loader);
 
-                let results = tricks
-                    .par_iter()
-                    .filter_map(get_all_available_actions_for_trick)
-                    .collect::<Vec<(String, Result<Vec<_>, _>)>>();
-
+                // Convert the results from above into a commandline-friendly format
                 for (trick_id, maybe_action_ids) in results {
                     let mut available = vec![];
                     for action in maybe_action_ids? {
@@ -60,27 +56,35 @@ impl GeneralAction {
 
                         available.push(name);
                     }
-                    let formatted = 
-                        format!(
-                            "{}:\n  {}",
-                            trick_id.clone(),
-                            available
+                    let formatted = format!(
+                        "{}:\n  {}",
+                        trick_id.clone(),
+                        available
                             .iter()
                             .map(|s| s.trim_matches(|c| c == '"'))
                             .collect::<Vec<_>>()
                             .join("\n  ")
-                        );
+                    );
                     all_available.push(formatted);
                 }
 
                 all_available.sort();
-
                 let output = all_available.join("\n");
-
                 success!(output)
             }
         }
     }
+}
+
+fn get_all_available_actions_for_all_tricks(
+    loader: &TricksLoader,
+) -> Vec<(TrickID, Result<Vec<SpecificActionID>, KnownError>)> {
+    let tricks = loader.get_hashmap();
+
+    tricks
+        .par_iter()
+        .filter_map(get_all_available_actions_for_trick)
+        .collect::<Vec<(String, Result<Vec<_>, _>)>>()
 }
 
 fn get_all_available_actions_for_trick(
@@ -96,10 +100,7 @@ fn get_all_available_actions_for_trick(
             );
             None
         }
-        Ok(provider) => {
-            //let mut available = vec![];
-            Some((trick_id.clone(), provider.get_available_actions()))
-        }
+        Ok(provider) => Some((trick_id.clone(), provider.get_available_actions())),
         Err(e) => Some((trick_id.clone(), Err(e))),
     }
 }

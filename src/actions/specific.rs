@@ -13,9 +13,10 @@ pub(crate) enum SpecificAction {
 }
 
 // TODO: Ensure these names are the same as elsewhere
+// NOTE: These are serialized in kebab-case to match clap's commandline arg style
 enum_with_all_variants!(
     #[derive(Debug, Clone, Serialize)]
-    #[serde(rename_all = "snake_case")]
+    #[serde(rename_all = "kebab-case")]
     pub(crate) enum SpecificActionID {
         Run,
         Install,
