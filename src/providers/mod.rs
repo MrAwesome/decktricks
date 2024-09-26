@@ -8,7 +8,7 @@ pub mod flatpak;
 pub mod simple_command;
 //pub mod decky_installer;
 
-pub(crate) type DynProvider = Box<dyn Provider>;
+pub(crate) type DynProvider = Box<dyn TrickProvider>;
 impl TryFrom<&Trick> for DynProvider {
     type Error = KnownError;
 
@@ -16,19 +16,34 @@ impl TryFrom<&Trick> for DynProvider {
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(flatpak.clone())),
             ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(simple_command.clone())),
-            _ => unimplemented!(),
+            _ => Err(KnownError::NotImplemented(format!(
+                "Provider {} not implemented yet for trick: \"{}\"",
+                trick.provider_config,
+                trick.id,
+            ))),
         }
     }
 }
 
-pub(crate) trait Provider: ProviderChecks + ProviderActions + Debug {
+pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug {
+    fn get_available_actions(&self) -> Result<Vec<SpecificActionID>, KnownError> {
+        let mut allowed_actions = vec![];
+
+        for id in SpecificActionID::all_variants() {
+            if self.can_id(&id)? {
+                allowed_actions.push(id);
+            }
+        }
+
+        Ok(allowed_actions)
+    }
     //    fn get_provider_info(&self) -> ProviderInfo;
-    //    fn specific_actions(&self) -> Vec<TrickActionID>;
-    //    fn always_allowed_actions(&self) -> Vec<TrickActionID> {
-    //        vec![TrickActionID::Info]
+    //    fn specific_actions(&self) -> Vec<SpecificActionID>;
+    //    fn always_allowed_actions(&self) -> Vec<SpecificActionID> {
+    //        vec![SpecificActionID::Info]
     //    }
     //
-    //    fn possible(&self) -> Vec<TrickActionID> {
+    //    fn possible(&self) -> Vec<SpecificActionID> {
     //        [self.specific_actions(), self.always_allowed_actions()].concat()
     //    }
     //    fn perform(&self, action: &Action) -> Result<ActionOutcome, KnownError> {
@@ -73,7 +88,21 @@ pub(crate) trait ProviderChecks {
             SpecificAction::Kill { .. } => self.is_killable(),
             SpecificAction::Uninstall { .. } => self.is_uninstallable(),
             SpecificAction::AddToSteam { .. } => self.is_addable_to_steam(),
+            SpecificAction::Update { .. } => self.is_updateable(),
             SpecificAction::Info { .. } => Ok(true),
+        }
+    }
+
+    fn can_id(&self, action_id: &SpecificActionID) -> Result<bool, KnownError> {
+        match action_id {
+            // Change these to just be () or the downstream checks should throw?
+            SpecificActionID::Run => self.is_runnable(),
+            SpecificActionID::Install => self.is_installable(),
+            SpecificActionID::Kill => self.is_killable(),
+            SpecificActionID::Uninstall => self.is_uninstallable(),
+            SpecificActionID::AddToSteam => self.is_addable_to_steam(),
+            SpecificActionID::Update => self.is_updateable(),
+            SpecificActionID::Info => Ok(true),
         }
     }
 
@@ -85,6 +114,8 @@ pub(crate) trait ProviderChecks {
     fn is_runnable(&self) -> Result<bool, KnownError>;
     fn is_running(&self) -> Result<bool, KnownError>;
     fn is_killable(&self) -> Result<bool, KnownError>;
+
+    fn is_updateable(&self) -> Result<bool, KnownError>;
 
     fn is_addable_to_steam(&self) -> Result<bool, KnownError>;
 }
@@ -100,7 +131,7 @@ pub(crate) trait ProviderActions {
 
     // This is the version specific to a package. For general updates, maybe make a
     // special-case GeneralProvider<ProviderType> for general actions?
-    //fn update(&self) -> Result<ActionSuccess, KnownError>;
+    fn update(&self) -> Result<ActionSuccess, KnownError>;
 
     //fn force_reinstall(&self) -> Result<ActionSuccess, KnownError>;
 
@@ -116,7 +147,7 @@ mod tests {
         #[derive(Debug)]
         ProviderImpl {}
 
-        impl Provider for ProviderImpl {
+        impl TrickProvider for ProviderImpl {
 
         }
         impl ProviderChecks for ProviderImpl {
@@ -126,6 +157,7 @@ mod tests {
             fn is_runnable(&self) -> Result<bool, KnownError>;
             fn is_running(&self) -> Result<bool, KnownError>;
             fn is_killable(&self) -> Result<bool, KnownError>;
+            fn is_updateable(&self) -> Result<bool, KnownError>;
             fn is_addable_to_steam(&self) -> Result<bool, KnownError>;
         }
 
@@ -134,6 +166,7 @@ mod tests {
             fn kill(&self) -> Result<ActionSuccess, KnownError>;
             fn install(&self) -> Result<ActionSuccess, KnownError>;
             fn uninstall(&self) -> Result<ActionSuccess, KnownError>;
+            fn update(&self) -> Result<ActionSuccess, KnownError>;
             fn add_to_steam(&self, ctx: AddToSteamContext) -> Result<ActionSuccess, KnownError>;
         }
     }
@@ -178,6 +211,17 @@ mod tests {
             .times(1)
             .returning(|| Ok(true));
         let action = SpecificAction::Uninstall {
+            id: "test-id".into(),
+        };
+        assert!(mock.can(&action)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_can_update() -> Result<(), KnownError> {
+        let mut mock = MockProviderImpl::new();
+        mock.expect_is_updateable().times(1).returning(|| Ok(true));
+        let action = SpecificAction::Update {
             id: "test-id".into(),
         };
         assert!(mock.can(&action)?);

@@ -1,6 +1,7 @@
 {
-    "tricks": {
-        "protonup-qt": {
+    "tricks": [
+        {
+            "id": "protonup-qt",
             "provider_config": {
                 "type": "flatpak",
                 "id": "net.davidotek.pupgui2"
@@ -16,7 +17,8 @@
             "display_name": "ProtonUp-Qt",
             "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
         },
-        "lutris": {
+        {
+            "id": "lutris",
             "provider_config": {
                 "type": "flatpak",
                 "id": "net.lutris.Lutris"
@@ -25,7 +27,8 @@
             "display_name": "Lutris",
             "description": "Game launcher for GOG, Ubisoft, Humble, Epic, and more."
         },
-        "dolphin-emu": {
+        {
+            "id": "dolphin-emu",
             "provider_config": {
                 "type": "flatpak",
                 "id": "org.DolphinEmu.dolphin-emu"
@@ -34,7 +37,8 @@
             "display_name": "Dolphin Emulator",
             "description": "Gamecube/Wii emulator. Great support for Gamecube controllers over USB."
         },
-        "test-package": {
+        {
+            "id": "test-package",
             "provider_config": {
                 "type": "flatpak",
                 "id": "io.github.erkin.ponysay"
@@ -44,7 +48,8 @@
             "display_name": "Test Package (Ignore)",
             "description": "A small package used in testing."
         },
-        "heroic": {
+        {
+            "id": "heroic",
             "provider_config": {
                 "type": "flatpak",
                 "id": "com.heroicgameslauncher.hgl"
@@ -53,7 +58,8 @@
             "display_name": "Heroic",
             "description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
         },
-        "decky": {
+        {
+            "id": "decky",
             "provider_config": {
                 "type": "decky_installer"
             },
@@ -62,5 +68,5 @@
             "description": "Homebrew plugin launcher for the Steam Deck.",
             "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         }
-    }
+    ]
 }

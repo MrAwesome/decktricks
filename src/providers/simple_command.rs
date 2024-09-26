@@ -12,7 +12,7 @@ impl SimpleCommand {
     }
 }
 
-impl Provider for SimpleCommand {}
+impl TrickProvider for SimpleCommand {}
 
 impl ProviderChecks for SimpleCommand {
     fn is_installable(&self) -> Result<bool, KnownError> {
@@ -39,6 +39,10 @@ impl ProviderChecks for SimpleCommand {
         self.is_running()
     }
 
+    fn is_updateable(&self) -> Result<bool, KnownError> {
+        Ok(false)
+    }
+
     fn is_addable_to_steam(&self) -> Result<bool, KnownError> {
         // For now, we'll assume these aren't commands people will want to run through Steam
         Ok(false)
@@ -59,6 +63,10 @@ impl ProviderActions for SimpleCommand {
     }
 
     fn kill(&self) -> Result<ActionSuccess, KnownError> {
+        unimplemented!()
+    }
+
+    fn update(&self) -> Result<ActionSuccess, KnownError> {
         unimplemented!()
     }
 

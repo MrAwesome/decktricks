@@ -7,6 +7,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
 use std::rc::Rc;
 
+// TODO: detect if on steam deck or not, and *do not mark as installable if not on steam deck*
+
 //const DECKY_DOWNLOAD_URL: &str = "https://decky.xyz/download";
 const DECKY_DOWNLOAD_URL: &str = "http://gleesus.net:8858/lawl.sh";
 

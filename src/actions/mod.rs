@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use crate::tricks_config::TricksConfig;
 use clap::{Parser, Subcommand};
 
 mod general;
@@ -41,17 +40,22 @@ pub enum Action {
     Info {
         id: String,
     },
+    // Note that update can work both globally or for a specific id.
+    Update {
+        id: Option<String>
+    },
     // Items below do not take trick ids, and function differently.
     List {
         #[clap(long)]
         installed: bool,
     },
+    SeeAllAvailableActions,
 }
 
 impl Action {
-    pub fn do_with(&self, config: &TricksConfig) -> Result<ActionSuccess, KnownError> {
+    pub fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
         let typed_action = TypedAction::from(self);
-        typed_action.do_with(config)
+        typed_action.do_with(loader)
     }
 }
 
@@ -69,17 +73,20 @@ impl From<&Action> for TypedAction {
             Action::Install { id } => Self::Specific(SpecificAction::Install { id }),
             Action::AddToSteam { name, id } => Self::Specific(SpecificAction::AddToSteam { name, id }),
             Action::Uninstall { id } => Self::Specific(SpecificAction::Uninstall { id }),
+            Action::Update { id: Some(id) } => Self::Specific(SpecificAction::Update { id }),
 
+            Action::Update { id: None } => Self::General(GeneralAction::UpdateAll {}),
             Action::List { installed } => Self::General(GeneralAction::List { installed }),
+            Action::SeeAllAvailableActions => Self::General(GeneralAction::SeeAllAvailableActions),
         }
     } 
 }
 
 impl TypedAction {
-    fn do_with(&self, config: &TricksConfig) -> Result<ActionSuccess, KnownError> {
+    fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
         match self {
-            Self::General(general_action) => general_action.run(config),
-            Self::Specific(specific_action) => specific_action.run(config),
+            Self::General(general_action) => general_action.run(loader),
+            Self::Specific(specific_action) => specific_action.run(loader),
         }
     }
 }
@@ -107,6 +114,13 @@ pub struct ActionSuccess {
 impl ActionSuccess {
     pub fn get_message(&self) -> Option<String> {
         self.message.clone()
+    }
+
+    pub fn get_message_or_blank(&self) -> String {
+        match self.message.clone() {
+            Some(msg) => msg,
+            None => "".into(),
+        }
     }
 }
 

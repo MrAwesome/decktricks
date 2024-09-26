@@ -1,26 +1,32 @@
-use crate::prelude::KnownError;
+use crate::prelude::*;
 use std::process::{Command, Stdio};
-use std::process;
-
-const DEBUG: bool = false;
 
 pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> Result<bool, KnownError> {
+    if TEST_SAFETY {
+        panic!(
+            "Attempted to run system command {:?} in test!",
+            (cmdname, args)
+        );
+    }
 
     let mut cmd = Command::new(cmdname);
     cmd.args(args.clone());
 
     if !DEBUG {
-        cmd.stdout(Stdio::null())
-            .stderr(Stdio::null());
+        cmd.stdout(Stdio::null()).stderr(Stdio::null());
     }
 
     let res = cmd.status();
 
     if DEBUG {
-        println!("== EXTERNAL COMMAND STATUS: {} {:?} {:?}", cmdname, args, res);
+        println!(
+            "== EXTERNAL COMMAND STATUS: {} {:?} {:?}",
+            cmdname, args, res
+        );
     }
 
-    res.map(|x| x.success()).map_err(|e| KnownError::SystemCommandRun(e))
+    res.map(|x| x.success())
+        .map_err(|e| KnownError::SystemCommandRun(e))
 }
 
 // For now, return nothing.
@@ -35,7 +41,18 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> Result
 //        .spawn();
 //}
 
-pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> Result<process::Output, KnownError> {
-    let output = Command::new(cmdname).args(args).output();
-    output.map_err(|e| KnownError::SystemCommandRun(e))
+pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> Result<ActionSuccess, KnownError> {
+    if TEST_SAFETY {
+        panic!(
+            "Attempted to run system command {:?} in test!",
+            (cmdname, args)
+        );
+    }
+
+    let output = Command::new(cmdname)
+        .args(args)
+        .output()
+        .map_err(|e| KnownError::SystemCommandRun(e))?
+        .stdout;
+    success!(String::from_utf8_lossy(&output))
 }

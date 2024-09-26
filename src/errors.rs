@@ -7,11 +7,13 @@ pub type DynamicError = Box<dyn std::error::Error>;
 #[derive(Debug)]
 pub enum KnownError {
     CheckFailure(String),
+    NotImplemented(String),
     ConfigParsing(serde_json::Error),
     Dynamic(DynamicError),
     SeriousError(SeriousError),
     SystemCommandParse(DynamicError),
     SystemCommandRun(std::io::Error),
+    SystemCommandInTest,
     UnknownTrickID(DynamicError),
 }
 
@@ -20,6 +22,15 @@ pub enum KnownError {
 pub struct DeckTricksError {
     pub message: String,
 }
+
+impl DeckTricksError {
+    pub fn new(message: String) -> Self {
+        Self {
+            message
+        }
+    }
+}
+
 impl std::fmt::Display for DeckTricksError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "An error has occurred: {}", self.message)

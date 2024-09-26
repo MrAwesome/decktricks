@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::hash_map::Iter;
-use std::collections::HashMap;
+
+// TODO: unit test error messages for incorrect configs
 
 // TODO: place this in the correct XDG dir and read from there, default to a compiled-in version
 const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
@@ -11,13 +13,7 @@ pub type TrickID = String;
 
 #[derive(Debug, Deserialize)]
 pub struct TricksConfig {
-    tricks: HashMap<TrickID, Trick>,
-}
-
-impl From<serde_json::Error> for KnownError {
-    fn from(e: serde_json::Error) -> Self {
-        KnownError::ConfigParsing(e)
-    }
+    tricks: Vec<Trick>,
 }
 
 impl TryFrom<&str> for TricksConfig {
@@ -27,18 +23,36 @@ impl TryFrom<&str> for TricksConfig {
     }
 }
 
-impl TricksConfig {
-    pub fn from_default_config() -> Result<TricksConfig, KnownError> {
-        Ok(Self::try_from(DEFAULT_CONFIG_CONTENTS)?)
+impl From<serde_json::Error> for KnownError {
+    fn from(e: serde_json::Error) -> Self {
+        KnownError::ConfigParsing(e)
+    }
+}
+
+pub struct TricksLoader {
+    tricks: HashMap<TrickID, Trick>,
+}
+
+impl TricksLoader {
+    pub fn from_default_config() -> Result<Self, KnownError> {
+        let config = TricksConfig::try_from(DEFAULT_CONFIG_CONTENTS)?;
+        let mut tricks = HashMap::new();
+        for trick in config.tricks {
+            tricks.insert(trick.id.clone(), trick);
+        }
+
+        Ok(Self {
+            tricks
+        })
     }
 
     pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, KnownError> {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
-            None => Err(KnownError::UnknownTrickID(Box::new(DeckTricksError {
-                message: format!("Trick not known: {maybe_id}"),
-            }))),
+            None => Err(KnownError::UnknownTrickID(err!(
+                "Trick not known: {maybe_id}"
+            ))),
         }
     }
 
@@ -47,9 +61,11 @@ impl TricksConfig {
     }
 }
 
+
 #[skip_serializing_none]
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Trick {
+    pub id: String,
     pub provider_config: ProviderConfig,
     pub display_name: String,
     pub always_present_on_steamdeck: Option<bool>,
@@ -69,6 +85,18 @@ pub enum ProviderConfig {
     //SystemPackage(SystemPackage)
     Custom,
 }
+
+impl std::fmt::Display for ProviderConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ProviderConfig::Flatpak(_) => write!(f, "Flatpak"),
+            ProviderConfig::DeckyInstaller => write!(f, "DeckyInstaller"),
+            ProviderConfig::SimpleCommand(_) => write!(f, "SimpleCommand"),
+            ProviderConfig::Custom => write!(f, "Custom"),
+        }
+    }
+}
+
 
 // custtom can be something like:
 // match provider_id {
@@ -97,6 +125,7 @@ pub struct SimpleCommand {
 fn reconvert_providerconfig() -> Result<(), KnownError> {
     let id = "net.davidotek.pupgui2";
     let trick = Trick {
+        id: id.into(),
         provider_config: ProviderConfig::Flatpak(Flatpak { id: id.into() }),
         display_name: "ProtonUp-Qt".into(),
         always_present_on_steamdeck: None,
@@ -115,8 +144,8 @@ fn reconvert_providerconfig() -> Result<(), KnownError> {
 // Integration test of the actual config
 #[test]
 fn integration_check_default_config() -> Result<(), KnownError> {
-    let config = TricksConfig::from_default_config()?;
-    let prov = &config.get_trick("lutris")?.provider_config;
+    let loader = TricksLoader::from_default_config()?;
+    let prov = &loader.get_trick("lutris")?.provider_config;
 
     match prov {
         ProviderConfig::Flatpak(flatpak) => assert_eq!("net.lutris.Lutris", flatpak.id),

@@ -4,6 +4,8 @@ General
 [] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
 [] 'available' command, which just shows all available actions for all available tricks
 [] simple zenity frontend to test gui functionality
+[] pipe command output into ActionSuccess
+[] remove uses of eprintln and use a logger
 
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"
 
