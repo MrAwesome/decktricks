@@ -1,13 +1,11 @@
 General
 [] Start writing unit tests
-    [] state changes
 [] Pull command running logic over from ruwi? or will the "run as root" guardrails be too intense?
-[] bring in config data for creating the various providers
 [] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
-[] check for unwraps and change to ?
-[] figure out how to give specific error messages for things like "can't be run because it's not installed"
 [] 'available' command, which just shows all available actions for all available tricks
 [] simple zenity frontend to test gui functionality
+
+[] figure out how to give specific error messages for things like "can't be run because it's not installed"
 
 Idea
 [] web frontend that just constructs a list of desired tricks and generates a .desktop that installs decktricks cli and uses it to install everything in one go

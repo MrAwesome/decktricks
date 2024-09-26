@@ -29,11 +29,11 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> Result
 // TODO: pass Result back to calling functions
 //
 // https://doc.rust-lang.org/std/process/struct.Child.html#method.try_wait
-pub fn spawn_system_command(cmdname: &str, args: Vec<&str>) {
-    Command::new(cmdname)
-        .args(args)
-        .spawn().unwrap();
-}
+//pub(crate) fn spawn_system_command(cmdname: &str, args: Vec<&str>) {
+//    Command::new(cmdname)
+//        .args(args)
+//        .spawn();
+//}
 
 pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> Result<process::Output, KnownError> {
     let output = Command::new(cmdname).args(args).output();

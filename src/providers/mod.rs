@@ -139,37 +139,40 @@ mod tests {
     }
 
     #[test]
-    fn test_can_run() {
+    fn test_can_run() -> Result<(), KnownError> {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_runnable().times(1).returning(|| Ok(true));
         let action = SpecificAction::Run {
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
+        assert!(mock.can(&action)?);
+        Ok(())
     }
 
     #[test]
-    fn test_can_install() {
+    fn test_can_install() -> Result<(), KnownError> {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_installable().times(1).returning(|| Ok(true));
         let action = SpecificAction::Install {
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
+        assert!(mock.can(&action)?);
+        Ok(())
     }
 
     #[test]
-    fn test_can_kill() {
+    fn test_can_kill() -> Result<(), KnownError> {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_killable().times(1).returning(|| Ok(true));
         let action = SpecificAction::Kill {
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
+        assert!(mock.can(&action)?);
+        Ok(())
     }
 
     #[test]
-    fn test_can_uninstall() {
+    fn test_can_uninstall() -> Result<(), KnownError> {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_uninstallable()
             .times(1)
@@ -177,11 +180,12 @@ mod tests {
         let action = SpecificAction::Uninstall {
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
+        assert!(mock.can(&action)?);
+        Ok(())
     }
 
     #[test]
-    fn test_can_add_to_steam() {
+    fn test_can_add_to_steam() -> Result<(), KnownError> {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_addable_to_steam()
             .times(1)
@@ -190,15 +194,17 @@ mod tests {
             name: None,
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
+        assert!(mock.can(&action)?);
+        Ok(())
     }
 
     #[test]
-    fn test_can_info() {
+    fn test_can_info() -> Result<(), KnownError> {
         let mock = MockProviderImpl::new();
         let action = SpecificAction::Info {
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
+        assert!(mock.can(&action)?);
+        Ok(())
     }
 }
