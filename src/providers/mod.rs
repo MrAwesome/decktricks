@@ -46,47 +46,7 @@ pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync 
 
         Ok(allowed_actions)
     }
-    //    fn get_provider_info(&self) -> ProviderInfo;
-    //    fn specific_actions(&self) -> Vec<SpecificActionID>;
-    //    fn always_allowed_actions(&self) -> Vec<SpecificActionID> {
-    //        vec![SpecificActionID::Info]
-    //    }
-    //
-    //    fn possible(&self) -> Vec<SpecificActionID> {
-    //        [self.specific_actions(), self.always_allowed_actions()].concat()
-    //    }
-    //    fn perform(&self, action: &Action) -> Result<ActionOutcome, KnownError> {
-    //        let res = self.can(action)?;
-    //        match res {
-    //            CheckOutcome::Success => {
-    //                match action {
-    //                    Action::Run { .. } => self.run(),
-    //                    Action::Install { .. } => self.install(),
-    //                    Action::Kill { .. } => self.kill(),
-    //                    Action::Uninstall { .. } => self.uninstall(),
-    //                    Action::AddToSteam { .. } => self.add_to_steam(),
-    //                    Action::Info { .. } => self.info(),
-    //                    Action::List { .. } => todo!("split actions at the type level to avoid this"),
-    //                }
-    //            },
-    //            CheckOutcome::Failure(cf) =>
-    //                Ok(ActionOutcome::CheckFailure(cf)),
-    //        }
-    //    }
 }
-
-// struct Killable;
-// impl Action {
-//     fn to_token(&self) {
-//         match self {
-//             Self::Killable => Killable;
-//         }
-//     }
-// }
-//
-// ... is_killable() -> Result<Some(Killable), KnownError>;
-
-//struct Killable;
 
 pub(crate) trait ProviderChecks {
     fn can(&self, action: &SpecificAction) -> Result<bool, KnownError> {

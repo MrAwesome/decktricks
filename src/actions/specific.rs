@@ -80,7 +80,11 @@ impl SpecificAction {
                 Self::Update { .. } => provider.update(),
 
                 Self::Info { .. } => {
-                    success!("{:?}", provider)
+                    success!(
+                        "{}",
+                        serde_json::to_string_pretty(trick)
+                            .map_err(|e| KnownError::ConfigParsing(e))?
+                    )
                 }
             }
         } else {

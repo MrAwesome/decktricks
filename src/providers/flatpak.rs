@@ -7,17 +7,7 @@ impl Flatpak {
     }
 }
 
-impl TrickProvider for Flatpak {
-    //fn get_provider_info(&self) -> ProviderInfo;
-    //fn specific_actions(&self) -> Vec<TrickActionID>;
-    //fn always_allowed_actions(&self) -> Vec<TrickActionID> {
-    //vec![TrickActionID::Info]
-    //}
-
-    //fn possible(&self) -> Vec<TrickActionID> {
-    //[self.specific_actions(), self.always_allowed_actions()].concat()
-    //}
-}
+impl TrickProvider for Flatpak {}
 
 #[cfg(not(test))]
 impl Flatpak {
