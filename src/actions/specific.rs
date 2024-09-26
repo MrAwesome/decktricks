@@ -14,7 +14,7 @@ pub(crate) enum SpecificAction {
 
 // TODO: Ensure these names are the same as elsewhere
 enum_with_all_variants!(
-    #[derive(Debug, Serialize)]
+    #[derive(Debug, Clone, Serialize)]
     #[serde(rename_all = "snake_case")]
     pub(crate) enum SpecificActionID {
         Run,

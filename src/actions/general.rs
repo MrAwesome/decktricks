@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::run_system_command::system_command_output;
+use rayon::prelude::*;
 
 #[derive(Debug)]
 pub(crate) enum GeneralAction {
@@ -43,41 +44,62 @@ impl GeneralAction {
                 todo!("Run global update procedures for all providers: for those that have global, run global (flatpak update). For those that don't, specifically update all installed packages.")
             }
             Self::SeeAllAvailableActions => {
-                let mut all_available: Vec<String> = vec![];
-                let tricks = loader.get_all_tricks();
+                let mut all_available = vec![];
+                let tricks = loader.get_hashmap();
 
-                for (id, trick) in tricks {
-                    let maybe_provider = DynProvider::try_from(trick);
+                let results = tricks
+                    .par_iter()
+                    .filter_map(get_all_available_actions_for_trick)
+                    .collect::<Vec<(String, Result<Vec<_>, _>)>>();
 
-                    // TODO: better error logging
-                    match maybe_provider {
-                        Err(KnownError::NotImplemented(_)) => {
-                            eprintln!(
-                                "INFO: Skipping unimplemented provider \"{}\" for trick \"{}\".",
-                                trick.provider_config, id
-                            );
-                        }
-                        provider => {
-                            let mut available = vec![];
-                            for action in provider?.get_available_actions()? {
-                                let action_id = serde_json::to_string::<SpecificActionID>(&action)
-                                    .map_err(|e| KnownError::ConfigParsing(e))?;
-                                available.push(action_id);
-                            }
+                for (trick_id, maybe_action_ids) in results {
+                    let mut available = vec![];
+                    for action in maybe_action_ids? {
+                        let name = serde_json::to_string::<SpecificActionID>(&action)
+                            .map_err(|e| KnownError::ConfigParsing(e))?;
 
-                            all_available.push(format!("{}:\n  {}", id.clone(), available
-                                    .iter()
-                                    .map(|s| s.trim_matches(|c| c == '"'))
-                                    .collect::<Vec<_>>()
-                                    .join("\n  ")));
-                        }
-                    };
+                        available.push(name);
+                    }
+                    let formatted = 
+                        format!(
+                            "{}:\n  {}",
+                            trick_id.clone(),
+                            available
+                            .iter()
+                            .map(|s| s.trim_matches(|c| c == '"'))
+                            .collect::<Vec<_>>()
+                            .join("\n  ")
+                        );
+                    all_available.push(formatted);
                 }
+
+                all_available.sort();
 
                 let output = all_available.join("\n");
 
                 success!(output)
             }
         }
+    }
+}
+
+fn get_all_available_actions_for_trick(
+    (trick_id, trick): (&String, &Trick),
+) -> Option<(String, Result<Vec<SpecificActionID>, KnownError>)> {
+    let maybe_provider = DynProvider::try_from(trick);
+
+    match maybe_provider {
+        Err(KnownError::NotImplemented(_)) => {
+            eprintln!(
+                "INFO: Skipping unimplemented provider \"{}\" for trick \"{}\".",
+                trick.provider_config, trick_id
+            );
+            None
+        }
+        Ok(provider) => {
+            //let mut available = vec![];
+            Some((trick_id.clone(), provider.get_available_actions()))
+        }
+        Err(e) => Some((trick_id.clone(), Err(e))),
     }
 }

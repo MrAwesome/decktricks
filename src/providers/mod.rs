@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use rayon::prelude::*;
 use std::fmt::Debug;
 //use crate::tricks_config::TricksConfig;
 //use serde::Serialize;
@@ -18,21 +19,29 @@ impl TryFrom<&Trick> for DynProvider {
             ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(simple_command.clone())),
             _ => Err(KnownError::NotImplemented(format!(
                 "Provider {} not implemented yet for trick: \"{}\"",
-                trick.provider_config,
-                trick.id,
+                trick.provider_config, trick.id,
             ))),
         }
     }
 }
 
-pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug {
+pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {
     fn get_available_actions(&self) -> Result<Vec<SpecificActionID>, KnownError> {
-        let mut allowed_actions = vec![];
+        let all_variants = SpecificActionID::all_variants();
+        // Go through and perform all system checks in parallel
+        let results: Vec<Result<&SpecificActionID, KnownError>> = all_variants
+            .par_iter()
+            .filter_map(|id| match self.can_id(&id) {
+                Ok(true) => Some(Ok(id)),
+                Ok(false) => None,
+                Err(e) => Some(Err(e)),
+            })
+            .collect();
 
-        for id in SpecificActionID::all_variants() {
-            if self.can_id(&id)? {
-                allowed_actions.push(id);
-            }
+        // Filter out any errors and throw them if found
+        let mut allowed_actions = vec![];
+        for res in results {
+            allowed_actions.push(res?.clone());
         }
 
         Ok(allowed_actions)

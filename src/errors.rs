@@ -2,7 +2,7 @@ use crate::prelude::*;
 use std::{backtrace::Backtrace, fmt::Debug};
 use urlencoding::encode;
 
-pub type DynamicError = Box<dyn std::error::Error>;
+pub type DynamicError = Box<dyn std::error::Error + Send + Sync>;
 
 #[derive(Debug)]
 pub enum KnownError {

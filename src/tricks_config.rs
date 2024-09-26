@@ -59,6 +59,10 @@ impl TricksLoader {
     pub fn get_all_tricks(&self) -> Iter<TrickID, Trick> {
         self.tricks.iter()
     }
+
+    pub fn get_hashmap(&self) -> &HashMap<TrickID, Trick> {
+        &self.tricks
+    }
 }
 
 
