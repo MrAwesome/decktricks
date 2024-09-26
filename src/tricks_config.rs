@@ -32,7 +32,7 @@ impl TricksConfig {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
-            None => Err(KnownError::UnknownTrickID(Box::new(ActionErrorTEMPORARY {
+            None => Err(KnownError::UnknownTrickID(Box::new(DeckTricksError {
                 message: format!("Trick not known: {maybe_id}"),
             }))),
         }

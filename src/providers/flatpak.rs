@@ -53,7 +53,7 @@ impl Flatpak {
                 Ok(lines)
             }
             Err(e) => Err(KnownError::SystemCommandParse(Box::new(
-                ActionErrorTEMPORARY {
+                DeckTricksError {
                     message: format!("Failed to parse 'flatpak ps' output: {:?}", e),
                 },
             ))),

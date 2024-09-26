@@ -15,32 +15,17 @@ pub enum KnownError {
     UnknownTrickID(DynamicError),
 }
 
-// NOTE: set to pub(crate) temporarily to find unused values
-#[non_exhaustive]
-#[derive(Debug, PartialEq, Eq)]
-pub enum DeckTricksErrorKind {
-    InstallError,
-}
-
-#[derive(Debug)]
-pub struct DeckTricksError {
-    pub kind: DeckTricksErrorKind,
-    pub desc: String,
-    //pub extra_data: Option<Vec<(String, String)>>,
-    //pub exit_code: Option<i32>,
-}
-
 // TODO: have full list of errors
 #[derive(Debug)]
-pub struct ActionErrorTEMPORARY {
+pub struct DeckTricksError {
     pub message: String,
 }
-impl std::fmt::Display for ActionErrorTEMPORARY {
+impl std::fmt::Display for DeckTricksError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "An error has occurred: {}", self.message)
     }
 }
-impl std::error::Error for ActionErrorTEMPORARY {}
+impl std::error::Error for DeckTricksError {}
 
 #[derive(Debug)]
 pub struct SeriousError {
