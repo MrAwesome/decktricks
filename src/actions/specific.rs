@@ -51,21 +51,22 @@ impl SpecificAction {
             //return Err(format!("Action \"{:?}\", supported actions: ", action.try_into()));
             //unimplemented!()
         //}
+        if provider.can(self)? {
+            match self {
+                Self::Install { .. } => provider.install(),
+                Self::Run { .. } => provider.run(),
+                Self::Uninstall { .. } => provider.uninstall(),
+                Self::AddToSteam { 
+                    name,
+                    .. } => provider.add_to_steam(AddToSteamContext { _name: name.clone() }),
+                Self::Kill { .. } => provider.kill(),
 
-        match self {
-            Self::Install { .. } => provider.install(),
-            Self::Run { .. } => provider.run(),
-            Self::Uninstall { .. } => provider.uninstall(),
-            Self::AddToSteam { 
-                //name, 
-                .. } => provider.add_to_steam(),
-            Self::Kill { .. } => provider.kill(),
-
-            // TODO: this is provider-agnostic, just run code here and return ActionSuccess with the
-            // string
-            Self::Info { .. } => {
-                success!("{:?}", provider)
-            },
+                Self::Info { .. } => {
+                    success!("{:?}", provider)
+                },
+            }
+        } else {
+            todo!("make this error handling more specific by having each action do its own check, or...?")
         }
     }
 }

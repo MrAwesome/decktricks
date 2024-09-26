@@ -31,19 +31,6 @@ pub(crate) trait Provider: ProviderChecks + ProviderActions + Debug {
     //    fn possible(&self) -> Vec<TrickActionID> {
     //        [self.specific_actions(), self.always_allowed_actions()].concat()
     //    }
-    fn can(&self, action: &Action) -> Result<bool, KnownError> {
-        match action {
-            // Change these to just be () or the downstream checks should throw?
-            Action::Run { .. } => self.is_runnable(),
-            Action::Install { .. } => self.is_installable(),
-            Action::Kill { .. } => self.is_killable(),
-            Action::Uninstall { .. } => self.is_uninstallable(),
-            Action::AddToSteam { .. } => self.is_addable_to_steam(),
-            Action::Info { .. } => Ok(true),
-            Action::List { .. } => Ok(true),
-        }
-    }
-
     //    fn perform(&self, action: &Action) -> Result<ActionOutcome, KnownError> {
     //        let res = self.can(action)?;
     //        match res {
@@ -78,6 +65,18 @@ pub(crate) trait Provider: ProviderChecks + ProviderActions + Debug {
 //struct Killable;
 
 pub(crate) trait ProviderChecks {
+    fn can(&self, action: &SpecificAction) -> Result<bool, KnownError> {
+        match action {
+            // Change these to just be () or the downstream checks should throw?
+            SpecificAction::Run { .. } => self.is_runnable(),
+            SpecificAction::Install { .. } => self.is_installable(),
+            SpecificAction::Kill { .. } => self.is_killable(),
+            SpecificAction::Uninstall { .. } => self.is_uninstallable(),
+            SpecificAction::AddToSteam { .. } => self.is_addable_to_steam(),
+            SpecificAction::Info { .. } => Ok(true),
+        }
+    }
+
     fn is_installable(&self) -> Result<bool, KnownError>;
     fn is_uninstallable(&self) -> Result<bool, KnownError>;
 
@@ -94,11 +93,17 @@ pub(crate) trait ProviderActions {
     fn run(&self) -> Result<ActionSuccess, KnownError>;
     fn kill(&self) -> Result<ActionSuccess, KnownError>;
     fn install(&self) -> Result<ActionSuccess, KnownError>;
-    fn update(&self) -> Result<ActionSuccess, KnownError>;
     fn uninstall(&self) -> Result<ActionSuccess, KnownError>;
-    fn force_reinstall(&self) -> Result<ActionSuccess, KnownError>;
-    fn add_to_steam(&self) -> Result<ActionSuccess, KnownError>;
-    //TODO: someday
+
+    // TODO: pop up an interstitial asking for args before running in GUI
+    fn add_to_steam(&self, ctx: AddToSteamContext) -> Result<ActionSuccess, KnownError>;
+
+    // This is the version specific to a package. For general updates, maybe make a
+    // special-case GeneralProvider<ProviderType> for general actions?
+    //fn update(&self) -> Result<ActionSuccess, KnownError>;
+
+    //fn force_reinstall(&self) -> Result<ActionSuccess, KnownError>;
+
     //fn remove_from_steam(&self) -> Result<ActionSuccess, DynamicError>>;
 }
 
@@ -128,10 +133,8 @@ mod tests {
             fn run(&self) -> Result<ActionSuccess, KnownError>;
             fn kill(&self) -> Result<ActionSuccess, KnownError>;
             fn install(&self) -> Result<ActionSuccess, KnownError>;
-            fn update(&self) -> Result<ActionSuccess, KnownError>;
             fn uninstall(&self) -> Result<ActionSuccess, KnownError>;
-            fn force_reinstall(&self) -> Result<ActionSuccess, KnownError>;
-            fn add_to_steam(&self) -> Result<ActionSuccess, KnownError>;
+            fn add_to_steam(&self, ctx: AddToSteamContext) -> Result<ActionSuccess, KnownError>;
         }
     }
 
@@ -139,7 +142,7 @@ mod tests {
     fn test_can_run() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_runnable().times(1).returning(|| Ok(true));
-        let action = Action::Run {
+        let action = SpecificAction::Run {
             id: "test-id".into(),
         };
         assert!(mock.can(&action).unwrap());
@@ -149,7 +152,7 @@ mod tests {
     fn test_can_install() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_installable().times(1).returning(|| Ok(true));
-        let action = Action::Install {
+        let action = SpecificAction::Install {
             id: "test-id".into(),
         };
         assert!(mock.can(&action).unwrap());
@@ -159,7 +162,7 @@ mod tests {
     fn test_can_kill() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_killable().times(1).returning(|| Ok(true));
-        let action = Action::Kill {
+        let action = SpecificAction::Kill {
             id: "test-id".into(),
         };
         assert!(mock.can(&action).unwrap());
@@ -171,7 +174,7 @@ mod tests {
         mock.expect_is_uninstallable()
             .times(1)
             .returning(|| Ok(true));
-        let action = Action::Uninstall {
+        let action = SpecificAction::Uninstall {
             id: "test-id".into(),
         };
         assert!(mock.can(&action).unwrap());
@@ -183,7 +186,7 @@ mod tests {
         mock.expect_is_addable_to_steam()
             .times(1)
             .returning(|| Ok(true));
-        let action = Action::AddToSteam {
+        let action = SpecificAction::AddToSteam {
             name: None,
             id: "test-id".into(),
         };
@@ -193,16 +196,9 @@ mod tests {
     #[test]
     fn test_can_info() {
         let mock = MockProviderImpl::new();
-        let action = Action::Info {
+        let action = SpecificAction::Info {
             id: "test-id".into(),
         };
-        assert!(mock.can(&action).unwrap());
-    }
-
-    #[test]
-    fn test_can_list() {
-        let mock = MockProviderImpl::new();
-        let action = Action::List { installed: false };
         assert!(mock.can(&action).unwrap());
     }
 }

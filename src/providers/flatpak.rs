@@ -108,17 +108,13 @@ impl ProviderChecks for Flatpak {
 impl ProviderActions for Flatpak {
     // NOTE!!!!! update takes user input on the command line (so pass -y)
     // , and *often will require a second run* if doing a full update of all packages
-    fn update(&self) -> Result<ActionSuccess, KnownError> {
-        unimplemented!()
-    }
+    //    fn update(&self) -> Result<ActionSuccess, KnownError> {
+    //        unimplemented!()
+    //    }
 
     fn uninstall(&self) -> Result<ActionSuccess, KnownError> {
         self.flatpak_uninstall()?;
         success!("\"{}\" uninstalled successfully.", self.id)
-    }
-
-    fn force_reinstall(&self) -> Result<ActionSuccess, KnownError> {
-        unimplemented!()
     }
 
     fn install(&self) -> Result<ActionSuccess, KnownError> {
@@ -145,7 +141,7 @@ impl ProviderActions for Flatpak {
         success!()
     }
 
-    fn add_to_steam(&self) -> Result<ActionSuccess, KnownError> {
+    fn add_to_steam(&self, _ctx: AddToSteamContext) -> Result<ActionSuccess, KnownError> {
         unimplemented!()
     }
 }

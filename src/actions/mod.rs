@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use crate::tricks_config::TricksConfig;
 use clap::{Parser, Subcommand};
-use serde::Serialize;
 
 mod general;
 mod specific;
@@ -50,9 +49,9 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn run(&self, config: &TricksConfig) -> Result<ActionSuccess, KnownError> {
+    pub fn do_with(&self, config: &TricksConfig) -> Result<ActionSuccess, KnownError> {
         let typed_action = TypedAction::from(self);
-        typed_action.run(config)
+        typed_action.do_with(config)
     }
 }
 
@@ -77,7 +76,7 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    fn run(&self, config: &TricksConfig) -> Result<ActionSuccess, KnownError> {
+    fn do_with(&self, config: &TricksConfig) -> Result<ActionSuccess, KnownError> {
         match self {
             Self::General(general_action) => general_action.run(config),
             Self::Specific(specific_action) => specific_action.run(config),
@@ -85,21 +84,21 @@ impl TypedAction {
     }
 }
 
-pub(crate) struct CheckFailure {
-    reason: String,
-}
-
-impl CheckFailure {
-    fn new(reason: String) -> Self {
-        Self { reason }
-    }
-}
-
-
-pub(crate) enum CheckOutcome {
-    Success,
-    Failure(CheckFailure),
-}
+//pub(crate) struct CheckFailure {
+//    reason: String,
+//}
+//
+//impl CheckFailure {
+//    fn new(reason: String) -> Self {
+//        Self { reason }
+//    }
+//}
+//
+//
+//pub(crate) enum CheckOutcome {
+//    Success,
+//    Failure(CheckFailure),
+//}
 
 pub struct ActionSuccess {
     message: Option<String>,
@@ -119,27 +118,33 @@ impl ActionSuccess {
     }
 }
 
-#[derive(Debug, Serialize, Eq, PartialEq, Clone)]
-#[serde(rename_all = "snake_case")]
-pub(crate) enum TrickActionID {
-    Run,
-    Install,
-    Kill,
-    Uninstall,
-    AddToSteam,
-    Info,
+// TODO: or just launch steamtinkerlaunch GUI manually?
+pub(crate) struct AddToSteamContext {
+    _name: Option<String>,
 }
 
-#[derive(Debug, Serialize, Eq, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub(crate) enum GeneralActionID {
-    List,
-}
-
-pub(crate) enum ActionID {
-    Individual(TrickActionID),
-    General(GeneralActionID),
-}
+//
+//#[derive(Debug, Serialize, Eq, PartialEq, Clone)]
+//#[serde(rename_all = "snake_case")]
+//pub(crate) enum TrickActionID {
+//    Run,
+//    Install,
+//    Kill,
+//    Uninstall,
+//    AddToSteam,
+//    Info,
+//}
+//
+//#[derive(Debug, Serialize, Eq, PartialEq)]
+//#[serde(rename_all = "snake_case")]
+//pub(crate) enum GeneralActionID {
+//    List,
+//}
+//
+//pub(crate) enum ActionID {
+//    Individual(TrickActionID),
+//    General(GeneralActionID),
+//}
 
 #[test]
 fn verify_cli() {

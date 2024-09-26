@@ -46,15 +46,7 @@ impl ProviderChecks for SimpleCommand {
 }
 
 impl ProviderActions for SimpleCommand {
-    fn update(&self) -> Result<ActionSuccess, KnownError> {
-        unimplemented!()
-    }
-
     fn uninstall(&self) -> Result<ActionSuccess, KnownError> {
-        unimplemented!()
-    }
-
-    fn force_reinstall(&self) -> Result<ActionSuccess, KnownError> {
         unimplemented!()
     }
 
@@ -70,7 +62,7 @@ impl ProviderActions for SimpleCommand {
         unimplemented!()
     }
 
-    fn add_to_steam(&self) -> Result<ActionSuccess, KnownError> {
+    fn add_to_steam(&self, _ctx: AddToSteamContext) -> Result<ActionSuccess, KnownError> {
         unimplemented!()
     }
 }

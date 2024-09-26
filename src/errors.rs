@@ -2,8 +2,6 @@ use crate::prelude::*;
 use std::{backtrace::Backtrace, fmt::Debug};
 use urlencoding::encode;
 
-//pub type KnownError = Box<dyn std::error::Error>;
-
 pub type DynamicError = Box<dyn std::error::Error>;
 
 #[derive(Debug)]

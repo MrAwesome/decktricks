@@ -8,7 +8,7 @@ fn main() -> Result<(), KnownError> {
     let cli = Cli::parse();
     let action = &cli.command;
 
-    let action_success = action.run(&config)?;
+    let action_success = action.do_with(&config)?;
 
     if let Some(message) = action_success.get_message() {
         println!("{}", message);
