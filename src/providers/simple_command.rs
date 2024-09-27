@@ -15,62 +15,62 @@ impl SimpleCommand {
 impl TrickProvider for SimpleCommand {}
 
 impl ProviderChecks for SimpleCommand {
-    fn is_installable(&self) -> Result<bool, KnownError> {
+    fn is_installable(&self) -> DeckResult<bool> {
         // These are meant to be simple system commands which are always known to be installed
         Ok(false)
     }
 
-    fn is_uninstallable(&self) -> Result<bool, KnownError> {
+    fn is_uninstallable(&self) -> DeckResult<bool> {
         Ok(false)
     }
 
-    fn is_installed(&self) -> Result<bool, KnownError> {
+    fn is_installed(&self) -> DeckResult<bool> {
         Ok(false)
     }
-    fn is_runnable(&self) -> Result<bool, KnownError> {
+    fn is_runnable(&self) -> DeckResult<bool> {
         Ok(true)
     }
-    fn is_running(&self) -> Result<bool, KnownError> {
+    fn is_running(&self) -> DeckResult<bool> {
         // NOTE: for now, we aren't going to implement this until it's needed
         // (an easy way to implement this would be to have 'unique_grep_regex' for each command)
         Ok(false)
     }
-    fn is_killable(&self) -> Result<bool, KnownError> {
+    fn is_killable(&self) -> DeckResult<bool> {
         self.is_running()
     }
 
-    fn is_updateable(&self) -> Result<bool, KnownError> {
+    fn is_updateable(&self) -> DeckResult<bool> {
         Ok(false)
     }
 
-    fn is_addable_to_steam(&self) -> Result<bool, KnownError> {
+    fn is_addable_to_steam(&self) -> DeckResult<bool> {
         // For now, we'll assume these aren't commands people will want to run through Steam
         Ok(false)
     }
 }
 
 impl ProviderActions for SimpleCommand {
-    fn uninstall(&self) -> Result<ActionSuccess, KnownError> {
+    fn uninstall(&self) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
 
-    fn install(&self) -> Result<ActionSuccess, KnownError> {
+    fn install(&self) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
 
-    fn run(&self) -> Result<ActionSuccess, KnownError> {
+    fn run(&self) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
 
-    fn kill(&self) -> Result<ActionSuccess, KnownError> {
+    fn kill(&self) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
 
-    fn update(&self) -> Result<ActionSuccess, KnownError> {
+    fn update(&self) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
 
-    fn add_to_steam(&self, _ctx: AddToSteamContext) -> Result<ActionSuccess, KnownError> {
+    fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
 }

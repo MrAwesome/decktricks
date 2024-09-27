@@ -55,7 +55,7 @@ impl SpecificAction {
         }
     }
 
-    pub(crate) fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
+    pub(crate) fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
         let provider = DynProvider::try_from(trick)?;

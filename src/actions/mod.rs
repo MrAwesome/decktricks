@@ -53,7 +53,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
+    pub fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
         let typed_action = TypedAction::from(self);
         typed_action.do_with(loader)
     }
@@ -83,7 +83,7 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
+    fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
         match self {
             Self::General(general_action) => general_action.do_with(loader),
             Self::Specific(specific_action) => specific_action.do_with(loader),

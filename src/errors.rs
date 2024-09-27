@@ -7,14 +7,11 @@ pub type DynamicError = Box<dyn std::error::Error + Send + Sync>;
 
 #[derive(Debug)]
 pub enum KnownError {
-    CheckFailure(String),
-    NotImplemented(String),
     ConfigParsing(serde_json::Error),
-    Dynamic(DynamicError),
+    NotImplemented(String),
     SeriousError(SeriousError),
     SystemCommandParse(DynamicError),
     SystemCommandRun(std::io::Error),
-    SystemCommandInTest,
     UnknownTrickID(DynamicError),
 }
 

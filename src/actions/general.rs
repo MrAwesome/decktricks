@@ -10,7 +10,7 @@ pub(crate) enum GeneralAction {
 }
 
 impl GeneralAction {
-    pub(crate) fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
+    pub(crate) fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
         match self {
             Self::List { installed } => {
                 let tricks = loader.get_all_tricks();
@@ -78,7 +78,7 @@ impl GeneralAction {
 
 fn get_all_available_actions_for_all_tricks(
     loader: &TricksLoader,
-) -> Vec<(TrickID, Result<Vec<SpecificActionID>, KnownError>)> {
+) -> Vec<(TrickID, DeckResult<Vec<SpecificActionID>>)> {
     let tricks = loader.get_hashmap();
 
     tricks
@@ -89,7 +89,7 @@ fn get_all_available_actions_for_all_tricks(
 
 fn get_all_available_actions_for_trick(
     (trick_id, trick): (&String, &Trick),
-) -> Option<(String, Result<Vec<SpecificActionID>, KnownError>)> {
+) -> Option<(String, DeckResult<Vec<SpecificActionID>>)> {
     let maybe_provider = DynProvider::try_from(trick);
 
     match maybe_provider {

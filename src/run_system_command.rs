@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use std::process::{Command, Stdio};
 
-pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> Result<bool, KnownError> {
+pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> DeckResult<bool> {
     if TEST_SAFETY {
         panic!(
             "Attempted to run system command {:?} in test!",
@@ -41,7 +41,7 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> Result
 //        .spawn();
 //}
 
-pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> Result<ActionSuccess, KnownError> {
+pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> DeckResult<ActionSuccess> {
     if TEST_SAFETY {
         panic!(
             "Attempted to run system command {:?} in test!",

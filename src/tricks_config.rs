@@ -34,7 +34,7 @@ pub struct TricksLoader {
 }
 
 impl TricksLoader {
-    pub fn from_default_config() -> Result<Self, KnownError> {
+    pub fn from_default_config() -> DeckResult<Self> {
         let config = TricksConfig::try_from(DEFAULT_CONFIG_CONTENTS)?;
         let mut tricks = HashMap::new();
         for trick in config.tricks {
@@ -46,7 +46,7 @@ impl TricksLoader {
         })
     }
 
-    pub fn get_trick(&self, maybe_id: &str) -> Result<&Trick, KnownError> {
+    pub fn get_trick(&self, maybe_id: &str) -> DeckResult<&Trick> {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
@@ -126,7 +126,7 @@ pub struct SimpleCommand {
 
 // Tests a write/read cycle of config objects to the config file format
 #[test]
-fn reconvert_providerconfig() -> Result<(), KnownError> {
+fn reconvert_providerconfig() -> DeckResult<()> {
     let id = "net.davidotek.pupgui2";
     let trick = Trick {
         id: id.into(),
@@ -147,7 +147,7 @@ fn reconvert_providerconfig() -> Result<(), KnownError> {
 
 // Integration test of the actual config
 #[test]
-fn integration_check_default_config() -> Result<(), KnownError> {
+fn integration_check_default_config() -> DeckResult<()> {
     let loader = TricksLoader::from_default_config()?;
     let prov = &loader.get_trick("lutris")?.provider_config;
 
