@@ -85,8 +85,8 @@ impl From<&Action> for TypedAction {
 impl TypedAction {
     fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
         match self {
-            Self::General(general_action) => general_action.run(loader),
-            Self::Specific(specific_action) => specific_action.run(loader),
+            Self::General(general_action) => general_action.do_with(loader),
+            Self::Specific(specific_action) => specific_action.do_with(loader),
         }
     }
 }
@@ -136,29 +136,6 @@ impl ActionSuccess {
 pub(crate) struct AddToSteamContext {
     _name: Option<String>,
 }
-
-//
-//#[derive(Debug, Serialize, Eq, PartialEq, Clone)]
-//#[serde(rename_all = "snake_case")]
-//pub(crate) enum TrickActionID {
-//    Run,
-//    Install,
-//    Kill,
-//    Uninstall,
-//    AddToSteam,
-//    Info,
-//}
-//
-//#[derive(Debug, Serialize, Eq, PartialEq)]
-//#[serde(rename_all = "snake_case")]
-//pub(crate) enum GeneralActionID {
-//    List,
-//}
-//
-//pub(crate) enum ActionID {
-//    Individual(TrickActionID),
-//    General(GeneralActionID),
-//}
 
 #[test]
 fn verify_cli() {

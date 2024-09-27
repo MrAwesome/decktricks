@@ -2,6 +2,7 @@ use crate::prelude::*;
 use std::{backtrace::Backtrace, fmt::Debug};
 use urlencoding::encode;
 
+pub type DeckResult<T> = Result<T, KnownError>;
 pub type DynamicError = Box<dyn std::error::Error + Send + Sync>;
 
 #[derive(Debug)]

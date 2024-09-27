@@ -3,7 +3,7 @@ use decktricks::prelude::*;
 use clap::Parser;
 use decktricks::actions::Cli;
 
-fn main() -> Result<(), KnownError> {
+fn main() -> DeckResult<()> {
     let loader = TricksLoader::from_default_config()?;
     let cli = Cli::parse();
     let action = &cli.command;

@@ -10,7 +10,7 @@ pub(crate) enum GeneralAction {
 }
 
 impl GeneralAction {
-    pub(crate) fn run(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
+    pub(crate) fn do_with(&self, loader: &TricksLoader) -> Result<ActionSuccess, KnownError> {
         match self {
             Self::List { installed } => {
                 let tricks = loader.get_all_tricks();
