@@ -9,6 +9,7 @@ General
 [] implement reinstall for flatpak
 [] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] remove all possible panics and return UnimplementedError instead (for GUI safety)
+[] test in chimeraos and steamfork
 
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"
 
