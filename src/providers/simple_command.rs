@@ -7,7 +7,7 @@ impl SimpleCommand {
         ) -> Self {
         Self {
             command: command.into(),
-            args: args.into_iter().map(|s| s.into()).collect(),
+            args: args.into_iter().map(Into::into).collect(),
         }
     }
 }

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::run_system_command::{system_command_output, system_command_ran_successfully};
+use super::flatpak_helpers::get_running_flatpak_applications;
 
 impl Flatpak {
     pub fn new<S: Into<String>>(id: S) -> Self {
@@ -36,40 +37,17 @@ impl Flatpak {
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
         system_command_output("flatpak", vec!["update", &self.id])
     }
-
-    fn flatpak_ps(&self) -> DeckResult<ActionSuccess> {
-        // NOTE: to see what this actually sees here, pipe it to cat.
-        system_command_output("flatpak", vec!["ps", "--columns=application"])
-    }
 }
 
 impl Flatpak {
     fn is_pkg_running(&self) -> DeckResult<bool> {
         // TODO: error handling
-        for line in self.get_running_flatpak_applications()? {
+        for line in get_running_flatpak_applications()? {
             if line == self.id {
                 return Ok(true);
             }
         }
         Ok(false)
-    }
-
-    fn get_running_flatpak_applications(&self) -> DeckResult<Vec<String>> {
-        // TODO: error handling
-        let ps_output = self.flatpak_ps();
-
-        match &ps_output {
-            Ok(output_obj) => {
-                let text = output_obj.get_message_or_blank();
-                let lines = text.trim().split("\n").map(|s| s.to_string()).collect();
-                Ok(lines)
-            }
-            Err(e) => Err(KnownError::SystemCommandParse(Box::new(
-                DeckTricksError {
-                    message: format!("Failed to parse 'flatpak ps' output: {:?}", e),
-                },
-            ))),
-        }
     }
 }
 
@@ -91,7 +69,7 @@ impl ProviderChecks for Flatpak {
     }
 
     fn is_running(&self) -> DeckResult<bool> {
-        Ok(self.is_pkg_running()?)
+        self.is_pkg_running()
     }
 
     fn is_killable(&self) -> DeckResult<bool> {
@@ -146,32 +124,34 @@ impl ProviderActions for Flatpak {
 
 #[cfg(test)]
 impl Flatpak {
+    #[allow(clippy::unnecessary_wraps)]
     fn is_pkg_installed(&self) -> DeckResult<bool> {
         Ok(self.id == "test_pkg_installed")
     }
 
+    #[allow(clippy::unused_self)]
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
         success!("flatpak run success in test")
     }
 
+    #[allow(clippy::unused_self)]
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
         success!("flatpak kill success in test")
     }
 
+    #[allow(clippy::unused_self)]
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
         success!("flatpak update success in test")
     }
 
+    #[allow(clippy::unused_self)]
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
         success!("flatpak install success in test")
     }
 
+    #[allow(clippy::unused_self)]
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
         success!("flatpak uninstall success in test")
-    }
-
-    fn flatpak_ps(&self) -> DeckResult<ActionSuccess> {
-        success!("running_package\nrunning_package2")
     }
 }
 
@@ -184,6 +164,8 @@ mod tests {
         let _ = (system_command_output, system_command_ran_successfully);
     }
 
+    
+    #[allow(clippy::unnecessary_wraps)]
     #[test]
     fn test_new_flatpak_provider() -> DeckResult<()> {
         let provider = Flatpak::new("test_pkg");

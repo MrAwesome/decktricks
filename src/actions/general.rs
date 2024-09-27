@@ -52,7 +52,7 @@ impl GeneralAction {
                     let mut available = vec![];
                     for action in maybe_action_ids? {
                         let name = serde_json::to_string::<SpecificActionID>(&action)
-                            .map_err(|e| KnownError::ConfigParsing(e))?;
+                            .map_err(KnownError::ConfigParsing)?;
 
                         available.push(name);
                     }

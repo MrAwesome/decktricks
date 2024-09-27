@@ -12,7 +12,9 @@ pub enum KnownError {
     SeriousError(SeriousError),
     SystemCommandParse(DynamicError),
     SystemCommandRun(std::io::Error),
+    DeckyInstall(DynamicError),
     UnknownTrickID(DynamicError),
+    TestError(String),
 }
 
 // TODO: have full list of errors
@@ -22,6 +24,7 @@ pub struct DeckTricksError {
 }
 
 impl DeckTricksError {
+    #[must_use]
     pub fn new(message: String) -> Self {
         Self {
             message
@@ -43,6 +46,7 @@ pub struct SeriousError {
     pub message: String,
 }
 impl SeriousError {
+    #[must_use]
     pub fn new(error_type: &str, location: &str, message: &str) -> Self {
         SeriousError {
             error_type: error_type.into(),

@@ -2,127 +2,108 @@ use crate::prelude::*;
 use crate::run_system_command::system_command_ran_successfully;
 use std::fs::File;
 use std::io::copy;
-use std::marker::PhantomData;
 use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
-use std::rc::Rc;
 
 // TODO: detect if on steam deck or not, and *do not mark as installable if not on steam deck*
 
 //const DECKY_DOWNLOAD_URL: &str = "https://decky.xyz/download";
 const DECKY_DOWNLOAD_URL: &str = "http://gleesus.net:8858/lawl.sh";
+const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 
-#[derive(Debug, Copy, Clone)]
-pub struct DeckyInstallerProviderData;
+impl TrickProvider for DeckyInstaller {}
 
-impl KnownProviderData for DeckyInstallerProviderData {}
+impl ProviderChecks for DeckyInstaller {
+    fn is_installable(&self) -> DeckResult<bool> {
+        Ok(!self.is_installed()?)
+    }
 
-pub type DeckyInstallerProvider = Provider<DeckyInstallerProviderData>;
+    fn is_uninstallable(&self) -> DeckResult<bool> {
+        self.is_installed()
+    }
 
-pub fn new_decky_installer_provider() -> DeckyInstallerProvider {
-    Provider {
-        data: Rc::new(DeckyInstallerProviderData),
-        state: PhantomData::<DefaultState>,
+    fn is_installed(&self) -> DeckResult<bool> {
+        system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"])
+    }
+
+    fn is_killable(&self) -> DeckResult<bool> {
+        Ok(false)
+    }
+
+    fn is_updateable(&self) -> DeckResult<bool> {
+        self.is_installed()
+    }
+
+    fn is_runnable(&self) -> DeckResult<bool> {
+        Ok(false)
+    }
+
+    fn is_running(&self) -> DeckResult<bool> {
+        system_command_ran_successfully("systemctl", vec!["is-running", "plugin_loader"])
+    }
+    fn is_addable_to_steam(&self) -> DeckResult<bool> {
+        Ok(false)
     }
 }
 
-#[allow(refining_impl_trait)]
-impl<State: KnownState> ProviderChecks<DeckyInstallerProviderData>
-    for Provider<DeckyInstallerProviderData, State>
-where
-    State: KnownState,
-{
-    fn is_installable(
-        &self,
-    ) -> Result<Provider<DeckyInstallerProviderData, IsInstallable>, ActionErrorTEMPORARY> {
-        success!(self)
-    }
-
-    fn is_installed(
-        &self,
-    ) -> Result<Provider<DeckyInstallerProviderData, IsInstalled>, ActionErrorTEMPORARY> {
-        if system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"]) {
-            success!(self)
-        } else {
-            Err(ActionErrorTEMPORARY {
-                message: "Decky not installed!".into(),
-            })
-        }
-    }
-    fn is_runnable(&self) -> Result<Provider<DeckyInstallerProviderData, IsRunnable>, ActionErrorTEMPORARY> {
-        Err(ActionErrorTEMPORARY {
-            message: "Decky is not runnable.".into(),
-        })
-    }
-    fn is_running(&self) -> Result<Provider<DeckyInstallerProviderData, IsRunning>, ActionErrorTEMPORARY> {
-        if system_command_ran_successfully("systemctl", vec!["is-running", "plugin_loader"]) {
-            success!(self)
-        } else {
-            Err(ActionErrorTEMPORARY {
-                message: "Decky not running!".into(),
-            })
-        }
-    }
-    fn is_addable_to_steam(
-        &self,
-    ) -> Result<Provider<DeckyInstallerProviderData, IsAddableToSteam>, ActionErrorTEMPORARY> {
-        Err(ActionErrorTEMPORARY {
-            message: "Decky is automatically added to Steam.".into(),
-        })
-    }
-}
-
-impl Installed for Provider<DeckyInstallerProviderData, IsInstalled> {
-    fn update(&self) -> Result<(), DynamicError> {
+impl ProviderActions for DeckyInstaller {
+    fn update(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is updated by running the installer again. This may be a different command.
-        self.is_installable()?.install()
+        todo!()
     }
 
-    fn remove(&self) -> Result<(), DynamicError> {
+    fn uninstall(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is removed by running the installer again. This may be a different command.
-        self.is_installable()?.install()
+        todo!()
     }
 
-    fn force_reinstall(&self) -> Result<(), DynamicError> {
-        self.is_installable()?.install()
+//    fn force_reinstall(&self) -> DeckResult<ActionSuccess> {
+//        todo!()
+//        // TODO: decky is removed by running the installer again. This may be a different command.
+//    }
+
+    fn install(&self) -> DeckResult<ActionSuccess> {
+        install_decky()?;
+        success!("Decky installed successfully!")
     }
-}
 
-impl Installable for Provider<DeckyInstallerProviderData, IsInstallable> {
-    fn install(&self) -> Result<(), DynamicError> {
-        let temp_filename = "/tmp/decky_installer.sh";
-
-        let response = reqwest::blocking::get(DECKY_DOWNLOAD_URL)?;
-
-        {
-            let mut dest = File::create(temp_filename)?;
-            copy(&mut response.bytes()?.as_ref(), &mut dest)?;
-        }
-
-        {
-            std::fs::set_permissions(temp_filename, std::fs::Permissions::from_mode(0o755))?;
-        }
-
-        Command::new(temp_filename).status()?;
-
-        Ok(())
+    fn run(&self) -> DeckResult<ActionSuccess> {
+        Err(KnownError::NotImplemented("Decky is not runnable!".into()))
     }
-}
 
-impl Runnable for Provider<DeckyInstallerProviderData, IsRunnable> {
-    fn run(&self) -> Result<(), DynamicError> {
-        Err(Box::new(ActionErrorTEMPORARY { message: "Decky is not runnable!".into() }))
+    fn kill(&self) -> DeckResult<ActionSuccess> {
+        Err(KnownError::NotImplemented("Decky is not killable!".into()))
+    }
+
+    fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
+        Err(KnownError::NotImplemented(
+            "Decky is automatically added to Steam.".into(),
+        ))
     }
 }
 
-impl Running for Provider<DeckyInstallerProviderData, IsRunning> {
-    fn kill(&self) -> Result<(), DynamicError> {
-        Err(Box::new(ActionErrorTEMPORARY { message: "Decky is not killable!".into() }))
-    }
+fn install_decky() -> Result<(), KnownError> {
+    install_decky_inner()
+        .map_err(KnownError::DeckyInstall)
 }
 
-impl AddableToSteam for Provider<DeckyInstallerProviderData, IsAddableToSteam> {
-    fn add_to_steam(&self) -> Result<(), DynamicError> {
-        Err(Box::new(ActionErrorTEMPORARY { message: "Decky is automatically added to Steam.".into() }))
+fn install_decky_inner() -> Result<(), DynamicError> {
+    let response = reqwest::blocking::get(DECKY_DOWNLOAD_URL)?;
+
+    // These are in blocks to ensure that files are closed out
+    // before attempting to do further changes
+    {
+        let mut dest = File::create(DECKY_INSTALLER_TEMP_FILENAME)?;
+        copy(&mut response.bytes()?.as_ref(), &mut dest)?;
     }
+
+    {
+        std::fs::set_permissions(
+            DECKY_INSTALLER_TEMP_FILENAME,
+            std::fs::Permissions::from_mode(0o755),
+        )?;
+    }
+
+    Command::new(DECKY_INSTALLER_TEMP_FILENAME).status()?;
+    Ok(())
 }

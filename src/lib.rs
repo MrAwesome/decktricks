@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 pub mod actions;
 pub mod errors;
 //#[allow(refining_impl_trait)]

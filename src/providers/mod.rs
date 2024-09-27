@@ -1,13 +1,11 @@
 use crate::prelude::*;
 use rayon::prelude::*;
 use std::fmt::Debug;
-//use crate::tricks_config::TricksConfig;
-//use serde::Serialize;
 
-// XXX
 pub mod flatpak;
 pub mod simple_command;
-//pub mod decky_installer;
+pub mod decky_installer;
+mod flatpak_helpers;
 
 pub(crate) type DynProvider = Box<dyn TrickProvider>;
 impl TryFrom<&Trick> for DynProvider {
@@ -17,12 +15,17 @@ impl TryFrom<&Trick> for DynProvider {
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(flatpak.clone())),
             ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(simple_command.clone())),
-            _ => Err(KnownError::NotImplemented(format!(
-                "Provider {} not implemented yet for trick: \"{}\"",
-                trick.provider_config, trick.id,
-            ))),
+            ProviderConfig::DeckyInstaller(decky_installer) => Ok(Box::new(decky_installer.clone())),
+            ProviderConfig::Custom => not_implemented(trick),
         }
     }
+}
+
+fn not_implemented(trick: &Trick) -> DeckResult<DynProvider> {
+    Err(KnownError::NotImplemented(format!(
+            "Provider {} not implemented yet for trick: \"{}\"",
+            trick.provider_config, trick.id,
+        )))
 }
 
 pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {
@@ -31,7 +34,7 @@ pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync 
         // Go through and perform all system checks in parallel
         let results: Vec<DeckResult<&SpecificActionID>> = all_variants
             .par_iter()
-            .filter_map(|id| match self.can_id(&id) {
+            .filter_map(|id| match self.can_id(id) {
                 Ok(true) => Some(Ok(id)),
                 Ok(false) => None,
                 Err(e) => Some(Err(e)),

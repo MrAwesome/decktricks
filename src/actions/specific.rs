@@ -60,14 +60,6 @@ impl SpecificAction {
         let trick = loader.get_trick(trick_id.as_ref())?;
         let provider = DynProvider::try_from(trick)?;
 
-        // TODO: implement
-        //let possible = provider.possible();
-
-        //if !possible.contains(&action.id()) {
-        // XXX
-        //return Err(format!("Action \"{:?}\", supported actions: ", action.try_into()));
-        //unimplemented!()
-        //}
         if provider.can(self)? {
             match self {
                 Self::Install { .. } => provider.install(),
@@ -83,7 +75,7 @@ impl SpecificAction {
                     success!(
                         "{}",
                         serde_json::to_string_pretty(trick)
-                            .map_err(|e| KnownError::ConfigParsing(e))?
+                            .map_err(KnownError::ConfigParsing)?
                     )
                 }
             }

@@ -53,6 +53,11 @@ pub enum Action {
 }
 
 impl Action {
+    #[must_use = "this is the result of an action taken"]
+    /// # Errors
+    ///
+    /// Almost any `KnownError` can happen by this point, as this is the entry point to most of our
+    /// program logic.
     pub fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
         let typed_action = TypedAction::from(self);
         typed_action.do_with(loader)
@@ -112,15 +117,14 @@ pub struct ActionSuccess {
 }
 
 impl ActionSuccess {
+    #[must_use]
     pub fn get_message(&self) -> Option<String> {
         self.message.clone()
     }
 
+    #[must_use]
     pub fn get_message_or_blank(&self) -> String {
-        match self.message.clone() {
-            Some(msg) => msg,
-            None => "".into(),
-        }
+        self.message.clone().unwrap_or_default()
     }
 }
 

@@ -10,8 +10,10 @@ pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
 
 pub(crate) const DEBUG: bool = false;
 
-#[cfg(test)]
-pub(crate) const TEST_SAFETY: bool = true;
+pub(crate) const fn am_in_test() -> bool {
+    #[cfg(test)]
+    return true;
+    #[cfg(not(test))]
+    return false;
+}
 
-#[cfg(not(test))]
-pub(crate) const TEST_SAFETY: bool = false;

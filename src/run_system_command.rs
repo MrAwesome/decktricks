@@ -1,13 +1,14 @@
 use crate::prelude::*;
 use std::process::{Command, Stdio};
 
-pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> DeckResult<bool> {
-    if TEST_SAFETY {
-        panic!(
-            "Attempted to run system command {:?} in test!",
-            (cmdname, args)
-        );
-    }
+// TODO: make this a trait with an implementation, and make a mock implementation for tests
+
+pub(crate) fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> DeckResult<bool> {
+    assert!(
+        !am_in_test(),
+        "Attempted to run system command {:?} in test!",
+        (cmdname, args)
+    );
 
     let mut cmd = Command::new(cmdname);
     cmd.args(args.clone());
@@ -19,14 +20,11 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> DeckRe
     let res = cmd.status();
 
     if DEBUG {
-        println!(
-            "== EXTERNAL COMMAND STATUS: {} {:?} {:?}",
-            cmdname, args, res
-        );
+        println!("== EXTERNAL COMMAND STATUS: {cmdname} {args:?} {res:?}");
     }
 
     res.map(|x| x.success())
-        .map_err(|e| KnownError::SystemCommandRun(e))
+        .map_err(KnownError::SystemCommandRun)
 }
 
 // For now, return nothing.
@@ -41,18 +39,17 @@ pub fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) -> DeckRe
 //        .spawn();
 //}
 
-pub fn system_command_output(cmdname: &str, args: Vec<&str>) -> DeckResult<ActionSuccess> {
-    if TEST_SAFETY {
-        panic!(
-            "Attempted to run system command {:?} in test!",
-            (cmdname, args)
-        );
-    }
+pub(crate) fn system_command_output(cmdname: &str, args: Vec<&str>) -> DeckResult<ActionSuccess> {
+    assert!(
+        !am_in_test(),
+        "Attempted to run system command {:?} in test!",
+        (cmdname, args)
+    );
 
     let output = Command::new(cmdname)
         .args(args)
         .output()
-        .map_err(|e| KnownError::SystemCommandRun(e))?
+        .map_err(KnownError::SystemCommandRun)?
         .stdout;
     success!(String::from_utf8_lossy(&output))
 }

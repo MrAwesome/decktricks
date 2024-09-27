@@ -19,7 +19,7 @@ pub struct TricksConfig {
 impl TryFrom<&str> for TricksConfig {
     type Error = KnownError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(serde_json::from_str(value).map_err(KnownError::from)?)
+        serde_json::from_str(value).map_err(KnownError::from)
     }
 }
 
@@ -34,6 +34,9 @@ pub struct TricksLoader {
 }
 
 impl TricksLoader {
+    /// # Errors
+    ///
+    /// Returns errors relating to file loads or config parsing.
     pub fn from_default_config() -> DeckResult<Self> {
         let config = TricksConfig::try_from(DEFAULT_CONFIG_CONTENTS)?;
         let mut tricks = HashMap::new();
@@ -46,6 +49,9 @@ impl TricksLoader {
         })
     }
 
+    /// # Errors
+    ///
+    /// Returns errors relating to config parsing.
     pub fn get_trick(&self, maybe_id: &str) -> DeckResult<&Trick> {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
@@ -56,10 +62,12 @@ impl TricksLoader {
         }
     }
 
+    #[must_use]
     pub fn get_all_tricks(&self) -> Iter<TrickID, Trick> {
         self.tricks.iter()
     }
 
+    #[must_use]
     pub fn get_hashmap(&self) -> &HashMap<TrickID, Trick> {
         &self.tricks
     }
@@ -84,7 +92,7 @@ pub struct Trick {
 #[serde(tag = "type")]
 pub enum ProviderConfig {
     Flatpak(Flatpak),
-    DeckyInstaller,
+    DeckyInstaller(DeckyInstaller),
     SimpleCommand(SimpleCommand),
     //SystemPackage(SystemPackage)
     Custom,
@@ -94,15 +102,14 @@ impl std::fmt::Display for ProviderConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             ProviderConfig::Flatpak(_) => write!(f, "Flatpak"),
-            ProviderConfig::DeckyInstaller => write!(f, "DeckyInstaller"),
+            ProviderConfig::DeckyInstaller(_) => write!(f, "DeckyInstaller"),
             ProviderConfig::SimpleCommand(_) => write!(f, "SimpleCommand"),
             ProviderConfig::Custom => write!(f, "Custom"),
         }
     }
 }
 
-
-// custtom can be something like:
+// custom can be something like:
 // match provider_id {
 //    "decky" => { blah },
 //}
@@ -117,6 +124,9 @@ pub struct SimpleCommand {
     pub command: String,
     pub args: Vec<String>,
 }
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct DeckyInstaller;
 
 //#[derive(Debug, Deserialize, Serialize)]
 //struct SystemPackage {
@@ -152,9 +162,7 @@ fn integration_check_default_config() -> DeckResult<()> {
     let prov = &loader.get_trick("lutris")?.provider_config;
 
     match prov {
-        ProviderConfig::Flatpak(flatpak) => assert_eq!("net.lutris.Lutris", flatpak.id),
-        other => panic!("Unexpected data received for lutris config: {:#?}", other),
+        ProviderConfig::Flatpak(flatpak) => Ok(assert_eq!("net.lutris.Lutris", flatpak.id)),
+        other => Err(KnownError::TestError(format!("Unexpected data received for lutris config: {other:#?}"))),
     }
-
-    Ok(())
 }
