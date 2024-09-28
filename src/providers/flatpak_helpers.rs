@@ -13,13 +13,15 @@ pub(super) fn get_running_flatpak_applications() -> DeckResult<Vec<String>> {
             let lines = text.lines().map(String::from).collect();
             Ok(lines)
         }
-        Err(e) => Err(KnownError::SystemCommandParse(err!("Failed to parse 'flatpak ps' output: {e:?}"))),
+        Err(e) => Err(KnownError::SystemCommandParse(err!(
+            "Failed to parse 'flatpak ps' output: {e:?}"
+        ))),
     }
 }
 
 #[cfg(not(test))]
 pub(super) fn flatpak_ps() -> DeckResult<ActionSuccess> {
-// NOTE: to see what this actually sees here, pipe it to cat.
+    // NOTE: to see what this actually sees here, pipe it to cat.
     system_command_output("flatpak", vec!["ps", "--columns=application"])
 }
 
@@ -30,4 +32,3 @@ pub(super) fn flatpak_ps() -> DeckResult<ActionSuccess> {
 
     success!("running_package\nrunning_package2")
 }
-

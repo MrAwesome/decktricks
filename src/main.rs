@@ -1,7 +1,7 @@
-use decktricks::tricks_config::TricksLoader;
-use decktricks::prelude::*;
 use clap::Parser;
 use decktricks::actions::Cli;
+use decktricks::prelude::*;
+use decktricks::tricks_config::TricksLoader;
 
 fn main() -> DeckResult<()> {
     let loader = TricksLoader::from_default_config()?;
@@ -13,7 +13,6 @@ fn main() -> DeckResult<()> {
     if let Some(message) = action_success.get_message() {
         println!("{}", message);
     }
-    
+
     Ok(())
 }
-

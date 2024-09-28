@@ -1,6 +1,6 @@
+use super::flatpak_helpers::get_running_flatpak_applications;
 use crate::prelude::*;
 use crate::run_system_command::{system_command_output, system_command_ran_successfully};
-use super::flatpak_helpers::get_running_flatpak_applications;
 
 impl Flatpak {
     pub fn new<S: Into<String>>(id: S) -> Self {
@@ -164,7 +164,6 @@ mod tests {
         let _ = (system_command_output, system_command_ran_successfully);
     }
 
-    
     #[allow(clippy::unnecessary_wraps)]
     #[test]
     fn test_new_flatpak_provider() -> DeckResult<()> {

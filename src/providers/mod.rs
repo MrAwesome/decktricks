@@ -2,10 +2,10 @@ use crate::prelude::*;
 use rayon::prelude::*;
 use std::fmt::Debug;
 
-pub mod flatpak;
-pub mod simple_command;
 pub mod decky_installer;
+pub mod flatpak;
 mod flatpak_helpers;
+pub mod simple_command;
 
 pub(crate) type DynProvider = Box<dyn TrickProvider>;
 impl TryFrom<&Trick> for DynProvider {
@@ -15,7 +15,9 @@ impl TryFrom<&Trick> for DynProvider {
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(flatpak.clone())),
             ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(simple_command.clone())),
-            ProviderConfig::DeckyInstaller(decky_installer) => Ok(Box::new(decky_installer.clone())),
+            ProviderConfig::DeckyInstaller(decky_installer) => {
+                Ok(Box::new(decky_installer.clone()))
+            }
             ProviderConfig::Custom => not_implemented(trick),
         }
     }
@@ -23,9 +25,9 @@ impl TryFrom<&Trick> for DynProvider {
 
 fn not_implemented(trick: &Trick) -> DeckResult<DynProvider> {
     Err(KnownError::NotImplemented(format!(
-            "Provider {} not implemented yet for trick: \"{}\"",
-            trick.provider_config, trick.id,
-        )))
+        "Provider {} not implemented yet for trick: \"{}\"",
+        trick.provider_config, trick.id,
+    )))
 }
 
 pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {

@@ -57,10 +57,10 @@ impl ProviderActions for DeckyInstaller {
         todo!()
     }
 
-//    fn force_reinstall(&self) -> DeckResult<ActionSuccess> {
-//        todo!()
-//        // TODO: decky is removed by running the installer again. This may be a different command.
-//    }
+    //    fn force_reinstall(&self) -> DeckResult<ActionSuccess> {
+    //        todo!()
+    //        // TODO: decky is removed by running the installer again. This may be a different command.
+    //    }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
         install_decky()?;
@@ -83,8 +83,7 @@ impl ProviderActions for DeckyInstaller {
 }
 
 fn install_decky() -> Result<(), KnownError> {
-    install_decky_inner()
-        .map_err(KnownError::DeckyInstall)
+    install_decky_inner().map_err(KnownError::DeckyInstall)
 }
 
 fn install_decky_inner() -> Result<(), DynamicError> {

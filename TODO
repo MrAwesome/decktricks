@@ -26,3 +26,5 @@ GUI
 Providers
 [] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
     [] individual launchers from within this?
+[] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin
+     [] especially for Decky

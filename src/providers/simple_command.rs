@@ -1,10 +1,7 @@
 use crate::prelude::*;
 
 impl SimpleCommand {
-    pub fn new<S: Into<String>>(
-            command: S,
-            args: Vec<S>,
-        ) -> Self {
+    pub fn new<S: Into<String>>(command: S, args: Vec<S>) -> Self {
         Self {
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),

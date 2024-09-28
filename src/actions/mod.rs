@@ -42,7 +42,7 @@ pub enum Action {
     },
     // Note that update can work both globally or for a specific id.
     Update {
-        id: Option<String>
+        id: Option<String>,
     },
     // Items below do not take trick ids, and function differently.
     List {
@@ -76,7 +76,9 @@ impl From<&Action> for TypedAction {
             Action::Kill { id } => Self::Specific(SpecificAction::Kill { id }),
             Action::Info { id } => Self::Specific(SpecificAction::Info { id }),
             Action::Install { id } => Self::Specific(SpecificAction::Install { id }),
-            Action::AddToSteam { name, id } => Self::Specific(SpecificAction::AddToSteam { name, id }),
+            Action::AddToSteam { name, id } => {
+                Self::Specific(SpecificAction::AddToSteam { name, id })
+            }
             Action::Uninstall { id } => Self::Specific(SpecificAction::Uninstall { id }),
             Action::Update { id: Some(id) } => Self::Specific(SpecificAction::Update { id }),
 
@@ -84,7 +86,7 @@ impl From<&Action> for TypedAction {
             Action::List { installed } => Self::General(GeneralAction::List { installed }),
             Action::SeeAllAvailableActions => Self::General(GeneralAction::SeeAllAvailableActions),
         }
-    } 
+    }
 }
 
 impl TypedAction {

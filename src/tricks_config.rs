@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::hash_map::Iter;
+use std::collections::HashMap;
 
 // TODO: unit test error messages for incorrect configs
 
@@ -44,9 +44,7 @@ impl TricksLoader {
             tricks.insert(trick.id.clone(), trick);
         }
 
-        Ok(Self {
-            tricks
-        })
+        Ok(Self { tricks })
     }
 
     /// # Errors
@@ -72,7 +70,6 @@ impl TricksLoader {
         &self.tricks
     }
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -145,10 +142,13 @@ fn reconvert_providerconfig() -> DeckResult<()> {
         always_present_on_steamdeck: None,
     };
 
-    let after_first_serialization = serde_json::to_string_pretty(&trick).map_err(KnownError::from)?;
+    let after_first_serialization =
+        serde_json::to_string_pretty(&trick).map_err(KnownError::from)?;
     let expected_text = after_first_serialization.clone();
-    let trick = serde_json::from_str::<Trick>(&after_first_serialization).map_err(KnownError::from)?;
-    let after_second_serialization = serde_json::to_string_pretty(&trick).map_err(KnownError::from)?;
+    let trick =
+        serde_json::from_str::<Trick>(&after_first_serialization).map_err(KnownError::from)?;
+    let after_second_serialization =
+        serde_json::to_string_pretty(&trick).map_err(KnownError::from)?;
 
     assert_eq!(expected_text, after_second_serialization);
 
@@ -163,6 +163,8 @@ fn integration_check_default_config() -> DeckResult<()> {
 
     match prov {
         ProviderConfig::Flatpak(flatpak) => Ok(assert_eq!("net.lutris.Lutris", flatpak.id)),
-        other => Err(KnownError::TestError(format!("Unexpected data received for lutris config: {other:#?}"))),
+        other => Err(KnownError::TestError(format!(
+            "Unexpected data received for lutris config: {other:#?}"
+        ))),
     }
 }

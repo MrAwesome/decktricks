@@ -51,4 +51,3 @@ macro_rules! enum_with_all_variants {
         }
     };
 }
-

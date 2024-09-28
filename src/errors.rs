@@ -17,7 +17,6 @@ pub enum KnownError {
     TestError(String),
 }
 
-// TODO: have full list of errors
 #[derive(Debug)]
 pub struct DeckTricksError {
     pub message: String,
@@ -26,9 +25,7 @@ pub struct DeckTricksError {
 impl DeckTricksError {
     #[must_use]
     pub fn new(message: String) -> Self {
-        Self {
-            message
-        }
+        Self { message }
     }
 }
 
