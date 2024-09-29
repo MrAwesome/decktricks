@@ -28,7 +28,7 @@ pub(crate) struct FlatpakSystemContext {
 
 impl FlatpakSystemContext {
     // TODO: parallelize this
-    pub(crate) fn try_gather() -> DeckResult<Self> {
+    pub(crate) fn gather() -> DeckResult<Self> {
         let (running, installed) = join_all!(
             get_running_flatpak_applications,
             get_installed_flatpak_applications

@@ -34,6 +34,10 @@ pub struct TricksLoader {
 }
 
 impl TricksLoader {
+    // NOTE: Currently, this does *not* read from the config file at runtime!
+    //       The config is read at compile time, so you need to cargo build/run
+    //       to see changes to the config.
+    //
     /// # Errors
     ///
     /// Returns errors relating to file loads or config parsing.

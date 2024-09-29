@@ -18,10 +18,10 @@ impl FullSystemContext {
     /// # Errors
     ///
     /// Can return system errors from trying to gather system information
-    pub fn try_gather() -> DeckResult<Self> {
+    pub fn gather() -> DeckResult<Self> {
         let (decky_ctx, flatpak_ctx) = join_all!(
-            DeckySystemContext::try_gather,
-            FlatpakSystemContext::try_gather
+            DeckySystemContext::gather,
+            FlatpakSystemContext::gather
         );
 
         Ok(Self {
