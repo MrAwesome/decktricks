@@ -1,4 +1,6 @@
-use super::flatpak_helpers::{get_installed_flatpak_applications, get_running_flatpak_applications};
+use super::flatpak_helpers::{
+    get_installed_flatpak_applications, get_running_flatpak_applications,
+};
 use crate::prelude::*;
 #[cfg(not(test))]
 use crate::run_system_command::system_command_output;
@@ -27,17 +29,15 @@ pub(crate) struct FlatpakSystemContext {
 impl FlatpakSystemContext {
     // TODO: parallelize this
     pub(crate) fn try_gather() -> DeckResult<Self> {
-        let (maybe_running, maybe_installed) = rayon::join(
+        let (running, installed) = join_all!(
             get_running_flatpak_applications,
-            get_installed_flatpak_applications,
+            get_installed_flatpak_applications
         );
 
-        let (running, installed) = (
-            maybe_running?,
-            maybe_installed?,
-        );
-
-        Ok(Self { running, installed })
+        Ok(Self {
+            running: running?,
+            installed: installed?,
+        })
     }
 }
 

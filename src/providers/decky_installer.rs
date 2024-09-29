@@ -30,17 +30,15 @@ pub(super) struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    // TODO: can be parallelized
     pub fn try_gather() -> DeckResult<Self> {
+        let (is_installed, is_running) = join_all!(
+            || system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"]),
+            || system_command_ran_successfully("systemctl", vec!["is-running", "plugin_loader"])
+        );
+
         Ok(Self {
-            is_installed: system_command_ran_successfully(
-                "systemctl",
-                vec!["is-enabled", "plugin_loader"],
-            )?,
-            is_running: system_command_ran_successfully(
-                "systemctl",
-                vec!["is-running", "plugin_loader"],
-            )?,
+            is_installed: is_installed?,
+            is_running: is_running?,
         })
     }
 }

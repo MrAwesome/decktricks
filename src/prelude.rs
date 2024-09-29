@@ -5,6 +5,7 @@ pub(crate) use crate::tricks_config::*;
 
 pub(crate) use crate::err;
 pub(crate) use crate::success;
+pub(crate) use crate::join_all;
 
 pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
 

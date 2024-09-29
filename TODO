@@ -24,6 +24,7 @@ Idea
 CLI
 [] just read config file once at start, calling function from lib.rs
 [] colorize output, decide which bits of spawned program output to keep in which contexts
+[] run: pass remaining args after cmdname or -- through to the run command
 
 GUI
 [] restart/refresh if config file hash changes?

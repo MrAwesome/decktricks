@@ -19,9 +19,14 @@ impl FullSystemContext {
     ///
     /// Can return system errors from trying to gather system information
     pub fn try_gather() -> DeckResult<Self> {
+        let (decky_ctx, flatpak_ctx) = join_all!(
+            DeckySystemContext::try_gather,
+            FlatpakSystemContext::try_gather
+        );
+
         Ok(Self {
-            flatpak_ctx: FlatpakSystemContext::try_gather()?,
-            decky_ctx: DeckySystemContext::try_gather()?,
+            decky_ctx: decky_ctx?,
+            flatpak_ctx: flatpak_ctx?,
         })
     }
 }
@@ -164,40 +169,37 @@ mod tests {
     }
 
     #[test]
-    fn test_can_run() -> DeckResult<()> {
+    fn test_can_run() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_runnable().times(1).returning(|| true);
         let action = SpecificAction::Run {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 
     #[test]
-    fn test_can_install() -> DeckResult<()> {
+    fn test_can_install() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_installable().times(1).returning(|| true);
         let action = SpecificAction::Install {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 
     #[test]
-    fn test_can_kill() -> DeckResult<()> {
+    fn test_can_kill() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_killable().times(1).returning(|| true);
         let action = SpecificAction::Kill {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 
     #[test]
-    fn test_can_uninstall() -> DeckResult<()> {
+    fn test_can_uninstall() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_uninstallable()
             .times(1)
@@ -206,22 +208,20 @@ mod tests {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 
     #[test]
-    fn test_can_update() -> DeckResult<()> {
+    fn test_can_update() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_updateable().times(1).returning(|| true);
         let action = SpecificAction::Update {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 
     #[test]
-    fn test_can_add_to_steam() -> DeckResult<()> {
+    fn test_can_add_to_steam() {
         let mut mock = MockProviderImpl::new();
         mock.expect_is_addable_to_steam()
             .times(1)
@@ -231,16 +231,14 @@ mod tests {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 
     #[test]
-    fn test_can_info() -> DeckResult<()> {
+    fn test_can_info() {
         let mock = MockProviderImpl::new();
         let action = SpecificAction::Info {
             id: "test-id".into(),
         };
         assert!(mock.can(&action));
-        Ok(())
     }
 }
