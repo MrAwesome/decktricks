@@ -1,4 +1,6 @@
 General
+[] switch checks over to https://docs.rs/predicates/latest/predicates/
+    [] use them in a default trait method in TrickProvider?
 [] Start writing unit tests
 [] Pull command running logic over from ruwi? or will the "run as root" guardrails be too intense?
 [] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
@@ -7,11 +9,14 @@ General
 [] pipe command output into ActionSuccess
 [] remove uses of eprintln and use a logger
 [] implement reinstall for flatpak
-[] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] remove all possible panics and return UnimplementedError instead (for GUI safety)
 [] test in chimeraos and steamfork
+[] grab SystemState once and use it for all checks (each TrickProvider can provide a get_relevant_system_state that it must read from. nicer separation of concerns for sure, and much faster for checks)
 
+[] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"
+
+[] dependencies between tricks
 
 Idea
 [] web frontend that just constructs a list of desired tricks and generates a .desktop that installs decktricks cli and uses it to install everything in one go
