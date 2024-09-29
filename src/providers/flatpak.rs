@@ -1,21 +1,55 @@
-use super::flatpak_helpers::get_running_flatpak_applications;
+use super::flatpak_helpers::{get_installed_flatpak_applications, get_running_flatpak_applications};
 use crate::prelude::*;
-use crate::run_system_command::{system_command_output, system_command_ran_successfully};
+#[cfg(not(test))]
+use crate::run_system_command::system_command_output;
 
-impl Flatpak {
-    pub fn new<S: Into<String>>(id: S) -> Self {
-        Flatpak { id: id.into() }
+type FlatpakID = String;
+
+#[derive(Debug)]
+pub(crate) struct FlatpakProvider {
+    id: FlatpakID,
+    ctx: FlatpakSystemContext,
+}
+
+impl FlatpakProvider {
+    pub(crate) fn new(flatpak: &Flatpak, ctx: FlatpakSystemContext) -> Self {
+        let id = flatpak.id.clone();
+        Self { id, ctx }
     }
 }
 
-impl TrickProvider for Flatpak {}
+#[derive(Debug, Clone)]
+pub(crate) struct FlatpakSystemContext {
+    running: Vec<FlatpakID>,
+    installed: Vec<FlatpakID>,
+}
 
-#[cfg(not(test))]
-impl Flatpak {
-    fn is_pkg_installed(&self) -> DeckResult<bool> {
-        system_command_ran_successfully("flatpak", vec!["info", &self.id])
+impl FlatpakSystemContext {
+    // TODO: parallelize this
+    pub(crate) fn try_gather() -> DeckResult<Self> {
+        let (running, installed) = (
+            get_running_flatpak_applications()?,
+            get_installed_flatpak_applications()?,
+        );
+
+        Ok(Self { running, installed })
+    }
+}
+
+impl TrickProvider for FlatpakProvider {}
+
+impl FlatpakProvider {
+    fn is_pkg_installed(&self) -> bool {
+        self.ctx.installed.contains(&self.id)
     }
 
+    fn is_pkg_running(&self) -> bool {
+        self.ctx.running.contains(&self.id)
+    }
+}
+
+#[cfg(not(test))]
+impl FlatpakProvider {
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
@@ -39,53 +73,43 @@ impl Flatpak {
     }
 }
 
-impl Flatpak {
-    fn is_pkg_running(&self) -> DeckResult<bool> {
-        // TODO: error handling
-        for line in get_running_flatpak_applications()? {
-            if line == self.id {
-                return Ok(true);
-            }
-        }
-        Ok(false)
-    }
-}
+// TODO: remove all test blocks for checks
 
-impl ProviderChecks for Flatpak {
-    fn is_installable(&self) -> DeckResult<bool> {
-        Ok(!self.is_installed()?)
+impl ProviderChecks for FlatpakProvider {
+    fn is_installable(&self) -> bool {
+        !self.is_installed()
     }
 
-    fn is_uninstallable(&self) -> DeckResult<bool> {
+    fn is_uninstallable(&self) -> bool {
         self.is_installed()
     }
 
-    fn is_installed(&self) -> DeckResult<bool> {
+    fn is_installed(&self) -> bool {
         self.is_pkg_installed()
     }
 
-    fn is_runnable(&self) -> DeckResult<bool> {
+    fn is_runnable(&self) -> bool {
         self.is_installed()
     }
 
-    fn is_running(&self) -> DeckResult<bool> {
+    fn is_running(&self) -> bool {
         self.is_pkg_running()
     }
 
-    fn is_killable(&self) -> DeckResult<bool> {
+    fn is_killable(&self) -> bool {
         self.is_running()
     }
 
-    fn is_updateable(&self) -> DeckResult<bool> {
+    fn is_updateable(&self) -> bool {
         self.is_installed()
     }
 
-    fn is_addable_to_steam(&self) -> DeckResult<bool> {
+    fn is_addable_to_steam(&self) -> bool {
         self.is_installed()
     }
 }
 
-impl ProviderActions for Flatpak {
+impl ProviderActions for FlatpakProvider {
     // NOTE!!!!! update takes user input on the command line (so pass -y)
     // , and *often will require a second run* if doing a full update of all packages
     //    fn update(&self) -> DeckResult<ActionSuccess> {
@@ -123,12 +147,7 @@ impl ProviderActions for Flatpak {
 }
 
 #[cfg(test)]
-impl Flatpak {
-    #[allow(clippy::unnecessary_wraps)]
-    fn is_pkg_installed(&self) -> DeckResult<bool> {
-        Ok(self.id == "test_pkg_installed")
-    }
-
+impl FlatpakProvider {
     #[allow(clippy::unused_self)]
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
         success!("flatpak run success in test")
@@ -159,50 +178,59 @@ impl Flatpak {
 mod tests {
     use super::*;
 
-    // To soothe CoC's jump-to issues for things that are cfg(not(test))
-    fn _shutup() {
-        let _ = (system_command_output, system_command_ran_successfully);
+    impl Flatpak {
+        pub(crate) fn new<S: Into<String>>(id: S) -> Self {
+            Flatpak { id: id.into() }
+        }
+    }
+
+    fn get_system_context() -> FlatpakSystemContext {
+        FlatpakSystemContext {
+            installed: vec!["installed_package".into(), "installed_package2".into()],
+            running: vec!["running_package".into(), "running_package2".into()],
+        }
+    }
+
+    fn fprov(id: &str) -> FlatpakProvider {
+        let ctx = get_system_context();
+        FlatpakProvider::new(&Flatpak::new(id), ctx)
     }
 
     #[allow(clippy::unnecessary_wraps)]
     #[test]
     fn test_new_flatpak_provider() -> DeckResult<()> {
-        let provider = Flatpak::new("test_pkg");
+        let provider = fprov("test_pkg");
         assert_eq!(provider.id, "test_pkg");
         Ok(())
     }
 
     #[test]
-    fn test_is_pkg_installed_true() -> DeckResult<()> {
-        let provider = Flatpak::new("test_pkg_installed");
-        assert!(provider.is_installed()?);
-        let provider = Flatpak::new("test_pkg_not_installed");
-        assert!(!provider.is_installed()?);
-        Ok(())
+    fn test_is_pkg_installed_true() {
+        let provider = fprov("installed_package");
+        assert!(provider.is_installed());
+        let provider = fprov("package_not_installed");
+        assert!(!provider.is_installed());
     }
 
     #[test]
-    fn test_installable() -> DeckResult<()> {
-        let provider = Flatpak::new("RANDOM_NAME_FROM_NOWHERE");
-        assert!(provider.is_installable()?);
-        Ok(())
+    fn test_installable() {
+        let provider = fprov("RANDOM_NAME_FROM_NOWHERE");
+        assert!(provider.is_installable());
     }
 
     #[test]
-    fn test_updateable() -> DeckResult<()> {
-        let provider = Flatpak::new("test_pkg_installed");
-        assert!(provider.is_updateable()?);
-        let provider = Flatpak::new("test_pkg_not_installed");
-        assert!(!provider.is_updateable()?);
-        Ok(())
+    fn test_updateable() {
+        let provider = fprov("installed_package");
+        assert!(provider.is_updateable());
+        let provider = fprov("test_pkg_not_installed");
+        assert!(!provider.is_updateable());
     }
 
     #[test]
-    fn test_is_pkg_running() -> DeckResult<()> {
-        let provider = Flatpak::new("running_package");
-        assert!(provider.is_running()?);
-        let provider = Flatpak::new("not_running_package");
-        assert!(!provider.is_running()?);
-        Ok(())
+    fn test_is_pkg_running() {
+        let provider = fprov("running_package");
+        assert!(provider.is_running());
+        let provider = fprov("not_running_package");
+        assert!(!provider.is_running());
     }
 }

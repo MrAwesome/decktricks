@@ -11,42 +11,76 @@ use std::process::Command;
 const DECKY_DOWNLOAD_URL: &str = "http://gleesus.net:8858/lawl.sh";
 const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 
-impl TrickProvider for DeckyInstaller {}
+#[derive(Debug)]
+pub struct DeckyInstallerProvider {
+    ctx: DeckySystemContext,
+}
 
-impl ProviderChecks for DeckyInstaller {
-    fn is_installable(&self) -> DeckResult<bool> {
-        Ok(!self.is_installed()?)
-    }
-
-    fn is_uninstallable(&self) -> DeckResult<bool> {
-        self.is_installed()
-    }
-
-    fn is_installed(&self) -> DeckResult<bool> {
-        system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"])
-    }
-
-    fn is_killable(&self) -> DeckResult<bool> {
-        Ok(false)
-    }
-
-    fn is_updateable(&self) -> DeckResult<bool> {
-        self.is_installed()
-    }
-
-    fn is_runnable(&self) -> DeckResult<bool> {
-        Ok(false)
-    }
-
-    fn is_running(&self) -> DeckResult<bool> {
-        system_command_ran_successfully("systemctl", vec!["is-running", "plugin_loader"])
-    }
-    fn is_addable_to_steam(&self) -> DeckResult<bool> {
-        Ok(false)
+impl DeckyInstallerProvider {
+    #[must_use]
+    pub(super) fn new(ctx: DeckySystemContext) -> Self {
+        Self { ctx }
     }
 }
 
-impl ProviderActions for DeckyInstaller {
+#[derive(Debug, Clone)]
+pub(super) struct DeckySystemContext {
+    is_installed: bool,
+    is_running: bool,
+}
+
+impl DeckySystemContext {
+    // TODO: can be parallelized
+    pub fn try_gather() -> DeckResult<Self> {
+        Ok(Self {
+            is_installed: system_command_ran_successfully(
+                "systemctl",
+                vec!["is-enabled", "plugin_loader"],
+            )?,
+            is_running: system_command_ran_successfully(
+                "systemctl",
+                vec!["is-running", "plugin_loader"],
+            )?,
+        })
+    }
+}
+
+impl TrickProvider for DeckyInstallerProvider {}
+
+impl ProviderChecks for DeckyInstallerProvider {
+    fn is_installable(&self) -> bool {
+        !self.is_installed()
+    }
+
+    fn is_uninstallable(&self) -> bool {
+        self.is_installed()
+    }
+
+    fn is_installed(&self) -> bool {
+        self.ctx.is_installed
+    }
+
+    fn is_killable(&self) -> bool {
+        false
+    }
+
+    fn is_updateable(&self) -> bool {
+        self.is_installed()
+    }
+
+    fn is_runnable(&self) -> bool {
+        false
+    }
+
+    fn is_running(&self) -> bool {
+        self.ctx.is_running
+    }
+    fn is_addable_to_steam(&self) -> bool {
+        false
+    }
+}
+
+impl ProviderActions for DeckyInstallerProvider {
     fn update(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is updated by running the installer again. This may be a different command.
         todo!()

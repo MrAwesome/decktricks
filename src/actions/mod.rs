@@ -53,14 +53,17 @@ pub enum Action {
 }
 
 impl Action {
+    // NOTE: if the initial full system check is too slow, you can have Specific check types do the
+    // gather only for their own provider type
+    //
     #[must_use = "this is the result of an action taken"]
     /// # Errors
     ///
     /// Almost any `KnownError` can happen by this point, as this is the entry point to most of our
     /// program logic.
-    pub fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
+    pub fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> DeckResult<ActionSuccess> {
         let typed_action = TypedAction::from(self);
-        typed_action.do_with(loader)
+        typed_action.do_with(loader, full_ctx)
     }
 }
 
@@ -90,10 +93,10 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
+    fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> DeckResult<ActionSuccess> {
         match self {
-            Self::General(general_action) => general_action.do_with(loader),
-            Self::Specific(specific_action) => specific_action.do_with(loader),
+            Self::General(general_action) => general_action.do_with(loader, full_ctx),
+            Self::Specific(specific_action) => specific_action.do_with(loader, full_ctx),
         }
     }
 }

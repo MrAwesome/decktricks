@@ -1,4 +1,5 @@
 #![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 
 pub mod actions;
 pub mod errors;

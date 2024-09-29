@@ -12,37 +12,37 @@ impl SimpleCommand {
 impl TrickProvider for SimpleCommand {}
 
 impl ProviderChecks for SimpleCommand {
-    fn is_installable(&self) -> DeckResult<bool> {
+    fn is_installable(&self) -> bool {
         // These are meant to be simple system commands which are always known to be installed
-        Ok(false)
+        false
     }
 
-    fn is_uninstallable(&self) -> DeckResult<bool> {
-        Ok(false)
+    fn is_uninstallable(&self) -> bool {
+        false
     }
 
-    fn is_installed(&self) -> DeckResult<bool> {
-        Ok(false)
+    fn is_installed(&self) -> bool {
+        false
     }
-    fn is_runnable(&self) -> DeckResult<bool> {
-        Ok(true)
+    fn is_runnable(&self) -> bool {
+        true
     }
-    fn is_running(&self) -> DeckResult<bool> {
+    fn is_running(&self) -> bool {
         // NOTE: for now, we aren't going to implement this until it's needed
         // (an easy way to implement this would be to have 'unique_grep_regex' for each command)
-        Ok(false)
+        false
     }
-    fn is_killable(&self) -> DeckResult<bool> {
+    fn is_killable(&self) -> bool {
         self.is_running()
     }
 
-    fn is_updateable(&self) -> DeckResult<bool> {
-        Ok(false)
+    fn is_updateable(&self) -> bool {
+        false
     }
 
-    fn is_addable_to_steam(&self) -> DeckResult<bool> {
+    fn is_addable_to_steam(&self) -> bool {
         // For now, we'll assume these aren't commands people will want to run through Steam
-        Ok(false)
+        false
     }
 }
 
@@ -75,9 +75,9 @@ impl ProviderActions for SimpleCommand {
 #[test]
 fn basic_expectations() {
     let sc = SimpleCommand::new("echo", vec!["lol"]);
-    assert!(sc.is_installable().is_ok_and(|r| !r));
-    assert!(sc.is_installed().is_ok_and(|r| !r));
-    assert!(sc.is_runnable().is_ok_and(|r| r));
-    assert!(sc.is_running().is_ok_and(|r| !r));
-    assert!(sc.is_addable_to_steam().is_ok_and(|r| !r));
+    assert!(!sc.is_installable());
+    assert!(!sc.is_installed());
+    assert!(sc.is_runnable());
+    assert!(!sc.is_running());
+    assert!(!sc.is_addable_to_steam());
 }

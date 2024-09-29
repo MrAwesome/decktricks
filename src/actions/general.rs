@@ -1,6 +1,5 @@
 use crate::prelude::*;
 use crate::run_system_command::system_command_output;
-use rayon::prelude::*;
 
 #[derive(Debug)]
 pub(crate) enum GeneralAction {
@@ -10,7 +9,7 @@ pub(crate) enum GeneralAction {
 }
 
 impl GeneralAction {
-    pub(crate) fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
+    pub(crate) fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> DeckResult<ActionSuccess> {
         match self {
             Self::List { installed } => {
                 let tricks = loader.get_all_tricks();
@@ -22,8 +21,8 @@ impl GeneralAction {
                     true => tricks
                         .filter(|name_and_trick| {
                             let trick = name_and_trick.1;
-                            let provider = DynProvider::try_from(trick);
-                            provider.is_ok_and(|t| t.is_installed().is_ok())
+                            let provider = DynProvider::try_from((trick, full_ctx));
+                            provider.is_ok_and(|t| t.is_installed())
                         })
                         .map(|name_and_trick| name_and_trick.0.as_str())
                         .collect(),
@@ -45,7 +44,7 @@ impl GeneralAction {
             }
             Self::SeeAllAvailableActions => {
                 let mut all_available = vec![];
-                let results = get_all_available_actions_for_all_tricks(loader);
+                let results = get_all_available_actions_for_all_tricks(loader, full_ctx);
 
                 // Convert the results from above into a commandline-friendly format
                 for (trick_id, maybe_action_ids) in results {
@@ -78,29 +77,34 @@ impl GeneralAction {
 
 fn get_all_available_actions_for_all_tricks(
     loader: &TricksLoader,
+    full_ctx: &FullSystemContext,
 ) -> Vec<(TrickID, DeckResult<Vec<SpecificActionID>>)> {
     let tricks = loader.get_hashmap();
 
-    tricks
-        .par_iter()
-        .filter_map(get_all_available_actions_for_trick)
-        .collect::<Vec<(String, Result<Vec<_>, _>)>>()
+    let mut name_to_actions = vec![];
+    for (id, trick) in tricks {
+        let actions = get_all_available_actions_for_trick(trick, full_ctx);
+        name_to_actions.push((id.clone(), actions));
+    }
+
+    name_to_actions
 }
 
 fn get_all_available_actions_for_trick(
-    (trick_id, trick): (&String, &Trick),
-) -> Option<(String, DeckResult<Vec<SpecificActionID>>)> {
-    let maybe_provider = DynProvider::try_from(trick);
+    trick: &Trick,
+    full_ctx: &FullSystemContext,
+) -> DeckResult<Vec<SpecificActionID>> {
+    let maybe_provider = DynProvider::try_from((trick, full_ctx));
 
     match maybe_provider {
         Err(KnownError::NotImplemented(_)) => {
             eprintln!(
                 "INFO: Skipping unimplemented provider \"{}\" for trick \"{}\".",
-                trick.provider_config, trick_id
+                trick.provider_config, trick.id
             );
-            None
+            Ok(vec![])
         }
-        Ok(provider) => Some((trick_id.clone(), provider.get_available_actions())),
-        Err(e) => Some((trick_id.clone(), Err(e))),
+        Ok(provider) => Ok(provider.get_available_actions()),
+        Err(e) => Err(e),
     }
 }

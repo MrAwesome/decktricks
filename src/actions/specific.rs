@@ -55,12 +55,12 @@ impl SpecificAction {
         }
     }
 
-    pub(crate) fn do_with(&self, loader: &TricksLoader) -> DeckResult<ActionSuccess> {
+    pub(crate) fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> DeckResult<ActionSuccess> {
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
-        let provider = DynProvider::try_from(trick)?;
+        let provider = DynProvider::try_from((trick, full_ctx))?;
 
-        if provider.can(self)? {
+        if provider.can(self) {
             match self {
                 Self::Install { .. } => provider.install(),
                 Self::Run { .. } => provider.run(),
