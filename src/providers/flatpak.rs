@@ -27,9 +27,14 @@ pub(crate) struct FlatpakSystemContext {
 impl FlatpakSystemContext {
     // TODO: parallelize this
     pub(crate) fn try_gather() -> DeckResult<Self> {
+        let (maybe_running, maybe_installed) = rayon::join(
+            get_running_flatpak_applications,
+            get_installed_flatpak_applications,
+        );
+
         let (running, installed) = (
-            get_running_flatpak_applications()?,
-            get_installed_flatpak_applications()?,
+            maybe_running?,
+            maybe_installed?,
         );
 
         Ok(Self { running, installed })
