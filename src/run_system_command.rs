@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 // TODO: make this a trait with an implementation, and make a mock implementation for tests
 
@@ -13,18 +13,17 @@ pub(crate) fn system_command_ran_successfully(cmdname: &str, args: Vec<&str>) ->
     let mut cmd = Command::new(cmdname);
     cmd.args(args.clone());
 
-    if !DEBUG {
-        cmd.stdout(Stdio::null()).stderr(Stdio::null());
+    let res = cmd
+        .output()
+        .map_err(KnownError::SystemCommandRun)?;
+
+
+    if is_debug() {
+        let output = String::from_utf8_lossy(&res.stdout);
+        debug!("== EXTERNAL COMMAND STATUS: {cmdname} {args:?} {res:?} \"{output}\"");
     }
 
-    let res = cmd.status();
-
-    if DEBUG {
-        println!("== EXTERNAL COMMAND STATUS: {cmdname} {args:?} {res:?}");
-    }
-
-    res.map(|x| x.success())
-        .map_err(KnownError::SystemCommandRun)
+    Ok(res.status.success())
 }
 
 // For now, return nothing.

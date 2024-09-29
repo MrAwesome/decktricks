@@ -12,6 +12,10 @@ pub(crate) use specific::*;
 pub struct Cli {
     #[clap(subcommand)]
     pub command: Action,
+
+
+    #[clap(short, long)]
+    pub debug: bool,
 }
 
 // This is the canonical list of actions we can take on tricks.

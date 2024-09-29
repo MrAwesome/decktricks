@@ -33,7 +33,7 @@ impl DeckySystemContext {
     pub fn gather() -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
             || system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"]),
-            || system_command_ran_successfully("systemctl", vec!["is-running", "plugin_loader"])
+            || system_command_ran_successfully("systemctl", vec!["is-active", "plugin_loader"])
         );
 
         Ok(Self {

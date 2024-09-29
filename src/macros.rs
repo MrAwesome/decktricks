@@ -22,16 +22,6 @@ macro_rules! err {
 }
 
 #[macro_export(local_inner_macros)]
-macro_rules! info {
-    ($msg:expr) => {
-        eprintln!("{}", $msg)
-    };
-    ($fmt:literal, $($arg:expr)*) => {
-        eprintln!($fmt, $($arg)*)
-    };
-}
-
-#[macro_export(local_inner_macros)]
 macro_rules! enum_with_all_variants {
     (
         $(#[$meta:meta])*

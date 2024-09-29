@@ -4,12 +4,9 @@ General
 [] Start writing unit tests
 [] Pull command running logic over from ruwi? or will the "run as root" guardrails be too intense?
 [] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
-[] 'available' command, which just shows all available actions for all available tricks
 [] simple zenity frontend to test gui functionality
-[] pipe command output into ActionSuccess
 [] remove uses of eprintln and use a logger
 [] implement reinstall for flatpak
-[] remove all possible panics and return UnimplementedError instead (for GUI safety)
 [] test in chimeraos and steamfork
 [] grab SystemState once and use it for all checks (each TrickProvider can provide a get_relevant_system_state that it must read from. nicer separation of concerns for sure, and much faster for checks)
 

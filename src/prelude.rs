@@ -1,19 +1,26 @@
 pub(crate) use crate::actions::*;
-pub use crate::errors::*;
-pub use crate::providers::*;
 pub(crate) use crate::tricks_config::*;
 
 pub(crate) use crate::err;
 pub(crate) use crate::success;
 pub(crate) use crate::join_all;
 
-pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
-
-pub(crate) const DEBUG: bool = false;
+#[allow(unused_imports)]
+pub use log::{info, error, warn, debug};
 
 pub(crate) const fn am_in_test() -> bool {
     #[cfg(test)]
     return true;
     #[cfg(not(test))]
     return false;
+}
+
+pub use crate::errors::*;
+pub use crate::providers::*;
+
+pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
+
+#[must_use]
+pub fn is_debug() -> bool {
+    matches!(log::max_level(), log::LevelFilter::Debug | log::LevelFilter::Trace)
 }
