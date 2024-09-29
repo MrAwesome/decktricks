@@ -2,20 +2,9 @@ use clap::Parser;
 use decktricks::actions::Cli;
 use decktricks::executor::Executor;
 use decktricks::prelude::*;
-use simplelog::*;
 
-fn init_logger(debug: bool) -> DeckResult<()> {
-    TermLogger::init(
-        if debug {
-            LevelFilter::Debug
-        } else {
-            LevelFilter::Info
-        },
-        Config::default(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    )
-    .map_err(KnownError::LoggerInitializationFail)
+fn init_logger() -> DeckResult<()> {
+    pretty_env_logger::try_init().map_err(KnownError::LoggerInitializationFail)
 }
 
 fn main() -> DeckResult<()> {
@@ -23,7 +12,7 @@ fn main() -> DeckResult<()> {
     let action = &cli.command;
     let debug = cli.debug;
 
-    init_logger(debug)?;
+    init_logger()?;
 
     if debug {
         //debug!("Running in debug mode!");
