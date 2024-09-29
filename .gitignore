@@ -24,3 +24,10 @@ target/
 # Added by cargo
 
 /target
+
+
+# Profiling
+flamegraph.svg
+perf.data
+perf.data.old
+profile.json
