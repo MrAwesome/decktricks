@@ -6,6 +6,7 @@ Providers
 [] implement basic command provider
     [] just takes cmd and args in the json, and nothing in code
     [] .... although, a simple command line would maybe be helpful in game mode?
+[] implement full updates for all providers
 
 Network/Updates
 [] MOTD
@@ -14,12 +15,15 @@ Network/Updates
 [] GUI handling updates how?
 
 General
+[] remove all todo!, unimplemented!, and panic!
+[] implement all not_implemented
 [] switch checks over to https://docs.rs/predicates/latest/predicates/
     [] use them in a default trait method in TrickProvider?
 [] simple zenity frontend to test gui functionality
 [] implement reinstall for flatpak
 [] test in chimeraos and steamfork
 [] grab SystemState once and use it for all checks (each TrickProvider can provide a get_relevant_system_state that it must read from. nicer separation of concerns for sure, and much faster for checks)
+[] fix up global updates - the logic on which providers run them, and how errors/messages are propagated/printed
 
 [] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"

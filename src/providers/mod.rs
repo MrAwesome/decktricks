@@ -1,5 +1,5 @@
-use crate::providers::simple_command::SimpleCommandProvider;
 use crate::prelude::*;
+use crate::providers::simple_command::SimpleCommandProvider;
 use decky_installer::{DeckyInstallerProvider, DeckySystemContext};
 use flatpak::{FlatpakProvider, FlatpakSystemContext};
 use std::fmt::Debug;
@@ -8,6 +8,14 @@ pub mod decky_installer;
 pub mod flatpak;
 mod flatpak_helpers;
 pub mod simple_command;
+
+pub(super) const fn not_possible(reason: &'static str) -> DeckResult<ActionSuccess> {
+    Err(KnownError::ActionNotPossible(reason))
+}
+
+pub(super) const fn not_implemented(reason: &'static str) -> DeckResult<ActionSuccess> {
+    Err(KnownError::ActionNotImplementedYet(reason))
+}
 
 pub struct FullSystemContext {
     flatpak_ctx: FlatpakSystemContext,
@@ -20,10 +28,8 @@ impl FullSystemContext {
     ///
     /// Can return system errors from trying to gather system information
     pub fn gather() -> DeckResult<Self> {
-        let (decky_ctx, flatpak_ctx) = join_all!(
-            DeckySystemContext::gather,
-            FlatpakSystemContext::gather
-        );
+        let (decky_ctx, flatpak_ctx) =
+            join_all!(DeckySystemContext::gather, FlatpakSystemContext::gather);
 
         Ok(Self {
             decky_ctx: decky_ctx?,
@@ -42,23 +48,27 @@ impl TryFrom<(&Trick, &FullSystemContext)> for DynProvider {
                 flatpak,
                 full_ctx.flatpak_ctx.clone(),
             ))),
-            ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(SimpleCommandProvider::from(simple_command.clone()))),
+            ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(
+                SimpleCommandProvider::from(simple_command.clone()),
+            )),
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
                 DeckyInstallerProvider::new(full_ctx.decky_ctx.clone()),
             )),
-            ProviderConfig::Custom => not_implemented(trick),
+            ProviderConfig::Custom => provider_not_implemented(trick),
         }
     }
 }
 
-fn not_implemented(trick: &Trick) -> DeckResult<DynProvider> {
-    Err(KnownError::NotImplemented(format!(
+fn provider_not_implemented(trick: &Trick) -> DeckResult<DynProvider> {
+    Err(KnownError::ProviderNotImplemented(format!(
         "Provider {} not implemented yet for trick: \"{}\"",
         trick.provider_config, trick.id,
     )))
 }
 
-pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {
+pub(crate) trait TrickProvider:
+    ProviderChecks + ProviderActions + Debug + Sync
+{
     fn get_available_actions(&self) -> Vec<SpecificActionID> {
         let all_variants = SpecificActionID::all_variants();
 
@@ -80,7 +90,6 @@ pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync 
 pub(crate) trait ProviderChecks {
     fn can(&self, action: &SpecificAction) -> bool {
         match action {
-            // Change these to just be () or the downstream checks should throw?
             SpecificAction::Run { .. } => self.is_runnable(),
             SpecificAction::Install { .. } => self.is_installable(),
             SpecificAction::Kill { .. } => self.is_killable(),
@@ -93,7 +102,6 @@ pub(crate) trait ProviderChecks {
 
     fn can_id(&self, action_id: &SpecificActionID) -> bool {
         match action_id {
-            // Change these to just be () or the downstream checks should throw?
             SpecificActionID::Run => self.is_runnable(),
             SpecificActionID::Install => self.is_installable(),
             SpecificActionID::Kill => self.is_killable(),
@@ -134,6 +142,10 @@ pub(crate) trait ProviderActions {
     //fn force_reinstall(&self) -> DeckResult<ActionSuccess>;
 
     //fn remove_from_steam(&self) -> Result<ActionSuccess, DynamicError>>;
+}
+
+pub(crate) trait GeneralProvider: Debug + Sync {
+    fn update_all(&self) -> DeckResult<ActionSuccess>;
 }
 
 #[cfg(test)]
@@ -202,9 +214,7 @@ mod tests {
     #[test]
     fn test_can_uninstall() {
         let mut mock = MockProviderImpl::new();
-        mock.expect_is_uninstallable()
-            .times(1)
-            .returning(|| true);
+        mock.expect_is_uninstallable().times(1).returning(|| true);
         let action = SpecificAction::Uninstall {
             id: "test-id".into(),
         };

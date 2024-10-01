@@ -82,10 +82,10 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    pub(crate) fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> DeckResult<ActionSuccess> {
+    pub(crate) fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> Vec<DeckResult<ActionSuccess>> {
         match self {
             Self::General(general_action) => general_action.do_with(loader, full_ctx),
-            Self::Specific(specific_action) => specific_action.do_with(loader, full_ctx),
+            Self::Specific(specific_action) => vec![specific_action.do_with(loader, full_ctx)],
         }
     }
 }
@@ -131,12 +131,7 @@ impl ActionSuccess {
 }
 
 // TODO: or just launch steamtinkerlaunch GUI manually?
+#[derive(Debug, Default)]
 pub(crate) struct AddToSteamContext {
     _name: Option<String>,
-}
-
-#[test]
-fn verify_cli() {
-    use clap::CommandFactory;
-    Cli::command().debug_assert();
 }

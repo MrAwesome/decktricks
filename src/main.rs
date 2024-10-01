@@ -10,8 +10,20 @@ fn main() -> DeckResult<()> {
     let action = &cli.command;
 
     let executor = Executor::new()?;
-    let action_success = executor.execute(action)?;
-    action_success.get_message().inspect(|m| println!("{}", m));
+    let results = executor.execute(action);
+
+    let mut experienced_error = false;
+    results.iter().for_each(|res|
+        match res {
+            Ok(action_success) => {
+                action_success.get_message().inspect(|m| println!("{}", m));
+            }
+            Err(known_error) => {
+                experienced_error = true;
+                error!("{:?}", known_error);
+            }
+        }
+    );
 
     Ok(())
 }

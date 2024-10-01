@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::run_system_command::system_command_ran_successfully;
+use crate::run_system_command::system_command_ran_successfully as sys_successful;
 use std::fs::File;
 use std::io::copy;
 use std::os::unix::fs::PermissionsExt;
@@ -32,8 +32,8 @@ pub(super) struct DeckySystemContext {
 impl DeckySystemContext {
     pub fn gather() -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
-            || system_command_ran_successfully("systemctl", vec!["is-enabled", "plugin_loader"]),
-            || system_command_ran_successfully("systemctl", vec!["is-active", "plugin_loader"])
+            || sys_successful("systemctl", vec!["is-enabled", "plugin_loader"]),
+            || sys_successful("systemctl", vec!["is-active", "plugin_loader"])
         );
 
         Ok(Self {
@@ -81,44 +81,42 @@ impl ProviderChecks for DeckyInstallerProvider {
 impl ProviderActions for DeckyInstallerProvider {
     fn update(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is updated by running the installer again. This may be a different command.
-        todo!()
+        not_implemented("Decky updates are not implemented yet!")
     }
 
     fn uninstall(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is removed by running the installer again. This may be a different command.
-        todo!()
+        not_implemented("Decky uninstall is not implemented yet!")
     }
 
-    //    fn force_reinstall(&self) -> DeckResult<ActionSuccess> {
-    //        todo!()
-    //        // TODO: decky is removed by running the installer again. This may be a different command.
-    //    }
-
     fn install(&self) -> DeckResult<ActionSuccess> {
-        install_decky()?;
+        install_decky().map_err(KnownError::DeckyInstall)?;
         success!("Decky installed successfully!")
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        Err(KnownError::NotImplemented("Decky is not runnable!".into()))
+        not_possible("Decky is not runnable!")
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        Err(KnownError::NotImplemented("Decky is not killable!".into()))
+        not_possible("Decky is not killable!")
     }
 
     fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
-        Err(KnownError::NotImplemented(
-            "Decky is automatically added to Steam.".into(),
-        ))
+        not_possible("Decky is automatically added to Steam.")
     }
 }
 
-fn install_decky() -> Result<(), KnownError> {
-    install_decky_inner().map_err(KnownError::DeckyInstall)
+#[derive(Debug)]
+pub(crate) struct DeckyInstallerGeneralProvider;
+impl GeneralProvider for DeckyInstallerGeneralProvider {
+    fn update_all(&self) -> DeckResult<ActionSuccess> {
+        // TODO: run the decky update command here
+        not_implemented("Decky update is not implemented yet!")
+    }
 }
 
-fn install_decky_inner() -> Result<(), DynamicError> {
+fn install_decky() -> Result<(), DynamicError> {
     let response = reqwest::blocking::get(DECKY_DOWNLOAD_URL)?;
 
     // These are in blocks to ensure that files are closed out

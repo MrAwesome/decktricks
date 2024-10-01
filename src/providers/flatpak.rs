@@ -2,8 +2,7 @@ use super::flatpak_helpers::{
     get_installed_flatpak_applications, get_running_flatpak_applications,
 };
 use crate::prelude::*;
-#[cfg(not(test))]
-use crate::run_system_command::system_command_output;
+use crate::run_system_command::system_command_output as sys_output;
 
 type FlatpakID = String;
 
@@ -58,23 +57,23 @@ impl FlatpakProvider {
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
-        system_command_output("flatpak", vec!["run", &self.id])
+        sys_output("flatpak", vec!["run", &self.id])
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
-        system_command_output("flatpak", vec!["install", "-y", &self.id])
+        sys_output("flatpak", vec!["install", "-y", &self.id])
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        system_command_output("flatpak", vec!["uninstall", "-y", &self.id])
+        sys_output("flatpak", vec!["uninstall", "-y", &self.id])
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
-        system_command_output("flatpak", vec!["kill", &self.id])
+        sys_output("flatpak", vec!["kill", &self.id])
     }
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
-        system_command_output("flatpak", vec!["update", &self.id])
+        sys_output("flatpak", vec!["update", &self.id])
     }
 }
 
@@ -115,12 +114,6 @@ impl ProviderChecks for FlatpakProvider {
 }
 
 impl ProviderActions for FlatpakProvider {
-    // NOTE!!!!! update takes user input on the command line (so pass -y)
-    // , and *often will require a second run* if doing a full update of all packages
-    //    fn update(&self) -> DeckResult<ActionSuccess> {
-    //        unimplemented!()
-    //    }
-
     fn uninstall(&self) -> DeckResult<ActionSuccess> {
         self.flatpak_uninstall()?;
         success!("\"{}\" uninstalled successfully.", self.id)
@@ -148,6 +141,18 @@ impl ProviderActions for FlatpakProvider {
 
     fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
         unimplemented!()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct FlatpakGeneralProvider;
+impl GeneralProvider for FlatpakGeneralProvider {
+    fn update_all(&self) -> DeckResult<ActionSuccess> {
+        // IMPORTANT: for flatpak update -y, you MUST run it twice to remove unused runtimes.
+        sys_output("flatpak", vec!["update", "-y"])?;
+        sys_output("flatpak", vec!["update", "-y"])?;
+
+        success!("Flatpak update run successfully!")
     }
 }
 

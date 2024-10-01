@@ -31,7 +31,7 @@ impl Executor {
     ///
     /// Almost any `KnownError` can happen by this point, as this is the entry point to most of our
     /// program logic.
-    pub fn execute(&self, action: &Action) -> DeckResult<ActionSuccess> {
+    pub fn execute(&self, action: &Action) -> Vec<DeckResult<ActionSuccess>> {
         let typed_action = TypedAction::from(action);
         typed_action.do_with(&self.loader, &self.full_ctx)
     }

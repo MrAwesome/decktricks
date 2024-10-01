@@ -63,37 +63,81 @@ impl ProviderChecks for SimpleCommandProvider {
 }
 
 impl ProviderActions for SimpleCommandProvider {
+    // TODO: generalize these to be default implementations?
     fn uninstall(&self) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        not_possible("Simple commands cannot be uninstalled!")
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        not_possible("Simple commands cannot be installed!")
     }
 
+    #[cfg(not(test))]
     fn run(&self) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        crate::run_system_command::system_command_output(
+            &self.command,
+            self.args.iter().map(AsRef::as_ref).collect(),
+        )
+    }
+
+    #[cfg(test)]
+    fn run(&self) -> DeckResult<ActionSuccess> {
+        Ok(ActionSuccess::success(Some("Success in test.")))
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        not_implemented("Simple commands cannot be killed yet.")
     }
 
     fn update(&self) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        not_possible("Simple commands cannot be installed!")
     }
 
     fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        not_implemented("Simple commands cannot be added to Steam yet.")
     }
 }
 
-#[test]
-fn basic_expectations() {
-    let sc = SimpleCommandProvider::new("echo", vec!["lol"]);
-    assert!(!sc.is_installable());
-    assert!(!sc.is_installed());
-    assert!(sc.is_runnable());
-    assert!(!sc.is_running());
-    assert!(!sc.is_addable_to_steam());
+impl GeneralProvider for SimpleCommandProvider {
+    fn update_all(&self) -> DeckResult<ActionSuccess> {
+        not_implemented("Simple commands cannot be updated!")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SimpleCommandProvider;
+    use crate::prelude::*;
+
+    #[test]
+    fn basic_expectations() {
+        let sc = SimpleCommandProvider::new("echo", vec!["lol"]);
+        assert!(!sc.is_installable());
+        assert!(!sc.is_installed());
+        assert!(sc.is_runnable());
+        assert!(!sc.is_running());
+        assert!(!sc.is_addable_to_steam());
+    }
+
+    #[test]
+    fn expected_failures() {
+        let sc = SimpleCommandProvider::new("echo", vec!["lol"]);
+        // TODO: generalize these to be default implementations?
+
+        assert!(matches!(sc.run(), Ok(ActionSuccess{..})));
+        assert!(matches!(
+            sc.uninstall(),
+            Err(KnownError::ActionNotPossible(_))
+        ));
+        assert!(matches!(
+            sc.install(),
+            Err(KnownError::ActionNotPossible(_))
+        ));
+        assert!(matches!(sc.kill(), Err(KnownError::ActionNotImplementedYet(_))));
+        assert!(matches!(sc.update(), Err(KnownError::ActionNotPossible(_))));
+        assert!(matches!(
+            sc.add_to_steam(AddToSteamContext::default()),
+            Err(KnownError::ActionNotImplementedYet(_))
+        ));
+    }
 }
