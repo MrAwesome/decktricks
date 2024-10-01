@@ -120,7 +120,7 @@ fn get_all_available_actions(
         let mut available: Vec<String> = vec![];
         for action in maybe_action_ids {
             let name = serde_json::to_string::<SpecificActionID>(&action)
-                .map_err(KnownError::ConfigParsing)?
+                .map_err(KnownError::from)?
                 .trim_matches(|c| c == '"')
                 .into();
 

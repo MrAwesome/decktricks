@@ -61,7 +61,7 @@
         {
             "id": "decky",
             "provider_config": {
-                "type": "decky_installer"
+                "type": "decky-installer"
             },
             "icon": "XXX",
             "display_name": "Decky Loader",

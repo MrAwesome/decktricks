@@ -74,7 +74,7 @@ impl SpecificAction {
                 Self::Info { .. } => {
                     success!(
                         "{}",
-                        serde_json::to_string_pretty(trick).map_err(KnownError::ConfigParsing)?
+                        serde_json::to_string_pretty(trick).map_err(KnownError::from)?
                     )
                 }
             }

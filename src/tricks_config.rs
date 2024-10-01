@@ -89,7 +89,7 @@ pub struct Trick {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 #[serde(tag = "type")]
 pub enum ProviderConfig {
     Flatpak(Flatpak),
