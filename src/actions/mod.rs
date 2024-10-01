@@ -13,9 +13,9 @@ pub struct Cli {
     #[clap(subcommand)]
     pub command: Action,
 
-
-    #[clap(short, long)]
-    pub debug: bool,
+    // Currently unused since pretty_env_logger uses env variables.
+    // #[clap(short, long)]
+    // pub debug: bool,
 }
 
 // This is the canonical list of actions we can take on tricks.

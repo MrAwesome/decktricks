@@ -1,7 +1,23 @@
 use crate::prelude::*;
 
-impl SimpleCommand {
-    pub fn new<S: Into<String>>(command: S, args: Vec<S>) -> Self {
+#[derive(Debug)]
+pub struct SimpleCommandProvider {
+    pub command: String,
+    pub args: Vec<String>,
+}
+
+impl From<SimpleCommand> for SimpleCommandProvider {
+    fn from(sc: SimpleCommand) -> Self {
+        Self {
+            command: sc.command,
+            args: sc.args,
+        }
+    }
+}
+
+#[cfg(test)]
+impl SimpleCommandProvider {
+    fn new<S: Into<String>>(command: S, args: Vec<S>) -> Self {
         Self {
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),
@@ -9,9 +25,9 @@ impl SimpleCommand {
     }
 }
 
-impl TrickProvider for SimpleCommand {}
+impl TrickProvider for SimpleCommandProvider {}
 
-impl ProviderChecks for SimpleCommand {
+impl ProviderChecks for SimpleCommandProvider {
     fn is_installable(&self) -> bool {
         // These are meant to be simple system commands which are always known to be installed
         false
@@ -46,7 +62,7 @@ impl ProviderChecks for SimpleCommand {
     }
 }
 
-impl ProviderActions for SimpleCommand {
+impl ProviderActions for SimpleCommandProvider {
     fn uninstall(&self) -> DeckResult<ActionSuccess> {
         unimplemented!()
     }
@@ -74,7 +90,7 @@ impl ProviderActions for SimpleCommand {
 
 #[test]
 fn basic_expectations() {
-    let sc = SimpleCommand::new("echo", vec!["lol"]);
+    let sc = SimpleCommandProvider::new("echo", vec!["lol"]);
     assert!(!sc.is_installable());
     assert!(!sc.is_installed());
     assert!(sc.is_runnable());

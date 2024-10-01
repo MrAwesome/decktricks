@@ -1,3 +1,4 @@
+use crate::providers::simple_command::SimpleCommandProvider;
 use crate::prelude::*;
 use decky_installer::{DeckyInstallerProvider, DeckySystemContext};
 use flatpak::{FlatpakProvider, FlatpakSystemContext};
@@ -41,7 +42,7 @@ impl TryFrom<(&Trick, &FullSystemContext)> for DynProvider {
                 flatpak,
                 full_ctx.flatpak_ctx.clone(),
             ))),
-            ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(simple_command.clone())),
+            ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(SimpleCommandProvider::from(simple_command.clone()))),
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
                 DeckyInstallerProvider::new(full_ctx.decky_ctx.clone()),
             )),
