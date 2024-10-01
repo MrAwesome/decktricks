@@ -45,10 +45,14 @@ pub(crate) fn system_command_output(cmdname: &str, args: Vec<&str>) -> DeckResul
         (cmdname, args)
     );
 
-    let output = Command::new(cmdname)
+    let result = Command::new(cmdname)
         .args(args)
         .output()
-        .map_err(KnownError::SystemCommandRun)?
-        .stdout;
-    success!(String::from_utf8_lossy(&output))
+        .map_err(KnownError::SystemCommandRun)?;
+    
+    if result.status.success() {
+        success!(String::from_utf8_lossy(&result.stdout))
+    } else {
+        Err(KnownError::SystemCommandFailed(result))
+    }
 }

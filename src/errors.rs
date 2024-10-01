@@ -8,6 +8,7 @@ pub type DynamicError = Box<dyn std::error::Error + Send + Sync>;
 #[derive(Debug)]
 pub enum KnownError {
     ConfigParsing(serde_json::Error),
+    ConfigRead(std::io::Error),
     DeckyInstall(DynamicError),
     LoggerInitializationFail(log::SetLoggerError),
     ProviderNotImplemented(String),
@@ -16,6 +17,8 @@ pub enum KnownError {
     SeriousError(SeriousError),
     SystemCommandParse(DynamicError),
     SystemCommandRun(std::io::Error),
+    SystemCommandFailed(std::process::Output),
+    ErrorDuringRun(&'static str),
     TestError(String),
     UnknownTrickID(DynamicError),
 }

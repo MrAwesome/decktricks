@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
+use std::fs;
 
 // TODO: unit test error messages for incorrect configs
 
@@ -33,6 +34,20 @@ pub struct TricksLoader {
     tricks: HashMap<TrickID, Trick>,
 }
 
+impl TryFrom<&str> for TricksLoader {
+    type Error = KnownError;
+
+    fn try_from(text: &str) -> DeckResult<Self> {
+        let config = TricksConfig::try_from(text)?;
+        let mut tricks = HashMap::new();
+        for trick in config.tricks {
+            tricks.insert(trick.id.clone(), trick);
+        }
+
+        Ok(Self { tricks })
+    }
+}
+
 impl TricksLoader {
     // NOTE: Currently, this does *not* read from the config file at runtime!
     //       The config is read at compile time, so you need to cargo build/run
@@ -42,13 +57,19 @@ impl TricksLoader {
     ///
     /// Returns errors relating to file loads or config parsing.
     pub fn from_default_config() -> DeckResult<Self> {
-        let config = TricksConfig::try_from(DEFAULT_CONFIG_CONTENTS)?;
-        let mut tricks = HashMap::new();
-        for trick in config.tricks {
-            tricks.insert(trick.id.clone(), trick);
-        }
+        Self::try_from(DEFAULT_CONFIG_CONTENTS)
+    }
 
-        Ok(Self { tricks })
+    // NOTE: Currently, this does *not* read from the config file at runtime!
+    //       The config is read at compile time, so you need to cargo build/run
+    //       to see changes to the config.
+    //
+    /// # Errors
+    ///
+    /// Returns errors relating to file loads or config loading/parsing.
+    pub fn from_config(path: &str) -> DeckResult<Self> {
+        let contents = read_config(path)?;
+        Self::try_from(contents.as_ref())
     }
 
     /// # Errors
@@ -73,6 +94,12 @@ impl TricksLoader {
     pub fn get_hashmap(&self) -> &HashMap<TrickID, Trick> {
         &self.tricks
     }
+}
+
+fn read_config(path: &str) -> DeckResult<String> {
+    fs::read(path)
+        .map(|contents| String::from_utf8_lossy(&contents).into())
+        .map_err(KnownError::ConfigRead)
 }
 
 #[skip_serializing_none]

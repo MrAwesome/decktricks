@@ -1,4 +1,6 @@
 pub(crate) use crate::actions::*;
+pub use crate::command::*;
+pub use crate::executor::*;
 pub(crate) use crate::tricks_config::*;
 
 pub(crate) use crate::err;

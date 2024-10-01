@@ -11,3 +11,4 @@ pub mod macros;
 pub mod run_system_command;
 pub mod tricks_config;
 pub mod executor;
+pub mod command;

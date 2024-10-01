@@ -13,11 +13,11 @@ macro_rules! success {
 
 #[macro_export(local_inner_macros)]
 macro_rules! err {
-    ($msg:expr) => {
-        Box::new(DeckTricksError::new(::std::format!($msg)))
+    ($fmt:literal, $($arg:expr),*) => {
+        Box::new($crate::errors::DeckTricksError::new(::std::format!($fmt, $($arg)*)))
     };
-    ($fmt:literal, $($arg:expr)*) => {
-        Box::new(DeckTricksError::new(::std::format!($fmt, $($arg)*)))
+    ($msg:expr) => {
+        Box::new($crate::errors::DeckTricksError::new(::std::format!($msg)))
     };
 }
 

@@ -1,23 +1,48 @@
-use decktricks::prelude::*;
-use std::{process::Command, time::{Duration, Instant}};
-
-pub const BINARY_NAME: &str = env!("CARGO_BIN_EXE_decktricks");
+use decktricks::{errors::DeckTricksError, prelude::DynamicError};
+use std::{
+    process::Command,
+    time::{Duration, Instant},
+};
 
 // TODO:
-// [] see-all-available-actions
-// [] time see-all-available-actions
 // [] install/uninstall flatpak (optional, with network)
-// [] run with -c test_config.json and try:
-//     [] simplecommand
 // [] test -c/-C behavior with test_config.json and test_config2.json
-// [] giving a broken config with -c errors
+
+macro_rules! decktricks {
+    ($($arg:tt),*) => {
+        run_cli_with_args(vec![$($arg,)*])
+    }
+}
+
+// TODO: move to utils when super error is fixed
+pub const BINARY_NAME: &str = env!("CARGO_BIN_EXE_decktricks");
+type CliResult = Result<String, DynamicError>;
+pub(crate) fn run_cli_with_args(args: Vec<&str>) -> CliResult {
+    let result = Command::new(BINARY_NAME).args(args.clone()).output()?;
+
+    if result.status.success() {
+        Ok(String::from_utf8_lossy(&result.stdout).into())
+    } else {
+        Err(Box::new(DeckTricksError::new(format!(
+            "Command failed!\nCommand: {} {}\nResult: {:#?}",
+            BINARY_NAME,
+            args.join(" "),
+            result
+        ))))
+    }
+}
 
 // NOTE: running this with the default config as another layer of validation
 #[test]
 fn can_run_see_all_available_actions() -> Result<(), DynamicError> {
-    Command::new(BINARY_NAME)
-        .args(vec!["see-all-available-actions"])
-        .output()?;
+    decktricks!["see-all-available-actions"]?;
+    Ok(())
+}
+
+#[test]
+fn broken_command_gives_error() -> Result<(), DynamicError> {
+    let res = decktricks!["JFKLDSJFDOISNFOIS"];
+    assert!(res.is_err());
     Ok(())
 }
 
@@ -26,27 +51,101 @@ fn can_run_see_all_available_actions() -> Result<(), DynamicError> {
 fn time_see_all_available_actions() -> Result<(), DynamicError> {
     let see_all_max_time = Duration::from_millis(100);
     let start = Instant::now();
-    Command::new(BINARY_NAME)
-        .args(vec!["see-all-available-actions"])
-        .output()?;
+    decktricks!["see-all-available-actions"]?;
     let time_taken = start.elapsed();
     if time_taken.gt(&see_all_max_time) {
-        panic!("ERROR: `see-all-available-actions` took too long! Taken: {:?} / Max: {:?}", time_taken, see_all_max_time);
+        panic!(
+            "ERROR: `see-all-available-actions` took too long! Taken: {:?} / Max: {:?}",
+            time_taken, see_all_max_time
+        );
     }
     Ok(())
 }
 
+// Run a "echo HARBLGARBL" through simple-command and make sure
+// it returns successfully and doesn't have any chatty stderr
 #[test]
 fn simple_command_harblgarbl() -> Result<(), DynamicError> {
     let output = Command::new(BINARY_NAME)
-        .args(vec!["-c", "tests/test_config.json", "run", "print-HARBLGARBL"])
+        .args(vec![
+            "-c",
+            "tests/test_config.json",
+            "run",
+            "print-HARBLGARBL",
+        ])
         .output()?;
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert_eq!("HARBLGARBL", stdout);
+    if !output.status.success() {
+        panic!("{:#?}", output);
+    }
 
     // Ensure we don't have extraneous stderr happening
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert_eq!("", stderr);
-    panic!()
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!("HARBLGARBL", stdout.trim()); // stdout seems to have double newlines here?
+    Ok(())
+}
+
+#[test]
+fn test_config_exclusivity() -> Result<(), DynamicError> {
+    let output = decktricks!["-c", "tests/test_config.json", "see-all-available-actions"]?;
+    assert!(output.contains("print-HARBLGARBL"));
+    assert!(output.contains("run"));
+    assert!(output.contains("info"));
+    assert!(!output.contains("decky"));
+
+    Ok(())
+}
+
+#[test]
+fn broken_config_gives_error() -> Result<(), DynamicError> {
+    let res = decktricks![
+        "-c",
+        "tests/broken_config.json",
+        "see-all-available-actions"
+    ];
+    assert!(res.is_err());
+    Ok(())
+}
+
+#[test]
+fn missing_config_gives_error() -> Result<(), DynamicError> {
+    let res = decktricks![
+        "-c",
+        "tests/jkfldjsaifdosaj.json",
+        "see-all-available-actions"
+    ];
+    assert!(res.is_err());
+    Ok(())
+}
+
+#[test]
+fn help_shown() -> Result<(), DynamicError> {
+    let no_args_res = decktricks![];
+    assert!(no_args_res.is_err());
+    let no_args_text = no_args_res.err().unwrap().to_string();
+    assert!(no_args_text.contains("Commands:"));
+
+    let shortname_res = decktricks!["-h"];
+    assert!(shortname_res.is_ok());
+    let shortname_text = shortname_res?;
+    assert!(shortname_text.contains("Commands:"));
+
+    let longname_res = decktricks!["--help"];
+    assert!(longname_res.is_ok());
+    let longname_text = longname_res?;
+    assert!(longname_text.contains("Commands:"));
+    Ok(())
+}
+
+
+#[test]
+fn bad_arg() -> Result<(), DynamicError> {
+    let badarg_res = decktricks!["--hosidahfodiash"];
+    assert!(badarg_res.is_err());
+    let badarg_text = badarg_res.err().unwrap().to_string();
+    assert!(badarg_text.contains("unexpected argument"));
+    Ok(())
 }
