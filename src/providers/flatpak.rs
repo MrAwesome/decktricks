@@ -140,7 +140,7 @@ impl ProviderActions for FlatpakProvider {
     }
 
     fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
-        unimplemented!()
+        not_implemented("Add to steam is not yet implemented for flatpak!")
     }
 }
 

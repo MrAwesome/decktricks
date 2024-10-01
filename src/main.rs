@@ -15,12 +15,12 @@ fn main() -> DeckResult<()> {
         }
         Err(known_error) => {
             experienced_error = true;
-            error!("{:?}", known_error);
+            error!("{}", known_error);
         }
     });
 
     if experienced_error {
-        Err(KnownError::ErrorDuringRun("Encountered error during run."))
+        std::process::exit(1);
     } else {
         Ok(())
     }

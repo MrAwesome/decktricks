@@ -118,12 +118,8 @@ fn get_all_available_actions(
     // Convert the results from above into a commandline-friendly format
     for (trick_id, maybe_action_ids) in results {
         let mut available: Vec<String> = vec![];
-        for action in maybe_action_ids {
-            let name = serde_json::to_string::<SpecificActionID>(&action)
-                .map_err(KnownError::from)?
-                .trim_matches(|c| c == '"')
-                .into();
-
+        for action_id in maybe_action_ids {
+            let name = String::try_from(&action_id)?;
             available.push(name);
         }
 

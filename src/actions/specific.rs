@@ -1,7 +1,7 @@
 use crate::{enum_with_all_variants, prelude::*};
 use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum SpecificAction {
     Run { id: String },
     Install { id: String },
@@ -27,6 +27,16 @@ enum_with_all_variants!(
         Update,
     }
 );
+
+impl TryFrom<&SpecificActionID> for String {
+    type Error = KnownError;
+    fn try_from(id: &SpecificActionID) -> Result<Self, Self::Error> {
+        Ok(serde_json::to_string_pretty(id)
+            .map_err(KnownError::from)?
+            .trim_matches(|c| c == '"')
+            .into())
+    }
+}
 
 impl From<SpecificAction> for SpecificActionID {
     fn from(action: SpecificAction) -> Self {
@@ -55,7 +65,11 @@ impl SpecificAction {
         }
     }
 
-    pub(crate) fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> DeckResult<ActionSuccess> {
+    pub(crate) fn do_with(
+        &self,
+        loader: &TricksLoader,
+        full_ctx: &FullSystemContext,
+    ) -> DeckResult<ActionSuccess> {
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
         let provider = DynProvider::try_from((trick, full_ctx))?;
@@ -79,7 +93,14 @@ impl SpecificAction {
                 }
             }
         } else {
-            todo!("make this error handling more specific by having each action do its own check, or...?")
+            // TODO: Make these more specific, maybe the checks can return a reason after all
+            //       on the other hand, this is only for the CLI which doesn't really matter.
+            //       Actions within the GUI will only show up if they pass this function.
+            Err(KnownError::ActionGated(format!(
+                "Action '{}' is not possible on trick '{}' right now. Is it installed/running? HINT: (Try 'see-all-available-actions')",
+                String::try_from(&SpecificActionID::from(self.clone()))?,
+                trick.id
+            )))
         }
     }
 }

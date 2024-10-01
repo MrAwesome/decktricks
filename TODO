@@ -15,7 +15,7 @@ Network/Updates
 [] GUI handling updates how?
 
 General
-[] remove all todo!, unimplemented!, and panic!
+[] remove all todo!, and panic!
 [] implement all not_implemented
 [] switch checks over to https://docs.rs/predicates/latest/predicates/
     [] use them in a default trait method in TrickProvider?

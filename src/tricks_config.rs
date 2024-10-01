@@ -79,9 +79,7 @@ impl TricksLoader {
         let maybe_trick = self.tricks.get(maybe_id);
         match maybe_trick {
             Some(trick) => Ok(trick),
-            None => Err(KnownError::UnknownTrickID(err!(
-                "Trick not known: {maybe_id}"
-            ))),
+            None => Err(KnownError::UnknownTrickID(maybe_id.into())),
         }
     }
 

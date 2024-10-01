@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use std::fmt::Display;
 use std::{backtrace::Backtrace, fmt::Debug};
 use urlencoding::encode;
 
@@ -12,6 +13,7 @@ pub enum KnownError {
     DeckyInstall(DynamicError),
     LoggerInitializationFail(log::SetLoggerError),
     ProviderNotImplemented(String),
+    ActionGated(String),
     ActionNotPossible(&'static str),
     ActionNotImplementedYet(&'static str),
     SeriousError(SeriousError),
@@ -20,7 +22,42 @@ pub enum KnownError {
     SystemCommandFailed(std::process::Output),
     ErrorDuringRun(&'static str),
     TestError(String),
-    UnknownTrickID(DynamicError),
+    UnknownTrickID(TrickID),
+}
+
+impl Display for KnownError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ConfigParsing(serde_json_err) => {
+                write!(f, "Error parsing config: {serde_json_err:?}")
+            }
+            Self::ConfigRead(cfg_read_err) => write!(f, "Error reading config: {cfg_read_err:?}"),
+            Self::DeckyInstall(decky_install_err) => {
+                write!(f, "Error installing Decky: {decky_install_err:?}")
+            }
+            Self::LoggerInitializationFail(logger_err) => {
+                write!(f, "Logger initialization failure: {logger_err:?}")
+            }
+            Self::SeriousError(serious_err) => write!(f, "{serious_err}"),
+            Self::SystemCommandParse(sys_parse_err) => {
+                write!(f, "Error parsing system command: {sys_parse_err:?}")
+            }
+            Self::SystemCommandRun(sys_run_err) => {
+                write!(f, "Error running system command: {sys_run_err:?}")
+            }
+            Self::SystemCommandFailed(output) => {
+                write!(f, "System command failed to run: {output:?}")
+            }
+            Self::UnknownTrickID(trick_id) => write!(f, "Unknown trick ID: {trick_id}"),
+            Self::ActionGated(msg) | Self::ProviderNotImplemented(msg) | Self::TestError(msg) => {
+                write!(f, "{msg}")
+            }
+
+            Self::ActionNotImplementedYet(msg)
+            | Self::ActionNotPossible(msg)
+            | Self::ErrorDuringRun(msg) => write!(f, "{msg}"),
+        }
+    }
 }
 
 #[derive(Debug)]
