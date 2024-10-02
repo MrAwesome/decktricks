@@ -7,8 +7,8 @@ pub struct Command {
     #[clap(subcommand)]
     pub action: Action,
 
-    // Anything below this line is global context for that command
-    // -------------------------------------------------------- //
+    // Anything below this line is global context for Actions we run
+    // ---------------------------------------------------------- //
 
     // Filename of an override config
     #[clap(short, long)]
@@ -17,7 +17,6 @@ pub struct Command {
     // Currently unused since pretty_env_logger uses env variables.
     // #[clap(short, long)]
     // pub debug: bool,
-    //
 }
 
 // This is the canonical list of actions we can take on tricks.
@@ -46,10 +45,12 @@ pub enum Action {
     Info {
         id: String,
     },
-    // Note that update can work both globally or for a specific id.
+
+    // Note that "update" can work both globally or for a specific id.
     Update {
         id: Option<String>,
     },
+
     // Items below do not take trick ids, and function differently.
     List {
         #[clap(long)]

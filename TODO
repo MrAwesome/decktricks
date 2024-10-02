@@ -3,10 +3,8 @@ Providers
     [] individual launchers from within this?
 [] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin
     [] especially for Decky
-[] implement basic command provider
-    [] just takes cmd and args in the json, and nothing in code
-    [] .... although, a simple command line would maybe be helpful in game mode?
 [] implement full updates for all providers
+[] system commands - terminal, system-settings
 
 Network/Updates
 [] MOTD
@@ -22,7 +20,6 @@ General
 [] simple zenity frontend to test gui functionality
 [] implement reinstall for flatpak
 [] test in chimeraos and steamfork
-[] grab SystemState once and use it for all checks (each TrickProvider can provide a get_relevant_system_state that it must read from. nicer separation of concerns for sure, and much faster for checks)
 [] fix up global updates - the logic on which providers run them, and how errors/messages are propagated/printed
 
 [] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak

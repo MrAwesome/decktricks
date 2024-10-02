@@ -69,6 +69,28 @@
             "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         },
         {
+            "id": "systemsettings",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "systemsettings"
+            },
+            "icon": "XXX",
+            "display_name": "System Settings (Plasma)",
+            "description": "The default settings app from Desktop Mode.",
+            "always_present_on_steamdeck": true
+        },
+        {
+            "id": "konsole",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "konsole"
+            },
+            "icon": "XXX",
+            "display_name": "Command Line Terminal (Konsole)",
+            "description": "Terminal for typing system commands.",
+            "always_present_on_steamdeck": true
+        },
+        {
             "id": "fake-testing-custom",
             "provider_config": {
                 "type": "custom"

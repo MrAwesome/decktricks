@@ -148,7 +148,7 @@ pub struct Flatpak {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SimpleCommand {
     pub command: String,
-    pub args: Vec<String>,
+    pub args: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

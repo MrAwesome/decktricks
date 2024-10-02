@@ -10,7 +10,7 @@ impl From<SimpleCommand> for SimpleCommandProvider {
     fn from(sc: SimpleCommand) -> Self {
         Self {
             command: sc.command,
-            args: sc.args,
+            args: sc.args.unwrap_or_default(),
         }
     }
 }
