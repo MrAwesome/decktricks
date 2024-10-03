@@ -4,6 +4,9 @@ pub(super) fn get_running_flatpak_applications(runner: &RunnerRc) -> DeckResult<
     // TODO: error handling
     let ps_output = flatpak_ps(runner);
 
+    // XXX
+    println!("========== result: {}", &ps_output.as_ref().unwrap().get_message_or_blank());
+
     match &ps_output {
         Ok(output_obj) => {
             let text = output_obj.get_message_or_blank();

@@ -60,7 +60,7 @@ impl SysCommandResult {
             stderr: b"".to_vec(),
         }
     }
-    pub(crate) fn fake_for_test(code: i32, stderr: &str, stdout: &str) -> std::process::Output {
+    pub(crate) fn fake_for_test(code: i32, stdout: &str, stderr: &str) -> std::process::Output {
         std::process::Output {
             status: std::process::ExitStatus::from_raw(code),
             stdout: stdout.as_bytes().to_vec(),

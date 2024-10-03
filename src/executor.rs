@@ -65,13 +65,20 @@ impl Executor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mockall::*;
 
-    fn get_executor() -> DeckResult<Executor> {
+    fn get_executor(maybe_mock: Option<MockTestActualRunner>) -> DeckResult<Executor> {
         let loader = TricksLoader::from_default_config()?;
 
-        let mut mock = MockTestActualRunner::new();
-        mock.expect_run()
-            .returning(|_| Ok(SysCommandResult::fake_success()));
+        let mock = match maybe_mock {
+            None => {
+                let mut mock = MockTestActualRunner::new();
+                mock.expect_run()
+                    .returning(|_| Ok(SysCommandResult::fake_success()));
+                mock
+            },
+            Some(mock) => mock,
+        };
 
         let runner = Arc::new(mock);
 
@@ -82,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn test_top_level_install() -> DeckResult<()> {
+    fn top_level_install() -> DeckResult<()> {
         let command = Command {
             action: Action::Install {
                 id: "lutris".into(),
@@ -90,7 +97,7 @@ mod tests {
             config: None,
         };
 
-        let executor = get_executor()?;
+        let executor = get_executor(None)?;
         let results = executor.execute(&command.action);
         assert_eq!(results.len(), 1);
         match &results[0] {
@@ -104,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_top_level_incorrect_run() -> DeckResult<()> {
+    fn top_level_incorrect_run() -> DeckResult<()> {
         let command = Command {
             action: Action::Run {
                 id: "FAKE_PACKAGE".into(),
@@ -112,14 +119,69 @@ mod tests {
             config: None,
         };
 
-        let executor = get_executor()?;
+        let executor = get_executor(None)?;
         let results = executor.execute(&command.action);
         assert_eq!(results.len(), 1);
         match &results[0] {
-            Ok(action_success) => panic!("unexpected successful installation for nonexistent package: {action_success:?}"),
+            Ok(action_success) => panic!(
+                "unexpected successful installation for nonexistent package: {action_success:?}"
+            ),
             Err(KnownError::UnknownTrickID(pkg)) => assert_eq!("FAKE_PACKAGE", pkg),
             Err(e) => panic!("unexpected failure in test: {e:?}"),
         }
+        Ok(())
+    }
+
+    #[test]
+    fn top_level_general_list() -> DeckResult<()> {
+        let command = Command {
+            action: Action::List { installed: false },
+            config: None,
+        };
+
+        let executor = get_executor(None)?;
+        let results = executor.execute(&command.action);
+        assert_eq!(results.len(), 1);
+        let res = &results[0];
+        assert!(res
+            .as_ref()
+            .unwrap()
+            .get_message()
+            .unwrap()
+            .lines()
+            .any(|l| l == "protonup-qt"));
+        Ok(())
+    }
+
+    #[test]
+    fn top_level_general_list_installed() -> DeckResult<()> {
+        let command = Command {
+            action: Action::List { installed: true },
+            config: None,
+        };
+
+        let mut mock = MockTestActualRunner::new();
+
+        let arg = SysCommand::new("flatpak", vec!["list", "--app", "--columns=application"]);
+        mock.expect_run()
+            .with(predicate::eq(arg))
+            .returning(|_| Ok(SysCommandResult::fake_for_test(0, "net.lutris.Lutris", "dooker")));
+
+        mock.expect_run()
+            .returning(|_| Ok(SysCommandResult::fake_success()));
+
+        let executor = get_executor(Some(mock))?;
+        let results = executor.execute(&command.action);
+        assert_eq!(results.len(), 1);
+        let res = &results[0];
+        assert!(res
+            .as_ref()
+            .unwrap()
+            .get_message()
+            .unwrap()
+            .lines()
+            .any(|l| l == "lutris"));
+
         Ok(())
     }
 }
