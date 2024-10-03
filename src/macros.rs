@@ -11,6 +11,7 @@ macro_rules! success {
     };
 }
 
+// TODO: refactor this to return Err($enum(Box...etc?
 #[macro_export(local_inner_macros)]
 macro_rules! err {
     ($fmt:literal, $($arg:expr),*) => {

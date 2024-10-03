@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use crate::run_system_command::system_command_ran_successfully as sys_successful;
 use std::fs::File;
 use std::io::copy;
 use std::os::unix::fs::PermissionsExt;
@@ -14,6 +13,7 @@ const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 #[derive(Debug)]
 pub struct DeckyInstallerProvider {
     ctx: DeckySystemContext,
+    //runner: RunnerRc,
 }
 
 impl DeckyInstallerProvider {
@@ -30,15 +30,15 @@ pub(super) struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    pub fn gather() -> DeckResult<Self> {
+    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
-            || sys_successful("systemctl", vec!["is-enabled", "plugin_loader"]),
-            || sys_successful("systemctl", vec!["is-active", "plugin_loader"])
+            || SysCommand::new("systemctl", vec!["is-enabled", "plugin_loader"]).run_with(runner),
+            || SysCommand::new("systemctl", vec!["is-active", "plugin_loader"]).run_with(runner)
         );
 
         Ok(Self {
-            is_installed: is_installed?,
-            is_running: is_running?,
+            is_installed: is_installed?.ran_successfully(),
+            is_running: is_running?.ran_successfully(),
         })
     }
 }

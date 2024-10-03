@@ -1,8 +1,10 @@
+use std::sync::Arc;
 use crate::prelude::*;
 
 pub struct Executor {
     pub loader: TricksLoader,
     pub full_ctx: FullSystemContext,
+    pub runner: RunnerRc,
 }
 
 impl Executor {
@@ -20,14 +22,16 @@ impl Executor {
             None => TricksLoader::from_default_config()?,
         };
 
-        let full_ctx = FullSystemContext::gather()?;
+        let runner = Arc::new(Runner::new());
 
-        Ok(Self { loader, full_ctx })
+        let full_ctx = FullSystemContext::gather_with(&runner)?;
+
+        Ok(Self::with(loader, full_ctx, runner))
     }
 
     #[must_use]
-    pub fn with(loader: TricksLoader, full_ctx: FullSystemContext) -> Self {
-        Self { loader, full_ctx }
+    pub fn with(loader: TricksLoader, full_ctx: FullSystemContext, runner: RunnerRc) -> Self {
+        Self { loader, full_ctx, runner }
     }
 
     // NOTE: if the initial full system check is too slow, you can have Specific check types do the
@@ -40,7 +44,7 @@ impl Executor {
     /// program logic.
     pub fn execute(&self, action: &Action) -> Vec<DeckResult<ActionSuccess>> {
         let typed_action = TypedAction::from(action);
-        typed_action.do_with(&self.loader, &self.full_ctx)
+        typed_action.do_with(&self.loader, &self.full_ctx, &self.runner)
     }
 
     //    pub fn reload_config(&mut self) -> DeckResult<()> {

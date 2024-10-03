@@ -2,7 +2,6 @@ use super::flatpak_helpers::{
     get_installed_flatpak_applications, get_running_flatpak_applications,
 };
 use crate::prelude::*;
-use crate::run_system_command::system_command_output as sys_output;
 
 type FlatpakID = String;
 
@@ -10,12 +9,13 @@ type FlatpakID = String;
 pub(crate) struct FlatpakProvider {
     id: FlatpakID,
     ctx: FlatpakSystemContext,
+    runner: RunnerRc,
 }
 
 impl FlatpakProvider {
-    pub(crate) fn new(flatpak: &Flatpak, ctx: FlatpakSystemContext) -> Self {
+    pub(crate) fn new(flatpak: &Flatpak, ctx: FlatpakSystemContext, runner: RunnerRc) -> Self {
         let id = flatpak.id.clone();
-        Self { id, ctx }
+        Self { id, ctx, runner }
     }
 }
 
@@ -27,11 +27,10 @@ pub(crate) struct FlatpakSystemContext {
 
 impl FlatpakSystemContext {
     // TODO: parallelize this
-    pub(crate) fn gather() -> DeckResult<Self> {
+    pub(crate) fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
         let (running, installed) = join_all!(
-            get_running_flatpak_applications,
-            get_installed_flatpak_applications
-        );
+            || get_running_flatpak_applications(runner), 
+            || get_installed_flatpak_applications(runner));
 
         Ok(Self {
             running: running?,
@@ -52,28 +51,37 @@ impl FlatpakProvider {
     }
 }
 
-#[cfg(not(test))]
 impl FlatpakProvider {
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
-        sys_output("flatpak", vec!["run", &self.id])
+        SysCommand::new("flatpak", vec!["run", &self.id])
+            .run_with(&self.runner)?
+            .as_success()
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
-        sys_output("flatpak", vec!["install", "-y", &self.id])
+        SysCommand::new("flatpak", vec!["install", "-y", &self.id])
+            .run_with(&self.runner)?
+            .as_success()
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        sys_output("flatpak", vec!["uninstall", "-y", &self.id])
+        SysCommand::new("flatpak", vec!["uninstall", "-y", &self.id])
+            .run_with(&self.runner)?
+            .as_success()
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
-        sys_output("flatpak", vec!["kill", &self.id])
+        SysCommand::new("flatpak", vec!["kill", &self.id])
+            .run_with(&self.runner)?
+            .as_success()
     }
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
-        sys_output("flatpak", vec!["update", &self.id])
+        SysCommand::new("flatpak", vec!["update", &self.id])
+            .run_with(&self.runner)?
+            .as_success()
     }
 }
 
@@ -145,48 +153,33 @@ impl ProviderActions for FlatpakProvider {
 }
 
 #[derive(Debug)]
-pub(crate) struct FlatpakGeneralProvider;
+pub(crate) struct FlatpakGeneralProvider {
+    runner: RunnerRc,
+}
+
+impl FlatpakGeneralProvider {
+    pub(crate) fn new(runner: RunnerRc) -> Self {
+        Self { runner }
+    }
+}
+
 impl GeneralProvider for FlatpakGeneralProvider {
     fn update_all(&self) -> DeckResult<ActionSuccess> {
-        // IMPORTANT: for flatpak update -y, you MUST run it twice to remove unused runtimes.
-        sys_output("flatpak", vec!["update", "-y"])?;
-        sys_output("flatpak", vec!["update", "-y"])?;
+        // TODO: when running in parallel, collect errors for each portion
+
+        // IMPORTANT: for global flatpak update -y, you MUST run it twice to remove unused runtimes.
+        SysCommand::new("flatpak", vec!["update", "-y"]).run_with(&self.runner)?;
+        SysCommand::new("flatpak", vec!["update", "-y"]).run_with(&self.runner)?;
 
         success!("Flatpak update run successfully!")
     }
 }
 
 #[cfg(test)]
-impl FlatpakProvider {
-    #[allow(clippy::unused_self)]
-    fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
-        success!("flatpak run success in test")
-    }
-
-    #[allow(clippy::unused_self)]
-    fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
-        success!("flatpak kill success in test")
-    }
-
-    #[allow(clippy::unused_self)]
-    fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
-        success!("flatpak update success in test")
-    }
-
-    #[allow(clippy::unused_self)]
-    fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
-        success!("flatpak install success in test")
-    }
-
-    #[allow(clippy::unused_self)]
-    fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        success!("flatpak uninstall success in test")
-    }
-}
-
-#[cfg(test)]
 mod tests {
-    use super::*;
+    use std::sync::Arc;
+use super::*;
+    use crate::run_system_command::MockTestActualRunner;
 
     impl Flatpak {
         pub(crate) fn new<S: Into<String>>(id: S) -> Self {
@@ -201,46 +194,54 @@ mod tests {
         }
     }
 
-    fn fprov(id: &str) -> FlatpakProvider {
+    fn fpak_prov(id: &str, runner: RunnerRc) -> FlatpakProvider {
         let ctx = get_system_context();
-        FlatpakProvider::new(&Flatpak::new(id), ctx)
+        FlatpakProvider::new(&Flatpak::new(id), ctx, runner)
     }
 
     #[allow(clippy::unnecessary_wraps)]
     #[test]
     fn test_new_flatpak_provider() -> DeckResult<()> {
-        let provider = fprov("test_pkg");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("test_pkg", runner);
         assert_eq!(provider.id, "test_pkg");
         Ok(())
     }
 
     #[test]
     fn test_is_pkg_installed_true() {
-        let provider = fprov("installed_package");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("installed_package", runner);
         assert!(provider.is_installed());
-        let provider = fprov("package_not_installed");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("package_not_installed", runner);
         assert!(!provider.is_installed());
     }
 
     #[test]
     fn test_installable() {
-        let provider = fprov("RANDOM_NAME_FROM_NOWHERE");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("RANDOM_NAME_FROM_NOWHERE", runner);
         assert!(provider.is_installable());
     }
 
     #[test]
     fn test_updateable() {
-        let provider = fprov("installed_package");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("installed_package", runner);
         assert!(provider.is_updateable());
-        let provider = fprov("test_pkg_not_installed");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("test_pkg_not_installed", runner);
         assert!(!provider.is_updateable());
     }
 
     #[test]
     fn test_is_pkg_running() {
-        let provider = fprov("running_package");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("running_package", runner);
         assert!(provider.is_running());
-        let provider = fprov("not_running_package");
+        let runner = Arc::new(MockTestActualRunner::new());
+        let provider = fpak_prov("not_running_package", runner);
         assert!(!provider.is_running());
     }
 }

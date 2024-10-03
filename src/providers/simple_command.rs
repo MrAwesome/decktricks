@@ -4,23 +4,15 @@ use crate::prelude::*;
 pub struct SimpleCommandProvider {
     pub command: String,
     pub args: Vec<String>,
+    pub runner: RunnerRc,
 }
 
-impl From<SimpleCommand> for SimpleCommandProvider {
-    fn from(sc: SimpleCommand) -> Self {
-        Self {
-            command: sc.command,
-            args: sc.args.unwrap_or_default(),
-        }
-    }
-}
-
-#[cfg(test)]
 impl SimpleCommandProvider {
-    fn new<S: Into<String>>(command: S, args: Vec<S>) -> Self {
+    pub(crate) fn new<S: Into<String>>(command: S, args: Vec<S>, runner: RunnerRc) -> Self {
         Self {
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),
+            runner,
         }
     }
 }
@@ -72,17 +64,11 @@ impl ProviderActions for SimpleCommandProvider {
         not_possible("Simple commands cannot be installed!")
     }
 
-    #[cfg(not(test))]
     fn run(&self) -> DeckResult<ActionSuccess> {
-        crate::run_system_command::system_command_output(
-            &self.command,
-            self.args.iter().map(AsRef::as_ref).collect(),
-        )
-    }
-
-    #[cfg(test)]
-    fn run(&self) -> DeckResult<ActionSuccess> {
-        Ok(ActionSuccess::success(Some("Success in test.")))
+        use crate::run_system_command::{SysCommand, SysCommandResultChecker, SysCommandRunner};
+        SysCommand::new(&self.command, self.args.iter().collect())
+            .run_with(&self.runner)?
+            .as_success()
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
@@ -108,10 +94,12 @@ impl GeneralProvider for SimpleCommandProvider {
 mod tests {
     use super::SimpleCommandProvider;
     use crate::prelude::*;
+    use crate::run_system_command::MockTestActualRunner;
 
     #[test]
     fn basic_expectations() {
-        let sc = SimpleCommandProvider::new("echo", vec!["lol"]);
+        let runner = Box::new(MockTestActualRunner::new());
+        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner);
         assert!(!sc.is_installable());
         assert!(!sc.is_installed());
         assert!(sc.is_runnable());
@@ -121,10 +109,11 @@ mod tests {
 
     #[test]
     fn expected_failures() {
-        let sc = SimpleCommandProvider::new("echo", vec!["lol"]);
+        let runner = Box::new(MockTestActualRunner::new());
+        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner);
         // TODO: generalize these to be default implementations?
 
-        assert!(matches!(sc.run(), Ok(ActionSuccess{..})));
+        assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));
         assert!(matches!(
             sc.uninstall(),
             Err(KnownError::ActionNotPossible(_))
@@ -133,7 +122,10 @@ mod tests {
             sc.install(),
             Err(KnownError::ActionNotPossible(_))
         ));
-        assert!(matches!(sc.kill(), Err(KnownError::ActionNotImplementedYet(_))));
+        assert!(matches!(
+            sc.kill(),
+            Err(KnownError::ActionNotImplementedYet(_))
+        ));
         assert!(matches!(sc.update(), Err(KnownError::ActionNotPossible(_))));
         assert!(matches!(
             sc.add_to_steam(AddToSteamContext::default()),

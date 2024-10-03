@@ -27,9 +27,11 @@ impl FullSystemContext {
     /// # Errors
     ///
     /// Can return system errors from trying to gather system information
-    pub fn gather() -> DeckResult<Self> {
+    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
         let (decky_ctx, flatpak_ctx) =
-            join_all!(DeckySystemContext::gather, FlatpakSystemContext::gather);
+            join_all!(|| DeckySystemContext::gather_with(runner), || {
+                FlatpakSystemContext::gather_with(runner)
+            });
 
         Ok(Self {
             decky_ctx: decky_ctx?,
@@ -38,19 +40,26 @@ impl FullSystemContext {
     }
 }
 
-pub(crate) type DynProvider = Box<dyn TrickProvider>;
-impl TryFrom<(&Trick, &FullSystemContext)> for DynProvider {
+pub(crate) type DynProvider<'a> = Box<dyn TrickProvider>;
+impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
     type Error = KnownError;
 
-    fn try_from((trick, full_ctx): (&Trick, &FullSystemContext)) -> Result<Self, Self::Error> {
+    fn try_from(
+        (trick, full_ctx, runner): (&Trick, &FullSystemContext, &RunnerRc),
+    ) -> Result<Self, Self::Error> {
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(FlatpakProvider::new(
                 flatpak,
                 full_ctx.flatpak_ctx.clone(),
+                runner.clone(),
             ))),
-            ProviderConfig::SimpleCommand(simple_command) => Ok(Box::new(
-                SimpleCommandProvider::from(simple_command.clone()),
-            )),
+            ProviderConfig::SimpleCommand(simple_command) => {
+                Ok(Box::new(SimpleCommandProvider::new(
+                    simple_command.command.clone(),
+                    simple_command.args.clone().unwrap_or_default(),
+                    runner.clone(),
+                )))
+            }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
                 DeckyInstallerProvider::new(full_ctx.decky_ctx.clone()),
             )),
@@ -66,9 +75,7 @@ fn provider_not_implemented(trick: &Trick) -> DeckResult<DynProvider> {
     )))
 }
 
-pub(crate) trait TrickProvider:
-    ProviderChecks + ProviderActions + Debug + Sync
-{
+pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {
     fn get_available_actions(&self) -> Vec<SpecificActionID> {
         let all_variants = SpecificActionID::all_variants();
 

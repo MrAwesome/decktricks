@@ -32,29 +32,18 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    pub(crate) fn do_with(&self, loader: &TricksLoader, full_ctx: &FullSystemContext) -> Vec<DeckResult<ActionSuccess>> {
+    pub(crate) fn do_with(
+        &self,
+        loader: &TricksLoader,
+        full_ctx: &FullSystemContext,
+        runner: &RunnerRc,
+    ) -> Vec<DeckResult<ActionSuccess>> {
         match self {
-            Self::General(general_action) => general_action.do_with(loader, full_ctx),
-            Self::Specific(specific_action) => vec![specific_action.do_with(loader, full_ctx)],
+            Self::General(general_action) => general_action.do_with(loader, full_ctx, runner),
+            Self::Specific(specific_action) => vec![specific_action.do_with(loader, full_ctx, runner)],
         }
     }
 }
-
-//pub(crate) struct CheckFailure {
-//    reason: String,
-//}
-//
-//impl CheckFailure {
-//    fn new(reason: String) -> Self {
-//        Self { reason }
-//    }
-//}
-//
-//
-//pub(crate) enum CheckOutcome {
-//    Success,
-//    Failure(CheckFailure),
-//}
 
 pub struct ActionSuccess {
     message: Option<String>,

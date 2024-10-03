@@ -3,6 +3,8 @@ pub use crate::command::*;
 pub use crate::executor::*;
 pub(crate) use crate::tricks_config::*;
 
+pub(crate) use crate::run_system_command::*;
+
 pub(crate) use crate::err;
 pub(crate) use crate::success;
 pub(crate) use crate::join_all;

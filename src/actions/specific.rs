@@ -69,10 +69,11 @@ impl SpecificAction {
         &self,
         loader: &TricksLoader,
         full_ctx: &FullSystemContext,
+        runner: &RunnerRc,
     ) -> DeckResult<ActionSuccess> {
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
-        let provider = DynProvider::try_from((trick, full_ctx))?;
+        let provider = DynProvider::try_from((trick, full_ctx, runner))?;
 
         if provider.can(self) {
             match self {

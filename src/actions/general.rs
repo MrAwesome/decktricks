@@ -15,6 +15,7 @@ impl GeneralAction {
         &self,
         loader: &TricksLoader,
         full_ctx: &FullSystemContext,
+        runner: &RunnerRc,
     ) -> Vec<DeckResult<ActionSuccess>> {
         match self {
             Self::List { installed } => {
@@ -27,7 +28,7 @@ impl GeneralAction {
                     true => tricks
                         .filter(|name_and_trick| {
                             let trick = name_and_trick.1;
-                            let provider = DynProvider::try_from((trick, full_ctx));
+                            let provider = DynProvider::try_from((trick, full_ctx, runner));
                             provider.is_ok_and(|t| t.is_installed())
                         })
                         .map(|name_and_trick| name_and_trick.0.as_str())
@@ -47,7 +48,7 @@ impl GeneralAction {
                 // decktricks update -> decktricks update_all
 
                 let general_providers: Vec<Box<dyn GeneralProvider>> = vec![
-                    Box::new(FlatpakGeneralProvider),
+                    Box::new(FlatpakGeneralProvider::new(runner.clone())),
                     Box::new(DeckyInstallerGeneralProvider),
                 ];
                 let mut results: Vec<DeckResult<ActionSuccess>> = general_providers
@@ -65,7 +66,7 @@ impl GeneralAction {
                 results
             }
             Self::SeeAllAvailableActions => {
-                vec![get_all_available_actions(loader, full_ctx)]
+                vec![get_all_available_actions(loader, full_ctx, runner)]
             }
         }
     }
@@ -74,12 +75,13 @@ impl GeneralAction {
 fn get_all_available_actions_for_all_tricks(
     loader: &TricksLoader,
     full_ctx: &FullSystemContext,
+    runner: &RunnerRc,
 ) -> DeckResult<Vec<(TrickID, Vec<SpecificActionID>)>> {
     let tricks = loader.get_hashmap();
 
     let mut name_to_actions = vec![];
     for (id, trick) in tricks {
-        let option_actions = get_all_available_actions_for_trick(trick, full_ctx)?;
+        let option_actions = get_all_available_actions_for_trick(trick, full_ctx, runner)?;
 
         if let Some(actions) = option_actions {
             name_to_actions.push((id.clone(), actions));
@@ -92,8 +94,9 @@ fn get_all_available_actions_for_all_tricks(
 fn get_all_available_actions_for_trick(
     trick: &Trick,
     full_ctx: &FullSystemContext,
+    runner: &RunnerRc,
 ) -> DeckResult<Option<Vec<SpecificActionID>>> {
-    let maybe_provider = DynProvider::try_from((trick, full_ctx));
+    let maybe_provider = DynProvider::try_from((trick, full_ctx, runner));
 
     match maybe_provider {
         Err(KnownError::ProviderNotImplemented(_)) => {
@@ -111,9 +114,10 @@ fn get_all_available_actions_for_trick(
 fn get_all_available_actions(
     loader: &TricksLoader,
     full_ctx: &FullSystemContext,
+    runner: &RunnerRc,
 ) -> DeckResult<ActionSuccess> {
     let mut all_available = vec![];
-    let results = get_all_available_actions_for_all_tricks(loader, full_ctx)?;
+    let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner)?;
 
     // Convert the results from above into a commandline-friendly format
     for (trick_id, maybe_action_ids) in results {
