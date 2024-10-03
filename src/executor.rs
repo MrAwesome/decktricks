@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use crate::prelude::*;
+use std::sync::Arc;
 
 pub struct Executor {
     pub loader: TricksLoader,
@@ -31,7 +31,11 @@ impl Executor {
 
     #[must_use]
     pub fn with(loader: TricksLoader, full_ctx: FullSystemContext, runner: RunnerRc) -> Self {
-        Self { loader, full_ctx, runner }
+        Self {
+            loader,
+            full_ctx,
+            runner,
+        }
     }
 
     // NOTE: if the initial full system check is too slow, you can have Specific check types do the
@@ -56,4 +60,66 @@ impl Executor {
     //        self.full_ctx = FullSystemContext::gather()?;
     //        Ok(())
     //    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_executor() -> DeckResult<Executor> {
+        let loader = TricksLoader::from_default_config()?;
+
+        let mut mock = MockTestActualRunner::new();
+        mock.expect_run()
+            .returning(|_| Ok(SysCommandResult::fake_success()));
+
+        let runner = Arc::new(mock);
+
+        let ctx = FullSystemContext::gather_with(&runner)?;
+
+        let executor = Executor::with(loader, ctx, runner);
+        Ok(executor)
+    }
+
+    #[test]
+    fn test_top_level_install() -> DeckResult<()> {
+        let command = Command {
+            action: Action::Install {
+                id: "lutris".into(),
+            },
+            config: None,
+        };
+
+        let executor = get_executor()?;
+        let results = executor.execute(&command.action);
+        assert_eq!(results.len(), 1);
+        match &results[0] {
+            Ok(action_success) => assert_eq!(
+                "\"net.lutris.Lutris\" installed successfully.",
+                action_success.get_message().unwrap_or_default()
+            ),
+            Err(e) => panic!("failed installation in test: {e:?}"),
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_top_level_incorrect_run() -> DeckResult<()> {
+        let command = Command {
+            action: Action::Run {
+                id: "FAKE_PACKAGE".into(),
+            },
+            config: None,
+        };
+
+        let executor = get_executor()?;
+        let results = executor.execute(&command.action);
+        assert_eq!(results.len(), 1);
+        match &results[0] {
+            Ok(action_success) => panic!("unexpected successful installation for nonexistent package: {action_success:?}"),
+            Err(KnownError::UnknownTrickID(pkg)) => assert_eq!("FAKE_PACKAGE", pkg),
+            Err(e) => panic!("unexpected failure in test: {e:?}"),
+        }
+        Ok(())
+    }
 }

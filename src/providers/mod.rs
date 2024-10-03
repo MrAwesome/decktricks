@@ -17,6 +17,7 @@ pub(super) const fn not_implemented(reason: &'static str) -> DeckResult<ActionSu
     Err(KnownError::ActionNotImplementedYet(reason))
 }
 
+// TODO: test
 pub struct FullSystemContext {
     flatpak_ctx: FlatpakSystemContext,
     decky_ctx: DeckySystemContext,
