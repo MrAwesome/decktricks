@@ -1,5 +1,8 @@
-use std::sync::Arc;
 use crate::prelude::*;
+use std::sync::Arc;
+
+#[cfg(test)]
+use std::os::unix::process::ExitStatusExt;
 
 #[cfg(test)]
 pub type Runner = MockTestActualRunner;
@@ -8,7 +11,7 @@ pub type Runner = LiveActualRunner;
 
 pub type RunnerRc = Arc<Runner>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SysCommand {
     pub cmd: String,
     pub args: Vec<String>,
@@ -46,6 +49,24 @@ impl SysCommandRunner for SysCommand {
 pub(crate) struct SysCommandResult {
     sys_command: SysCommand,
     raw_output: std::process::Output,
+}
+
+#[cfg(test)]
+impl SysCommandResult {
+    pub(crate) fn fake_success() -> std::process::Output {
+        std::process::Output {
+            status: std::process::ExitStatus::from_raw(0),
+            stdout: b"".to_vec(),
+            stderr: b"".to_vec(),
+        }
+    }
+    pub(crate) fn fake_for_test(code: i32, stderr: &str, stdout: &str) -> std::process::Output {
+        std::process::Output {
+            status: std::process::ExitStatus::from_raw(code),
+            stdout: stdout.as_bytes().to_vec(),
+            stderr: stderr.as_bytes().to_vec(),
+        }
+    }
 }
 
 pub(crate) trait SysCommandResultChecker {
@@ -94,7 +115,7 @@ use mockall::mock;
 #[cfg(test)]
 mock! {
     #[derive(Debug, Clone, Copy)]
-    pub(crate) TestActualRunner {}
+    pub TestActualRunner {}
 
     impl ActualRunner for TestActualRunner {
         fn run(&self, sys_command: &SysCommand) -> DeckResult<std::process::Output>;
@@ -113,14 +134,15 @@ impl LiveActualRunner {
 }
 #[cfg(not(test))]
 impl ActualRunner for LiveActualRunner {
+    #[cfg(test)]
+    fn run(&self, sys_command: &SysCommand) -> DeckResult<std::process::Output> {
+        panic!("Attempted to run system command {:?} in test!", sys_command)
+    }
+
+    #[cfg(not(test))]
     fn run(&self, sys_command: &SysCommand) -> DeckResult<std::process::Output> {
         let cmd = &sys_command.cmd;
         let args = &sys_command.args;
-        assert!(
-            !am_in_test(),
-            "Attempted to run system command {:?} in test!",
-            (cmd, args)
-        );
 
         std::process::Command::new(cmd)
             .args(args)

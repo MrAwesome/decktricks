@@ -95,10 +95,11 @@ mod tests {
     use super::SimpleCommandProvider;
     use crate::prelude::*;
     use crate::run_system_command::MockTestActualRunner;
+    use std::sync::Arc;
 
     #[test]
     fn basic_expectations() {
-        let runner = Box::new(MockTestActualRunner::new());
+        let runner = Arc::new(MockTestActualRunner::new());
         let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner);
         assert!(!sc.is_installable());
         assert!(!sc.is_installed());
@@ -109,7 +110,12 @@ mod tests {
 
     #[test]
     fn expected_failures() {
-        let runner = Box::new(MockTestActualRunner::new());
+        let mut mock = MockTestActualRunner::new();
+        mock.expect_run()
+            .times(1)
+            .returning(|_| Ok(SysCommandResult::fake_success()));
+
+        let runner = Arc::new(mock);
         let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner);
         // TODO: generalize these to be default implementations?
 

@@ -12,13 +12,6 @@ pub(crate) use crate::join_all;
 #[allow(unused_imports)]
 pub use log::{info, error, warn, debug};
 
-pub(crate) const fn am_in_test() -> bool {
-    #[cfg(test)]
-    return true;
-    #[cfg(not(test))]
-    return false;
-}
-
 pub use crate::errors::*;
 pub use crate::providers::*;
 

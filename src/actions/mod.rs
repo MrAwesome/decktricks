@@ -45,6 +45,7 @@ impl TypedAction {
     }
 }
 
+#[derive(Debug)]
 pub struct ActionSuccess {
     message: Option<String>,
 }

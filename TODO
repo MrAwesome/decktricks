@@ -13,7 +13,7 @@ Network/Updates
 [] GUI handling updates how?
 
 General
-[] unit test *all* uses of syscommand - there should be no cfg(test) remaining
+[] using new command runner, add unit tests for general, gather, each provider, and top-level calls
 [] remove all todo!, and panic!
 [] implement all not_implemented
 [] switch checks over to https://docs.rs/predicates/latest/predicates/
