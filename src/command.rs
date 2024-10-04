@@ -56,5 +56,8 @@ pub enum Action {
         #[clap(long)]
         installed: bool,
     },
-    SeeAllAvailableActions,
+    SeeAllAvailableActions {
+        #[clap(long)]
+        json: bool,
+    }
 }

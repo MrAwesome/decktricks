@@ -7,7 +7,7 @@ use rayon::prelude::*;
 pub(crate) enum GeneralAction {
     List { installed: bool },
     UpdateAll,
-    SeeAllAvailableActions,
+    SeeAllAvailableActions { json: bool },
 }
 
 impl GeneralAction {
@@ -65,8 +65,8 @@ impl GeneralAction {
 
                 results
             }
-            Self::SeeAllAvailableActions => {
-                vec![get_all_available_actions(loader, full_ctx, runner)]
+            Self::SeeAllAvailableActions { json } => {
+                vec![get_all_available_actions(loader, full_ctx, runner, *json)]
             }
         }
     }
@@ -115,23 +115,29 @@ fn get_all_available_actions(
     loader: &TricksLoader,
     full_ctx: &FullSystemContext,
     runner: &RunnerRc,
+    json: bool,
 ) -> DeckResult<ActionSuccess> {
     let mut all_available = vec![];
     let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner)?;
 
-    // Convert the results from above into a commandline-friendly format
-    for (trick_id, maybe_action_ids) in results {
-        let mut available: Vec<String> = vec![];
-        for action_id in maybe_action_ids {
-            let name = String::try_from(&action_id)?;
-            available.push(name);
+    // TODO: unit test this
+    let output = if json {
+        serde_json::to_string(&results).map_err(KnownError::from)?
+    } else {
+        // Convert the results from above into a commandline-friendly format
+        for (trick_id, maybe_action_ids) in results {
+            let mut available: Vec<String> = vec![];
+            for action_id in maybe_action_ids {
+                let name = String::try_from(&action_id)?;
+                available.push(name);
+            }
+
+            let formatted = format!("{}:\n  {}", trick_id.clone(), available.join("\n  "));
+            all_available.push(formatted);
         }
 
-        let formatted = format!("{}:\n  {}", trick_id.clone(), available.join("\n  "));
-        all_available.push(formatted);
-    }
-
-    all_available.sort();
-    let output = all_available.join("\n");
+        all_available.sort();
+        all_available.join("\n")
+    };
     success!(output)
 }

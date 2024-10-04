@@ -26,7 +26,9 @@ impl From<&Action> for TypedAction {
 
             Action::Update { id: None } => Self::General(GeneralAction::UpdateAll {}),
             Action::List { installed } => Self::General(GeneralAction::List { installed }),
-            Action::SeeAllAvailableActions => Self::General(GeneralAction::SeeAllAvailableActions),
+            Action::SeeAllAvailableActions { json } => {
+                Self::General(GeneralAction::SeeAllAvailableActions { json })
+            }
         }
     }
 }
@@ -40,7 +42,9 @@ impl TypedAction {
     ) -> Vec<DeckResult<ActionSuccess>> {
         match self {
             Self::General(general_action) => general_action.do_with(loader, full_ctx, runner),
-            Self::Specific(specific_action) => vec![specific_action.do_with(loader, full_ctx, runner)],
+            Self::Specific(specific_action) => {
+                vec![specific_action.do_with(loader, full_ctx, runner)]
+            }
         }
     }
 }
