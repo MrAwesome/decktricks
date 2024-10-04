@@ -98,7 +98,7 @@ impl SpecificAction {
             //       on the other hand, this is only for the CLI which doesn't really matter.
             //       Actions within the GUI will only show up if they pass this function.
             Err(KnownError::ActionGated(format!(
-                "Action '{}' is not possible on trick '{}' right now. Is it installed/running? HINT: (Try 'see-all-available-actions')",
+                "Action '{}' is not possible on trick '{}' right now. Is it installed/running? HINT: (Try 'actions')",
                 String::try_from(&SpecificActionID::from(self.clone()))?,
                 trick.id
             )))

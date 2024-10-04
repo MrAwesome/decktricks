@@ -35,7 +35,7 @@ pub(crate) fn run_cli_with_args(args: Vec<&str>) -> CliResult {
 // NOTE: running this with the default config as another layer of validation
 #[test]
 fn can_run_see_all_available_actions() -> Result<(), DynamicError> {
-    decktricks!["see-all-available-actions"]?;
+    decktricks!["actions"]?;
     Ok(())
 }
 
@@ -51,11 +51,11 @@ fn broken_command_gives_error() -> Result<(), DynamicError> {
 fn time_see_all_available_actions() -> Result<(), DynamicError> {
     let see_all_max_time = Duration::from_millis(100);
     let start = Instant::now();
-    decktricks!["see-all-available-actions"]?;
+    decktricks!["actions"]?;
     let time_taken = start.elapsed();
     if time_taken.gt(&see_all_max_time) {
         panic!(
-            "ERROR: `see-all-available-actions` took too long! Taken: {:?} / Max: {:?}",
+            "ERROR: `actions` took too long! Taken: {:?} / Max: {:?}",
             time_taken, see_all_max_time
         );
     }
@@ -90,7 +90,7 @@ fn simple_command_harblgarbl() -> Result<(), DynamicError> {
 
 #[test]
 fn test_config_exclusivity() -> Result<(), DynamicError> {
-    let output = decktricks!["-c", "tests/test_config.json", "see-all-available-actions"]?;
+    let output = decktricks!["-c", "tests/test_config.json", "actions"]?;
     assert!(output.contains("print-HARBLGARBL"));
     assert!(output.contains("run"));
     assert!(output.contains("info"));
@@ -104,7 +104,7 @@ fn broken_config_gives_error() -> Result<(), DynamicError> {
     let res = decktricks![
         "-c",
         "tests/broken_config.json",
-        "see-all-available-actions"
+        "actions"
     ];
     assert!(res.is_err());
     Ok(())
@@ -115,7 +115,7 @@ fn missing_config_gives_error() -> Result<(), DynamicError> {
     let res = decktricks![
         "-c",
         "tests/jkfldjsaifdosaj.json",
-        "see-all-available-actions"
+        "actions"
     ];
     assert!(res.is_err());
     Ok(())

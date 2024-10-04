@@ -13,7 +13,6 @@ pub struct Command {
     // Filename of an override config
     #[clap(short, long)]
     pub config: Option<String>,
-
     // Currently unused since pretty_env_logger uses env variables.
     // #[clap(short, long)]
     // pub debug: bool,
@@ -56,8 +55,9 @@ pub enum Action {
         #[clap(long)]
         installed: bool,
     },
-    SeeAllAvailableActions {
+    Actions {
+        id: Option<String>,
         #[clap(long)]
         json: bool,
-    }
+    },
 }

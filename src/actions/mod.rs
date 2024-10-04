@@ -26,8 +26,8 @@ impl From<&Action> for TypedAction {
 
             Action::Update { id: None } => Self::General(GeneralAction::UpdateAll {}),
             Action::List { installed } => Self::General(GeneralAction::List { installed }),
-            Action::SeeAllAvailableActions { json } => {
-                Self::General(GeneralAction::SeeAllAvailableActions { json })
+            Action::Actions { id, json } => {
+                Self::General(GeneralAction::Actions { id, json })
             }
         }
     }

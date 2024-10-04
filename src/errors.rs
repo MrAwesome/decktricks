@@ -8,19 +8,20 @@ pub type DynamicError = Box<dyn std::error::Error + Send + Sync>;
 
 #[derive(Debug)]
 pub enum KnownError {
+    ActionGated(String),
+    ActionNotImplementedYet(&'static str),
+    ActionNotPossible(&'static str),
     ConfigParsing(serde_json::Error),
     ConfigRead(std::io::Error),
     DeckyInstall(DynamicError),
+    ErrorDuringRun(&'static str),
     LoggerInitializationFail(log::SetLoggerError),
+    NoAvailableActions(TrickID),
     ProviderNotImplemented(String),
-    ActionGated(String),
-    ActionNotPossible(&'static str),
-    ActionNotImplementedYet(&'static str),
     SeriousError(SeriousError),
+    SystemCommandFailed(std::process::Output),
     SystemCommandParse(DynamicError),
     SystemCommandRun(std::io::Error),
-    SystemCommandFailed(std::process::Output),
-    ErrorDuringRun(&'static str),
     TestError(String),
     UnknownTrickID(TrickID),
 }
@@ -49,6 +50,10 @@ impl Display for KnownError {
                 write!(f, "System command failed to run: {output:?}")
             }
             Self::UnknownTrickID(trick_id) => write!(f, "Unknown trick ID: {trick_id}"),
+            Self::NoAvailableActions(trick_id) => write!(
+                f,
+                "No actions available for \"{trick_id}\". This is almost certainly a bug."
+            ),
             Self::ActionGated(msg) | Self::ProviderNotImplemented(msg) | Self::TestError(msg) => {
                 write!(f, "{msg}")
             }

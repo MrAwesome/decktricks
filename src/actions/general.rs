@@ -6,8 +6,8 @@ use rayon::prelude::*;
 #[derive(Debug)]
 pub(crate) enum GeneralAction {
     List { installed: bool },
+    Actions { id: Option<String>, json: bool },
     UpdateAll,
-    SeeAllAvailableActions { json: bool },
 }
 
 impl GeneralAction {
@@ -65,8 +65,8 @@ impl GeneralAction {
 
                 results
             }
-            Self::SeeAllAvailableActions { json } => {
-                vec![get_all_available_actions(loader, full_ctx, runner, *json)]
+            Self::Actions { id, json } => {
+                vec![get_all_available_actions(loader, full_ctx, runner, id, *json)]
             }
         }
     }
@@ -81,9 +81,9 @@ fn get_all_available_actions_for_all_tricks(
 
     let mut name_to_actions = vec![];
     for (id, trick) in tricks {
-        let option_actions = get_all_available_actions_for_trick(trick, full_ctx, runner)?;
+        let maybe_actions = get_all_available_actions_for_trick(trick, full_ctx, runner)?;
 
-        if let Some(actions) = option_actions {
+        if let Some(actions) = maybe_actions {
             name_to_actions.push((id.clone(), actions));
         }
     }
@@ -115,29 +115,53 @@ fn get_all_available_actions(
     loader: &TricksLoader,
     full_ctx: &FullSystemContext,
     runner: &RunnerRc,
+    maybe_id: &Option<TrickID>,
     json: bool,
 ) -> DeckResult<ActionSuccess> {
-    let mut all_available = vec![];
-    let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner)?;
 
-    // TODO: unit test this
-    let output = if json {
-        serde_json::to_string(&results).map_err(KnownError::from)?
-    } else {
-        // Convert the results from above into a commandline-friendly format
-        for (trick_id, maybe_action_ids) in results {
-            let mut available: Vec<String> = vec![];
-            for action_id in maybe_action_ids {
-                let name = String::try_from(&action_id)?;
-                available.push(name);
+    if let Some(id) = maybe_id {
+        let trick = loader.get_trick(id.as_ref())?;
+        let maybe_actions = get_all_available_actions_for_trick(trick, full_ctx, runner)?;
+
+        if let Some(action_ids) = maybe_actions {
+            let mut names = vec![];
+            for action_id in action_ids {
+                names.push(String::try_from(&action_id)?);
             }
 
-            let formatted = format!("{}:\n  {}", trick_id.clone(), available.join("\n  "));
-            all_available.push(formatted);
+            // TODO: unit test this
+            if json {
+                success!(serde_json::to_string(&names).map_err(KnownError::from)?)
+            } else {
+                success!(names.join("\n"))
+            }
+        } else {
+            Err(KnownError::NoAvailableActions(format!("No actions available for \"{id}\".")))
         }
+    } else {
 
-        all_available.sort();
-        all_available.join("\n")
-    };
-    success!(output)
+        let mut all_available = vec![];
+        let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner)?;
+
+        // TODO: unit test this
+        let output = if json {
+            serde_json::to_string(&results).map_err(KnownError::from)?
+        } else {
+            // Convert the results from above into a commandline-friendly format
+            for (trick_id, maybe_action_ids) in results {
+                let mut available: Vec<String> = vec![];
+                for action_id in maybe_action_ids {
+                    let name = String::try_from(&action_id)?;
+                    available.push(name);
+                }
+
+                let formatted = format!("{}:\n  {}", trick_id.clone(), available.join("\n  "));
+                all_available.push(formatted);
+            }
+
+            all_available.sort();
+            all_available.join("\n")
+        };
+        success!(output)
+    }
 }

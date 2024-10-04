@@ -4,7 +4,7 @@ Providers
 [] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin
     [] especially for Decky
 [] implement full updates for all providers
-[] system commands - terminal, system-settings
+[] system commands - terminal, system-settings, file browser
 
 Network/Updates
 [] MOTD
@@ -13,6 +13,7 @@ Network/Updates
 [] GUI handling updates how?
 
 General
+[] unit test actions --json
 [] using new command runner, add unit tests for general, gather, each provider, and top-level calls
 [] remove all todo!, and panic!
 [] implement all not_implemented
