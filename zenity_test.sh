@@ -9,8 +9,4 @@ result="$("$binary" see-all-available-actions --json)"
 program=$(echo "$result" | jq -r '.[].[0]' | zenity --list --title="Select Program" --column="Program")
 action=$(echo "$result" | jq -r --arg program "$program" '.[] | select(.[0] == $program) | .[1][]' | zenity --list --title="Select Action" --column="Action")
 
-if [[ "$action" == "info" ]]; then
-    zenity --info --text="$("$binary" "$action" "$program")"
-else 
-    "$binary" "$action" "$program" 
-fi
+zenity --info --text="$("$binary" "$action" "$program")"
