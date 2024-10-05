@@ -110,13 +110,15 @@ mod tests {
 
     #[test]
     fn expected_failures() {
+        let cmd = "echo";
+        let args = vec!["lol"];
         let mut mock = MockTestActualRunner::new();
         mock.expect_run()
             .times(1)
-            .returning(|_| Ok(SysCommandResult::fake_success()));
+            .returning(move |_| Ok(SysCommandResult::fake_for_test("echo", vec!["lol"], 0, "lol", "")));
 
         let runner = Arc::new(mock);
-        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner);
+        let sc = SimpleCommandProvider::new(cmd, args, runner);
         // TODO: generalize these to be default implementations?
 
         assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));

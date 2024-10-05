@@ -15,7 +15,7 @@ impl Executor {
     /// Any errors that might arise from parsing the config
     /// or from gathering system resources.
     ///
-    pub fn new(command: &Command) -> DeckResult<Self> {
+    pub fn new(command: &DeckTricksCommand) -> DeckResult<Self> {
         let maybe_config_path = command.config.as_ref();
         let loader = match maybe_config_path {
             Some(config_path) => TricksLoader::from_config(config_path)?,
@@ -48,7 +48,7 @@ impl Executor {
     /// program logic.
     pub fn execute(&self, action: &Action) -> Vec<DeckResult<ActionSuccess>> {
         let typed_action = TypedAction::from(action);
-        typed_action.do_with(&self.loader, &self.full_ctx, &self.runner)
+        typed_action.do_with(self)
     }
 
     //    pub fn reload_config(&mut self) -> DeckResult<()> {
@@ -60,6 +60,11 @@ impl Executor {
     //        self.full_ctx = FullSystemContext::gather()?;
     //        Ok(())
     //    }
+
+    #[must_use]
+    pub fn get_pieces(&self) -> (&TricksLoader, &FullSystemContext, &RunnerRc) {
+        (&self.loader, &self.full_ctx, &self.runner)
+    }
 }
 
 #[cfg(test)]
@@ -76,7 +81,7 @@ mod tests {
                 mock.expect_run()
                     .returning(|_| Ok(SysCommandResult::fake_success()));
                 mock
-            },
+            }
             Some(mock) => mock,
         };
 
@@ -90,7 +95,7 @@ mod tests {
 
     #[test]
     fn top_level_install() -> DeckResult<()> {
-        let command = Command {
+        let command = DeckTricksCommand {
             action: Action::Install {
                 id: "lutris".into(),
             },
@@ -112,7 +117,7 @@ mod tests {
 
     #[test]
     fn top_level_incorrect_run() -> DeckResult<()> {
-        let command = Command {
+        let command = DeckTricksCommand {
             action: Action::Run {
                 id: "FAKE_PACKAGE".into(),
             },
@@ -134,7 +139,7 @@ mod tests {
 
     #[test]
     fn top_level_general_list() -> DeckResult<()> {
-        let command = Command {
+        let command = DeckTricksCommand {
             action: Action::List { installed: false },
             config: None,
         };
@@ -155,17 +160,26 @@ mod tests {
 
     #[test]
     fn top_level_general_list_installed() -> DeckResult<()> {
-        let command = Command {
+        let command = DeckTricksCommand {
             action: Action::List { installed: true },
             config: None,
         };
 
         let mut mock = MockTestActualRunner::new();
 
-        let arg = SysCommand::new("flatpak", vec!["list", "--app", "--columns=application"]);
-        mock.expect_run()
-            .with(predicate::eq(arg))
-            .returning(|_| Ok(SysCommandResult::fake_for_test(0, "net.lutris.Lutris", "dooker")));
+        let cmd = "flatpak";
+        let args = vec!["list", "--app", "--columns=application"];
+        let returned_args = args.clone();
+        let arg = SysCommand::new(cmd, args);
+        mock.expect_run().with(predicate::eq(arg)).returning(move |_| {
+            Ok(SysCommandResult::fake_for_test(
+                cmd,
+                returned_args.clone(),
+                0,
+                "net.lutris.Lutris",
+                "dooker",
+            ))
+        });
 
         mock.expect_run()
             .returning(|_| Ok(SysCommandResult::fake_success()));

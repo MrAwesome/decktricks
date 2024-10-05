@@ -29,6 +29,9 @@ impl From<&Action> for TypedAction {
             Action::Actions { id, json } => {
                 Self::General(GeneralAction::Actions { id, json })
             }
+            Action::Gui { gui } => {
+                Self::General(GeneralAction::Gui { gui })
+            }
         }
     }
 }
@@ -36,14 +39,12 @@ impl From<&Action> for TypedAction {
 impl TypedAction {
     pub(crate) fn do_with(
         &self,
-        loader: &TricksLoader,
-        full_ctx: &FullSystemContext,
-        runner: &RunnerRc,
+        executor: &Executor,
     ) -> Vec<DeckResult<ActionSuccess>> {
         match self {
-            Self::General(general_action) => general_action.do_with(loader, full_ctx, runner),
+            Self::General(general_action) => general_action.do_with(executor),
             Self::Specific(specific_action) => {
-                vec![specific_action.do_with(loader, full_ctx, runner)]
+                vec![specific_action.do_with(executor)]
             }
         }
     }
@@ -63,6 +64,12 @@ impl ActionSuccess {
     #[must_use]
     pub fn get_message_or_blank(&self) -> String {
         self.message.clone().unwrap_or_default()
+    }
+}
+
+impl From<&ActionSuccess> for String {
+    fn from(value: &ActionSuccess) -> Self {
+        value.get_message_or_blank()
     }
 }
 

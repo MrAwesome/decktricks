@@ -8,6 +8,7 @@ pub(crate) enum SpecificAction {
     Kill { id: String },
     Uninstall { id: String },
     AddToSteam { name: Option<String>, id: String },
+    // TODO: move Info to General, since it doesn't actually require a provider. Or should it?
     Info { id: String },
     Update { id: String },
 }
@@ -67,10 +68,10 @@ impl SpecificAction {
 
     pub(crate) fn do_with(
         &self,
-        loader: &TricksLoader,
-        full_ctx: &FullSystemContext,
-        runner: &RunnerRc,
+        executor: &Executor,
     ) -> DeckResult<ActionSuccess> {
+        let (loader, full_ctx, runner) = executor.get_pieces();
+
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
         let provider = DynProvider::try_from((trick, full_ctx, runner))?;

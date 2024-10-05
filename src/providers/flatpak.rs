@@ -245,14 +245,14 @@ mod tests {
 
     #[test]
     fn test_can_install_pkg() {
+        let cmd = "flatpak";
+        let args = vec!["install", "-y", "RANDOM_PACKAGE"];
+        let returned_args = args.clone();
         let mut mock = MockTestActualRunner::new();
         mock.expect_run()
             .times(1)
-            .with(predicate::eq(SysCommand::new(
-                "flatpak",
-                vec!["install", "-y", "RANDOM_PACKAGE"],
-            )))
-            .returning(|_| Ok(SysCommandResult::fake_for_test(0, "", "")));
+            .with(predicate::eq(SysCommand::new(cmd, args)))
+            .returning(move |_| Ok(SysCommandResult::fake_for_test(cmd, returned_args.clone(), 0, "", "")));
 
         let runner = Arc::new(mock);
         let provider = fpak_prov("RANDOM_PACKAGE", runner);
@@ -267,7 +267,9 @@ mod tests {
 
     #[test]
     fn test_failed_to_install_pkg() {
-        let failure = SysCommandResult::fake_for_test(1, "FAILED LOL", "");
+        let cmd = "flatpak";
+        let args = vec!["install", "-y", "RANDOM_PACKAGE"];
+        let failure = SysCommandResult::fake_for_test(cmd, args, 1, "FAILED LOL", "");
         let expected_failure = failure.clone();
 
         let mut mock = MockTestActualRunner::new();

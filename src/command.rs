@@ -1,8 +1,9 @@
+use crate::gui::GuiType;
 pub use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[clap(name = "decktricks")]
-pub struct Command {
+pub struct DeckTricksCommand {
     // The actual command to be run
     #[clap(subcommand)]
     pub action: Action,
@@ -21,7 +22,7 @@ pub struct Command {
 // This is the canonical list of actions we can take on tricks.
 // It is directly parsed by clap for the commandline, and should be
 // the entry point for any GUI or downstream lib.
-#[derive(Debug, Subcommand, Clone)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum Action {
     Run {
         id: String,
@@ -59,5 +60,9 @@ pub enum Action {
         id: Option<String>,
         #[clap(long)]
         json: bool,
+    },
+    Gui {
+        #[clap(subcommand)]
+        gui: GuiType,
     },
 }

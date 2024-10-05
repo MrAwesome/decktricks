@@ -29,6 +29,9 @@ General
 
 [] dependencies between tricks
 
+Code
+[] Codemod for? to collect::<Result<_, _>>
+
 Misc
 [] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
 

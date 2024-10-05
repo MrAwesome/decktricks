@@ -11,6 +11,7 @@ pub enum KnownError {
     ActionGated(String),
     ActionNotImplementedYet(&'static str),
     ActionNotPossible(&'static str),
+    CommandLineParseError(clap::error::Error),
     ConfigParsing(serde_json::Error),
     ConfigRead(std::io::Error),
     DeckyInstall(DynamicError),
@@ -19,7 +20,7 @@ pub enum KnownError {
     NoAvailableActions(TrickID),
     ProviderNotImplemented(String),
     SeriousError(SeriousError),
-    SystemCommandFailed(std::process::Output),
+    SystemCommandFailed(SysCommandResult),
     SystemCommandParse(DynamicError),
     SystemCommandRun(std::io::Error),
     TestError(String),
@@ -33,18 +34,21 @@ impl Display for KnownError {
                 write!(f, "Error parsing config: {serde_json_err:?}")
             }
             Self::ConfigRead(cfg_read_err) => write!(f, "Error reading config: {cfg_read_err:?}"),
+            Self::CommandLineParseError(cmd_parse_err) => {
+                write!(f, "Error parsing command line: {cmd_parse_err:#?}")
+            }
             Self::DeckyInstall(decky_install_err) => {
-                write!(f, "Error installing Decky: {decky_install_err:?}")
+                write!(f, "Error installing Decky: {decky_install_err:#?}")
             }
             Self::LoggerInitializationFail(logger_err) => {
-                write!(f, "Logger initialization failure: {logger_err:?}")
+                write!(f, "Logger initialization failure: {logger_err:#?}")
             }
             Self::SeriousError(serious_err) => write!(f, "{serious_err}"),
             Self::SystemCommandParse(sys_parse_err) => {
-                write!(f, "Error parsing system command: {sys_parse_err:?}")
+                write!(f, "Error parsing system command: {sys_parse_err:#?}")
             }
             Self::SystemCommandRun(sys_run_err) => {
-                write!(f, "Error running system command: {sys_run_err:?}")
+                write!(f, "Error running system command: {sys_run_err:#?}")
             }
             Self::SystemCommandFailed(output) => {
                 write!(f, "System command failed to run: {output:?}")
@@ -62,6 +66,24 @@ impl Display for KnownError {
             | Self::ActionNotPossible(msg)
             | Self::ErrorDuringRun(msg) => write!(f, "{msg}"),
         }
+    }
+}
+
+impl From<&KnownError> for String {
+    fn from(e: &KnownError) -> Self {
+        format!("{e}")
+    }
+}
+
+impl From<clap::error::Error> for KnownError {
+    fn from(e: clap::error::Error) -> Self {
+        Self::CommandLineParseError(e)
+    }
+}
+
+impl From<std::io::Error> for KnownError {
+    fn from(e: std::io::Error) -> Self {
+        Self::SystemCommandRun(e)
     }
 }
 

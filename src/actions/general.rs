@@ -1,3 +1,4 @@
+use crate::gui::GuiType;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerGeneralProvider;
 use crate::providers::flatpak::FlatpakGeneralProvider;
@@ -5,6 +6,7 @@ use rayon::prelude::*;
 
 #[derive(Debug)]
 pub(crate) enum GeneralAction {
+    Gui { gui: GuiType },
     List { installed: bool },
     Actions { id: Option<String>, json: bool },
     UpdateAll,
@@ -13,10 +15,9 @@ pub(crate) enum GeneralAction {
 impl GeneralAction {
     pub(crate) fn do_with(
         &self,
-        loader: &TricksLoader,
-        full_ctx: &FullSystemContext,
-        runner: &RunnerRc,
+        executor: &Executor,
     ) -> Vec<DeckResult<ActionSuccess>> {
+        let (loader, full_ctx, runner) = executor.get_pieces();
         match self {
             Self::List { installed } => {
                 let tricks = loader.get_all_tricks();
@@ -66,8 +67,11 @@ impl GeneralAction {
                 results
             }
             Self::Actions { id, json } => {
-                vec![get_all_available_actions(loader, full_ctx, runner, id, *json)]
+                vec![get_all_available_actions(
+                    loader, full_ctx, runner, id, *json,
+                )]
             }
+            Self::Gui { gui } => vec![gui.launch(executor)],
         }
     }
 }
@@ -118,7 +122,6 @@ fn get_all_available_actions(
     maybe_id: &Option<TrickID>,
     json: bool,
 ) -> DeckResult<ActionSuccess> {
-
     if let Some(id) = maybe_id {
         let trick = loader.get_trick(id.as_ref())?;
         let maybe_actions = get_all_available_actions_for_trick(trick, full_ctx, runner)?;
@@ -136,10 +139,11 @@ fn get_all_available_actions(
                 success!(names.join("\n"))
             }
         } else {
-            Err(KnownError::NoAvailableActions(format!("No actions available for \"{id}\".")))
+            Err(KnownError::NoAvailableActions(format!(
+                "No actions available for \"{id}\"."
+            )))
         }
     } else {
-
         let mut all_available = vec![];
         let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner)?;
 
