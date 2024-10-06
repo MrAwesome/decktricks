@@ -166,15 +166,17 @@ mock! {
 }
 
 #[cfg(not(test))]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct LiveActualRunner {}
 
 #[cfg(not(test))]
 impl LiveActualRunner {
-    pub(crate) fn new() -> Self {
-        Self {}
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
     }
 }
+
 #[cfg(not(test))]
 impl ActualRunner for LiveActualRunner {
     #[cfg(test)]

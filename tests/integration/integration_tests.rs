@@ -1,47 +1,26 @@
-use decktricks::{errors::DeckTricksError, prelude::DynamicError};
+use crate::integration::utils::BINARY_NAME;
+use decktricks::prelude::DynamicError;
 use std::{
     process::Command,
     time::{Duration, Instant},
 };
+use crate::decktricks_cli;
 
 // TODO:
 // [] install/uninstall flatpak (optional, with network)
 // [] test -c/-C behavior with test_config.json and test_config2.json
 
-macro_rules! decktricks {
-    ($($arg:tt),*) => {
-        run_cli_with_args(vec![$($arg,)*])
-    }
-}
-
 // TODO: move to utils when super error is fixed
-pub const BINARY_NAME: &str = env!("CARGO_BIN_EXE_decktricks");
-type CliResult = Result<String, DynamicError>;
-pub(crate) fn run_cli_with_args(args: Vec<&str>) -> CliResult {
-    let result = Command::new(BINARY_NAME).args(args.clone()).output()?;
-
-    if result.status.success() {
-        Ok(String::from_utf8_lossy(&result.stdout).into())
-    } else {
-        Err(Box::new(DeckTricksError::new(format!(
-            "Command failed!\nCommand: {} {}\nResult: {:#?}",
-            BINARY_NAME,
-            args.join(" "),
-            result
-        ))))
-    }
-}
-
 // NOTE: running this with the default config as another layer of validation
 #[test]
 fn can_run_see_all_available_actions() -> Result<(), DynamicError> {
-    decktricks!["actions"]?;
+    decktricks_cli!["actions"]?;
     Ok(())
 }
 
 #[test]
 fn broken_command_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks!["JFKLDSJFDOISNFOIS"];
+    let res = decktricks_cli!["JFKLDSJFDOISNFOIS"];
     assert!(res.is_err());
     Ok(())
 }
@@ -51,7 +30,7 @@ fn broken_command_gives_error() -> Result<(), DynamicError> {
 fn time_see_all_available_actions() -> Result<(), DynamicError> {
     let see_all_max_time = Duration::from_millis(100);
     let start = Instant::now();
-    decktricks!["actions"]?;
+    decktricks_cli!["actions"]?;
     let time_taken = start.elapsed();
     if time_taken.gt(&see_all_max_time) {
         panic!(
@@ -69,7 +48,7 @@ fn simple_command_harblgarbl() -> Result<(), DynamicError> {
     let output = Command::new(BINARY_NAME)
         .args(vec![
             "-c",
-            "tests/test_config.json",
+            "tests/integration/test_config.json",
             "run",
             "print-HARBLGARBL",
         ])
@@ -90,7 +69,7 @@ fn simple_command_harblgarbl() -> Result<(), DynamicError> {
 
 #[test]
 fn test_config_exclusivity() -> Result<(), DynamicError> {
-    let output = decktricks!["-c", "tests/test_config.json", "actions"]?;
+    let output = decktricks_cli!["-c", "tests/integration/test_config.json", "actions"]?;
     assert!(output.contains("print-HARBLGARBL"));
     assert!(output.contains("run"));
     assert!(output.contains("info"));
@@ -101,9 +80,9 @@ fn test_config_exclusivity() -> Result<(), DynamicError> {
 
 #[test]
 fn broken_config_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks![
+    let res = decktricks_cli![
         "-c",
-        "tests/broken_config.json",
+        "tests/integration/broken_config.json",
         "actions"
     ];
     assert!(res.is_err());
@@ -112,9 +91,9 @@ fn broken_config_gives_error() -> Result<(), DynamicError> {
 
 #[test]
 fn missing_config_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks![
+    let res = decktricks_cli![
         "-c",
-        "tests/jkfldjsaifdosaj.json",
+        "tests/integration/jkfldjsaifdosaj.json",
         "actions"
     ];
     assert!(res.is_err());
@@ -123,17 +102,17 @@ fn missing_config_gives_error() -> Result<(), DynamicError> {
 
 #[test]
 fn help_shown() -> Result<(), DynamicError> {
-    let no_args_res = decktricks![];
+    let no_args_res = decktricks_cli![];
     assert!(no_args_res.is_err());
     let no_args_text = no_args_res.err().unwrap().to_string();
     assert!(no_args_text.contains("Commands:"));
 
-    let shortname_res = decktricks!["-h"];
+    let shortname_res = decktricks_cli!["-h"];
     assert!(shortname_res.is_ok());
     let shortname_text = shortname_res?;
     assert!(shortname_text.contains("Commands:"));
 
-    let longname_res = decktricks!["--help"];
+    let longname_res = decktricks_cli!["--help"];
     assert!(longname_res.is_ok());
     let longname_text = longname_res?;
     assert!(longname_text.contains("Commands:"));
@@ -143,7 +122,7 @@ fn help_shown() -> Result<(), DynamicError> {
 
 #[test]
 fn bad_arg() -> Result<(), DynamicError> {
-    let badarg_res = decktricks!["--hosidahfodiash"];
+    let badarg_res = decktricks_cli!["--hosidahfodiash"];
     assert!(badarg_res.is_err());
     let badarg_text = badarg_res.err().unwrap().to_string();
     assert!(badarg_text.contains("unexpected argument"));

@@ -16,11 +16,11 @@ pub(super) fn zenity_launch(executor: &Executor) -> DeckResult<ActionSuccess> {
     Command::new("zenity")
         .arg("--info")
         .arg("--text")
-        .arg(output)
+        .arg(output.clone())
         .status()
         .expect("Failed to execute process");
 
-    success!()
+    success!(output)
 }
 
 fn zenity_run_action(executor: &Executor) -> DeckResult<Vec<DeckResult<ActionSuccess>>> {
