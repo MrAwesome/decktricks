@@ -37,6 +37,7 @@ Misc
 
 Idea
 [] web frontend that just constructs a list of desired tricks and generates a .desktop that installs decktricks cli and uses it to install everything in one go
+[] firefox, and ublock origin
 
 CLI
 [] colorize output, decide which bits of spawned program output to keep in which contexts

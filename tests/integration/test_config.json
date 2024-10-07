@@ -11,6 +11,26 @@
             "tags": ["harblgarbl"],
             "display_name": "HARBLGARBLWHARBLGARBL",
             "description": "HARBLWHARBLGARBLLLLL"
+        },
+        {
+            "id": "test-package",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "io.github.erkin.ponysay"
+            },
+            "icon": "XXX",
+            "hidden": true,
+            "display_name": "Test Package (Ignore)",
+            "description": "A small package used in testing."
+        },
+        {
+            "id": "fake-testing-custom",
+            "provider_config": {
+                "type": "custom"
+            },
+            "icon": "XXX",
+            "display_name": "Custom Trick",
+            "description": "Nothingburger."
         }
     ]
 }

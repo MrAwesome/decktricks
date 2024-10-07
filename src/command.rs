@@ -4,20 +4,33 @@ pub use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[clap(name = "decktricks")]
 pub struct DeckTricksCommand {
-    // The actual command to be run
+    // The actual command to be executed, such as "run" or "install"
     #[clap(subcommand)]
     pub action: Action,
 
-    // Anything below this line is global context for Actions we run
-    // ---------------------------------------------------------- //
+    // Anything below this line is global context for Actions: //
+    // ------------------------------------------------------- //
 
     // Filename of an override config
     #[clap(short, long)]
     pub config: Option<String>,
+
     // Currently unused since pretty_env_logger uses env variables.
     // #[clap(short, long)]
     // pub debug: bool,
 }
+
+// * "Run"
+// * "Install"
+// * "Uninstall"
+// * "Update"
+// * "Add To Steam"
+//
+// * "More Actions"
+// * "Kill"
+// * "Force Reinstall"
+// * "Info"
+// * "Configure"/"Settings"
 
 // This is the canonical list of actions we can take on tricks.
 // It is directly parsed by clap for the commandline, and should be

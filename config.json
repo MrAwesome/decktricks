@@ -38,17 +38,6 @@
             "description": "Gamecube/Wii emulator. Great support for Gamecube controllers over USB."
         },
         {
-            "id": "test-package",
-            "provider_config": {
-                "type": "flatpak",
-                "id": "io.github.erkin.ponysay"
-            },
-            "icon": "XXX",
-            "hidden": true,
-            "display_name": "Test Package (Ignore)",
-            "description": "A small package used in testing."
-        },
-        {
             "id": "heroic",
             "provider_config": {
                 "type": "flatpak",
@@ -91,13 +80,24 @@
             "always_present_on_steamdeck": true
         },
         {
-            "id": "fake-testing-custom",
+            "id": "firefox",
             "provider_config": {
-                "type": "custom"
+                "type": "flatpak",
+                "id": "org.mozilla.firefox"
             },
             "icon": "XXX",
-            "display_name": "Custom Trick",
-            "description": "Nothingburger."
+            "display_name": "Firefox",
+            "description": "Free and open source web browser from Mozilla."
+        },
+        {
+            "id": "chromium",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "org.chromium.Chromium"
+            },
+            "icon": "XXX",
+            "display_name": "Chromium (Chrome)",
+            "description": "Free and open source web browser from Google."
         }
     ]
 }
