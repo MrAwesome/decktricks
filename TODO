@@ -6,6 +6,20 @@ Providers
 [] implement full updates for all providers
 [] system commands - terminal, system-settings, file browser
 
+.desktop/updater
+[] find out default PATH on deck
+[] .desktop:
+    [] if binary doesn't exist:
+        [] download from *tag* on gh
+    [] update logic?
+        [] if gh.com/blah/tag/latest/VERSION < cur_vers
+        [] initialize download in background
+        [] check md5sum
+        [] when complete, set a once-off flag
+        [] chmod +x
+        [] swap, and keep old version
+        [] run a 'verify' command
+
 Network/Updates
 [] MOTD
 [] Code updates
@@ -44,6 +58,7 @@ CLI
 [] run: pass remaining args after cmdname or -- through to the run command
 
 GUI
+[] zenity: resize the window to fit the deck
 [] restart/refresh if config file hash changes?
 
 Tips:
