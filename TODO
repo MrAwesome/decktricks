@@ -1,10 +1,14 @@
+[] live-config: gives back the latest config, including currently available actions
+
 Providers
 [] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
     [] individual launchers from within this?
 [] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin
     [] especially for Decky
 [] implement full updates for all providers
-[] system commands - terminal, system-settings, file browser
+[] system commands - *file browser* (what's the name in plasma)
+[] playstation plus
+[] junk store
 
 .desktop/updater
 [] find out default PATH on deck
@@ -60,6 +64,14 @@ CLI
 GUI
 [] zenity: resize the window to fit the deck
 [] restart/refresh if config file hash changes?
+[] icons: clicking will install, run, or stop when clicked (if installable/runnable/stoppable)
+[] --dry-run flag that just prints out commands to be run (for e2e tests?)
+
+Controller support:
+[] find out how to launch the steam input configuration for the current app
 
 Tips:
-[] Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click
+* Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click
+
+Notes:
+* Always say what decktricks is in posts about it

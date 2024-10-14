@@ -149,7 +149,8 @@ fn get_all_available_actions(
 
         // TODO: unit test this
         let output = if json {
-            serde_json::to_string(&results).map_err(KnownError::from)?
+            let results_map: std::collections::HashMap<_, _> = results.into_iter().collect();
+            serde_json::to_string(&results_map).map_err(KnownError::from)?
         } else {
             // Convert the results from above into a commandline-friendly format
             for (trick_id, maybe_action_ids) in results {
