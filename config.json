@@ -80,6 +80,17 @@
             "always_present_on_steamdeck": true
         },
         {
+            "id": "plasma-discover",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "plasma-discover"
+            },
+            "icon": "XXX",
+            "display_name": "Software Center (Discover)",
+            "description": "The package manager from Desktop Mode.",
+            "always_present_on_steamdeck": true
+        },
+        {
             "id": "firefox",
             "provider_config": {
                 "type": "flatpak",
