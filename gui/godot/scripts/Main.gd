@@ -51,10 +51,15 @@ func _ready():
 	var actions = get_actions()
 	print(actions['chromium'])
 	
-	var file = FileAccess.open("res://assets/config.json", FileAccess.READ)
-	if file:
-		var config_data = file.get_as_text()
-		file.close()
+	#var file = FileAccess.open("res://assets/config.json", FileAccess.READ)
+	var config_output = []
+	var config_res = OS.execute("./decktricks", ["get-config"], config_output)
+	
+	
+	if config_res == 0:
+		#var config_data = file.get_as_text()
+		#file.close()
+		var config_data = "".join(config_output)
 		var json = JSON.new()
 		var ret = json.parse(config_data)
 		
@@ -63,14 +68,20 @@ func _ready():
 			for trick in tricks:
 				var trick_id = trick.get("id")
 				var display_name = trick.get("display_name")
-				var icon_path = trick.get("icon")
+				var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
+				var description = trick.get("description")
 				
+				# Error checking should never be needed for this access, since we
+				# check on the Rust side that we're only generating valid actions
 				var available_actions = actions[trick_id]
-				# TODO: error checking
 				
-				var TEMP_row_label = $Label.duplicate()
-				TEMP_row_label.text = display_name
-				games.add_child(TEMP_row_label)
+				var label_box = $LabelOuter.duplicate()
+				var label = label_box.get_child(0)
+				label.text = display_name
+				# TODO: set tooltip to description
+				label.tooltip_text = description
+				
+				games.add_child(label_box)
 
 				var trick_row = create_row(trick_id, available_actions, display_name, icon_path)
 				games.add_child(trick_row)

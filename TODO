@@ -22,6 +22,19 @@ Actions:
 [] "essentials" - just installs essentials
 [] ssh-server (launch an sshd with safe/known/set password)
 
+GUI
+[] rust e2e test for gui behavior
+[] way to have desktop:
+    [] gamescope wine explorer /desktop=shell,640x480
+[] top menu with quit/etc (labeled with button labels?)
+[] handle config.json updates for godot editor (just use 'decktricks get-config'?)
+[] zenity: resize the window to fit the deck
+[] restart/refresh if config file hash changes?
+[] icons: clicking will install, run, or stop when clicked (if installable/runnable/stoppable)
+[] --dry-run flag that just prints out commands to be run (for e2e tests?)
+[] warning after clicking "run" on things that will require mouse ("if you launch this, you will need to press X key combination to exit (or go through menu), and you'll need to use STEAM + right joystick to move mouse and STEAM + Right trigger to click (or use touchscreen)")
+    [] plasma system settings
+
 .desktop/updater
 [] have a rust-based installer script? allows for better handling of curl/tar/threads
 [] find out default PATH on deck
@@ -85,18 +98,6 @@ Idea
 CLI
 [] colorize output, decide which bits of spawned program output to keep in which contexts
 [] run: pass remaining args after cmdname or -- through to the run command
-
-GUI
-[] way to have desktop:
-    [] gamescope wine explorer /desktop=shell,640x480
-[] top menu with quit/etc (labeled with button labels?)
-[] handle config.json updates for godot editor (just use 'decktricks get-config'?)
-[] zenity: resize the window to fit the deck
-[] restart/refresh if config file hash changes?
-[] icons: clicking will install, run, or stop when clicked (if installable/runnable/stoppable)
-[] --dry-run flag that just prints out commands to be run (for e2e tests?)
-[] warning after clicking "run" on things that will require mouse ("if you launch this, you will need to press X key combination to exit (or go through menu), and you'll need to use STEAM + right joystick to move mouse and STEAM + Right trigger to click (or use touchscreen)")
-    [] plasma system settings
 
 Controller support:
 [] find out how to launch the steam input configuration for the current app

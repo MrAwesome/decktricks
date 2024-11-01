@@ -106,6 +106,7 @@ pub struct Trick {
     pub id: String,
     pub provider_config: ProviderConfig,
     pub display_name: String,
+    pub description: String,
     pub always_present_on_steamdeck: Option<bool>,
     //download: Option<String>,
     //command_before: Option<String>,
@@ -167,6 +168,7 @@ fn reconvert_providerconfig() -> DeckResult<()> {
     let trick = Trick {
         id: id.into(),
         provider_config: ProviderConfig::Flatpak(Flatpak { id: id.into() }),
+        description: "lol".into(),
         display_name: "ProtonUp-Qt".into(),
         always_present_on_steamdeck: None,
     };

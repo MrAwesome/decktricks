@@ -27,7 +27,6 @@ layout_mode = 2
 theme_override_constants/margin_left = 5
 
 [node name="Games" type="VBoxContainer" parent="ScrollContainer/MarginContainer"]
-custom_minimum_size = Vector2(1280, 800)
 layout_mode = 2
 size_flags_horizontal = 0
 
@@ -39,10 +38,15 @@ offset_right = -92.0
 offset_bottom = -92.0
 alignment = 0
 
-[node name="Label" type="Label" parent="."]
+[node name="LabelOuter" type="MarginContainer" parent="."]
 layout_mode = 0
-offset_left = -62.0
-offset_top = -58.0
-offset_right = -51.0
-offset_bottom = -33.0
+offset_left = -37.0
+offset_top = -18.0
+offset_right = -21.0
+offset_bottom = 72.0
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+
+[node name="Label" type="Label" parent="LabelOuter"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 128
