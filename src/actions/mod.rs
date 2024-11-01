@@ -1,5 +1,7 @@
 use crate::prelude::*;
 
+// For the master list of available actions, see command.rs
+
 mod general;
 mod specific;
 
@@ -26,21 +28,15 @@ impl From<&Action> for TypedAction {
 
             Action::Update { id: None } => Self::General(GeneralAction::UpdateAll {}),
             Action::List { installed } => Self::General(GeneralAction::List { installed }),
-            Action::Actions { id, json } => {
-                Self::General(GeneralAction::Actions { id, json })
-            }
-            Action::Gui { gui } => {
-                Self::General(GeneralAction::Gui { gui })
-            }
+            Action::Actions { id, json } => Self::General(GeneralAction::Actions { id, json }),
+            Action::Gui { gui } => Self::General(GeneralAction::Gui { gui }),
+            Action::GetConfig => Self::General(GeneralAction::GetConfig),
         }
     }
 }
 
 impl TypedAction {
-    pub(crate) fn do_with(
-        &self,
-        executor: &Executor,
-    ) -> Vec<DeckResult<ActionSuccess>> {
+    pub(crate) fn do_with(&self, executor: &Executor) -> Vec<DeckResult<ActionSuccess>> {
         match self {
             Self::General(general_action) => general_action.do_with(executor),
             Self::Specific(specific_action) => {

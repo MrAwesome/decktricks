@@ -10,6 +10,7 @@ pub(crate) enum GeneralAction {
     List { installed: bool },
     Actions { id: Option<String>, json: bool },
     UpdateAll,
+    GetConfig,
 }
 
 impl GeneralAction {
@@ -72,6 +73,10 @@ impl GeneralAction {
                 )]
             }
             Self::Gui { gui } => vec![gui.launch(executor)],
+            Self::GetConfig => {
+                // TODO: if using live configs, use here
+                vec![success!(DEFAULT_CONFIG_CONTENTS)]
+            }
         }
     }
 }

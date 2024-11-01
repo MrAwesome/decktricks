@@ -1,6 +1,7 @@
-[] live-config: gives back the latest config, including currently available actions
+[] figure out why integration test is happening by default
 
 Providers
+[] Moonlight!
 [] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
     [] individual launchers from within this?
 [] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin
@@ -9,8 +10,20 @@ Providers
 [] system commands - *file browser* (what's the name in plasma)
 [] playstation plus
 [] junk store
+[] "nested desktop" from the software center
+[] steamtinkerlaunch
+[] prism launcher (minecraft)
+[] mod: RDO lobby manager
+[] yuzu/etc steam emulators
+[] customscript, bash scripts which are compiled into the binary
+[] blizzard launcher (NonSteamLaunchers probably adds this)
+
+Actions:
+[] "essentials" - just installs essentials
+[] ssh-server (launch an sshd with safe/known/set password)
 
 .desktop/updater
+[] have a rust-based installer script? allows for better handling of curl/tar/threads
 [] find out default PATH on deck
 [] .desktop:
     [] if binary doesn't exist:
@@ -29,6 +42,17 @@ Network/Updates
 [] Code updates
 [] Config updates
 [] GUI handling updates how?
+[] offline mode where binaries are all embedded into the binary, or online mode where it requires internet to run
+[] check out https://crates.io/crates/self_update
+[] and also https://docs.rs/self-replace/latest/self_replace/
+[] updating live would be much easier with a wrapper script, but maybe decktricks can just have a self-update ? so script might look like:
+    1) check if exists
+    2) check decktricks self-test
+    3) check decktricks update-available (maybe just do during a normal run in a thread)
+        a) download update
+    4) if updated version is downloaded
+        a) self-test
+            1) if passed, move decktricks to decktricks.bak and decktricks.new to decktricks (use hard links to keep atomicity)
 
 General
 [] unit test actions --json
@@ -41,6 +65,7 @@ General
 [] implement reinstall for flatpak
 [] test in chimeraos and steamfork
 [] fix up global updates - the logic on which providers run them, and how errors/messages are propagated/printed
+[] Find out PATH on deck, and how to update it if necessary
 
 [] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"
@@ -62,13 +87,23 @@ CLI
 [] run: pass remaining args after cmdname or -- through to the run command
 
 GUI
+[] way to have desktop:
+    [] gamescope wine explorer /desktop=shell,640x480
+[] top menu with quit/etc (labeled with button labels?)
+[] handle config.json updates for godot editor (just use 'decktricks get-config'?)
 [] zenity: resize the window to fit the deck
 [] restart/refresh if config file hash changes?
 [] icons: clicking will install, run, or stop when clicked (if installable/runnable/stoppable)
 [] --dry-run flag that just prints out commands to be run (for e2e tests?)
+[] warning after clicking "run" on things that will require mouse ("if you launch this, you will need to press X key combination to exit (or go through menu), and you'll need to use STEAM + right joystick to move mouse and STEAM + Right trigger to click (or use touchscreen)")
+    [] plasma system settings
 
 Controller support:
 [] find out how to launch the steam input configuration for the current app
+
+Media outlets:
+[] steamdeckhq
+[] gamingonlinux
 
 Tips:
 * Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click

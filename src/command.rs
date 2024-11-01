@@ -78,4 +78,5 @@ pub enum Action {
         #[clap(subcommand)]
         gui: GuiType,
     },
+    GetConfig,
 }

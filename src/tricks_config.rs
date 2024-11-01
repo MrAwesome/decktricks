@@ -8,7 +8,7 @@ use std::fs;
 // TODO: unit test error messages for incorrect configs
 
 // TODO: place this in the correct XDG dir and read from there, default to a compiled-in version
-const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
+pub const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
 //const DEFAULT_CONFIG_LOCATION: &str = "config.json";
 pub type TrickID = String;
 

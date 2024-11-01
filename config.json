@@ -18,11 +18,32 @@
             "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
         },
         {
+            "id": "Moonlight",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "com.moonlight_stream.Moonlight"
+            },
+            "icon": "XXX",
+            "tags": [
+                "moonlight",
+                "sunshine",
+                "streaming"
+            ],
+            "display_name": "Moonlight",
+            "description": "Stream games and other applications from another PC running Sunshine or GeForce Experience."
+        },
+        {
             "id": "lutris",
             "provider_config": {
                 "type": "flatpak",
                 "id": "net.lutris.Lutris"
             },
+            "tags": [
+                "gog",
+                "ubisoft",
+                "humble",
+                "epic"
+            ],
             "icon": "XXX",
             "display_name": "Lutris",
             "description": "Game launcher for GOG, Ubisoft, Humble, Epic, and more."
@@ -43,6 +64,13 @@
                 "type": "flatpak",
                 "id": "com.heroicgameslauncher.hgl"
             },
+            "tags": [
+                "heroic",
+                "amazon",
+                "prime",
+                "gog",
+                "epic"
+            ],
             "icon": "XXX",
             "display_name": "Heroic",
             "description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
@@ -52,6 +80,9 @@
             "provider_config": {
                 "type": "decky-installer"
             },
+            "tags": [
+                "decky"
+            ],
             "icon": "XXX",
             "display_name": "Decky Loader",
             "description": "Homebrew plugin launcher for the Steam Deck.",
@@ -63,8 +94,13 @@
                 "type": "simple-command",
                 "command": "systemsettings"
             },
+            "tags": [
+                "system",
+                "settings",
+                "plasma"
+            ],
             "icon": "XXX",
-            "display_name": "System Settings (Plasma)",
+            "display_name": "System Settings",
             "description": "The default settings app from Desktop Mode.",
             "always_present_on_steamdeck": true
         },
@@ -74,8 +110,15 @@
                 "type": "simple-command",
                 "command": "konsole"
             },
+            "tags": [
+                "terminal",
+                "konsole",
+                "console",
+                "cmdline",
+                "commandline"
+            ],
             "icon": "XXX",
-            "display_name": "Command Line Terminal (Konsole)",
+            "display_name": "Command Line Terminal",
             "description": "Terminal for typing system commands.",
             "always_present_on_steamdeck": true
         },
@@ -85,8 +128,12 @@
                 "type": "simple-command",
                 "command": "plasma-discover"
             },
+            "tags": [
+                "settings",
+                "system"
+            ],
             "icon": "XXX",
-            "display_name": "Software Center (Discover)",
+            "display_name": "Software Center",
             "description": "The package manager from Desktop Mode.",
             "always_present_on_steamdeck": true
         },
@@ -96,6 +143,10 @@
                 "type": "flatpak",
                 "id": "org.mozilla.firefox"
             },
+            "tags": [
+                "firefox",
+                "browser"
+            ],
             "icon": "XXX",
             "display_name": "Firefox",
             "description": "Free and open source web browser from Mozilla."
@@ -106,8 +157,13 @@
                 "type": "flatpak",
                 "id": "org.chromium.Chromium"
             },
+            "tags": [
+                "chrome",
+                "chromium",
+                "browser"
+            ],
             "icon": "XXX",
-            "display_name": "Chromium (Chrome)",
+            "display_name": "Chrome",
             "description": "Free and open source web browser from Google."
         }
     ]

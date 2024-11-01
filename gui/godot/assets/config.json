@@ -1,0 +1,130 @@
+{
+	"tricks": [
+		{
+			"id": "protonup-qt",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "net.davidotek.pupgui2"
+			},
+			"icon": "XXX",
+			"tags": [
+				"openmw",
+				"daggerfall-unity",
+				"protonup",
+				"compatibility",
+				"stalker"
+			],
+			"display_name": "ProtonUp-Qt",
+			"description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
+		},
+		{
+			"id": "Moonlight",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "com.moonlight_stream.Moonlight"
+			},
+			"icon": "XXX",
+			"tags": [
+				"moonlight",
+				"sunshine",
+				"streaming"
+			],
+			"display_name": "Moonlight (Streaming)",
+			"description": "Stream games and other applications from another PC running Sunshine or GeForce Experience."
+		},
+		{
+			"id": "lutris",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "net.lutris.Lutris"
+			},
+			"icon": "XXX",
+			"display_name": "Lutris",
+			"description": "Game launcher for GOG, Ubisoft, Humble, Epic, and more."
+		},
+		{
+			"id": "dolphin-emu",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "org.DolphinEmu.dolphin-emu"
+			},
+			"icon": "XXX",
+			"display_name": "Dolphin Emulator",
+			"description": "Gamecube/Wii emulator. Great support for Gamecube controllers over USB."
+		},
+		{
+			"id": "heroic",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "com.heroicgameslauncher.hgl"
+			},
+			"icon": "XXX",
+			"display_name": "Heroic",
+			"description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
+		},
+		{
+			"id": "decky",
+			"provider_config": {
+				"type": "decky-installer"
+			},
+			"icon": "XXX",
+			"display_name": "Decky Loader",
+			"description": "Homebrew plugin launcher for the Steam Deck.",
+			"more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
+		},
+		{
+			"id": "systemsettings",
+			"provider_config": {
+				"type": "simple-command",
+				"command": "systemsettings"
+			},
+			"icon": "XXX",
+			"display_name": "System Settings",
+			"description": "The default settings app from Desktop Mode.",
+			"always_present_on_steamdeck": true
+		},
+		{
+			"id": "konsole",
+			"provider_config": {
+				"type": "simple-command",
+				"command": "konsole"
+			},
+			"icon": "XXX",
+			"display_name": "Terminal",
+			"description": "Terminal for typing system commands.",
+			"always_present_on_steamdeck": true
+		},
+		{
+			"id": "plasma-discover",
+			"provider_config": {
+				"type": "simple-command",
+				"command": "plasma-discover"
+			},
+			"icon": "XXX",
+			"display_name": "Software Center",
+			"description": "The package manager from Desktop Mode.",
+			"always_present_on_steamdeck": true
+		},
+		{
+			"id": "firefox",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "org.mozilla.firefox"
+			},
+			"icon": "XXX",
+			"display_name": "Firefox",
+			"description": "Free and open source web browser from Mozilla."
+		},
+		{
+			"id": "chromium",
+			"provider_config": {
+				"type": "flatpak",
+				"id": "org.chromium.Chromium"
+			},
+			"tags": ["chrome", "chromium"],
+			"icon": "XXX",
+			"display_name": "Chrome",
+			"description": "Free and open source web browser from Google."
+		}
+	]
+}
