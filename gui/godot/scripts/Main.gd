@@ -3,8 +3,12 @@ extends Control
 # Create function that takes action and display name (or icon)
 # Call it for each one
 
+# TODO: figure out how to remove $Button from the scene so it's not selectable with controller
+
+var first_button = null
+
 func create_action_button(action: String, target: String, contents: String):
-	var button = $Button.duplicate()
+	var button = $Hidden/Button.duplicate()
 	button.name = action
 	button.text = contents
 	button.pressed.connect(take_action.bind(action, target))
@@ -18,18 +22,17 @@ func take_action(action: String, target: String):
 	print(output)
 
 # take [available, actions, like, this]
-func create_row(target: String, available_actions, _display_name: String, _icon_path: String):
-	var row = HBoxContainer.new()
+func create_actions_row(target: String, available_actions, _display_name: String, _icon_path: String):
+	var actions_row_outer = $Hidden/ActionsRowOuter.duplicate()
+	var row = actions_row_outer.get_child(0).get_child(0)
 	
 	var did_first = false
 	for action in available_actions:
-		var button = create_action_button(action, target, action) #Fix this to take display names etc from the config
-		if not did_first:
-			button.name = "first_button"
-			did_first = true
-		
+		# Fix this to take display names etc from the config
+		# TODO: fix ordering so info is last
+		var button = create_action_button(action, target, action)
 		row.add_child(button)
-	return row
+	return actions_row_outer
 
 func get_actions():
 	var output = []
@@ -47,7 +50,7 @@ func get_actions():
 		# TODO: fallback/error
 	
 func _ready():
-	var games = $ScrollContainer/MarginContainer/Games
+	var games = $MainPanel/ScrollContainer/Games
 	var actions = get_actions()
 	print(actions['chromium'])
 	
@@ -63,8 +66,12 @@ func _ready():
 		var json = JSON.new()
 		var ret = json.parse(config_data)
 		
+		
+		
 		if ret == OK:
 			var tricks = json.data.get("tricks", [])
+			
+			var marked_first = false
 			for trick in tricks:
 				var trick_id = trick.get("id")
 				var display_name = trick.get("display_name")
@@ -75,21 +82,31 @@ func _ready():
 				# check on the Rust side that we're only generating valid actions
 				var available_actions = actions[trick_id]
 				
-				var label_box = $LabelOuter.duplicate()
+				
+				# TODO: make label selectable, have it just jump to the first option
+				# TODO: show tooltext when it's selected
+				
+				var label_box = $Hidden/LabelOuter.duplicate()
 				var label = label_box.get_child(0)
 				label.text = display_name
-				# TODO: set tooltip to description
-				label.tooltip_text = description
+				label_box.tooltip_text = description
+
+				var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
 				
-				games.add_child(label_box)
+				if not marked_first:
+					first_button = trick_row.get_child(0).get_child(0).get_child(0)
+					marked_first = true
+				
+				var row_outer = $Hidden/RowOuter.duplicate()
+				var row_inner = row_outer.get_child(0).get_child(0)
+				row_inner.add_child(label_box)
+				row_inner.add_child(trick_row)
+				games.add_child(row_outer)
 
-				var trick_row = create_row(trick_id, available_actions, display_name, icon_path)
-				games.add_child(trick_row)
-
-	# TODO: improve
-	var first_row = games.get_children()[1]
-	var first_button = first_row.get_children()[0]
+	print(first_button.text)
 	first_button.grab_focus()
+	
+	$Hidden/Button.get_parent().remove_child($Hidden/Button)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_exit_decktricks"):

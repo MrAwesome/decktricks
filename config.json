@@ -118,7 +118,7 @@
                 "commandline"
             ],
             "icon": "XXX",
-            "display_name": "Command Line Terminal",
+            "display_name": "Terminal",
             "description": "Terminal for typing system commands.",
             "always_present_on_steamdeck": true
         },
