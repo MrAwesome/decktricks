@@ -18,11 +18,10 @@ func create_action_button(action: String, target: String, contents: String):
 	return button
 
 func take_action(action: String, target: String):
+	# TODO: special handling for "info" etc
 	print('Running: ', './decktricks ', action, ' ', target)
-	var output = []
-	var res = OS.execute("./decktricks", [action, target], output, true)
+	var res = OS.execute_with_pipe("./decktricks", [action, target])
 	# TODO: check res
-	print(output)
 
 # take [available, actions, like, this]
 func create_actions_row(target: String, available_actions, _display_name: String, _icon_path: String):
