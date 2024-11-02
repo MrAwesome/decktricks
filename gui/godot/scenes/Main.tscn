@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
-[ext_resource type="Theme" uid="uid://u5qh1r677ec2" path="res://themes/neon-wave-theme/neon-wave.tres" id="1_rvslj"]
+[ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_rvslj"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_rvslj"]
 
@@ -31,55 +31,3 @@ vertical_scroll_mode = 2
 [node name="Games" type="VBoxContainer" parent="MainPanel/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 0
-
-[node name="Hidden" type="Control" parent="."]
-visible = false
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="Button" type="Button" parent="Hidden"]
-layout_mode = 0
-offset_left = -100.0
-offset_top = -100.0
-offset_right = -40.0
-offset_bottom = -86.0
-alignment = 0
-
-[node name="ActionsRowOuter" type="PanelContainer" parent="Hidden"]
-layout_mode = 0
-offset_left = -213.0
-offset_top = 106.0
-offset_right = -173.0
-offset_bottom = 146.0
-
-[node name="ActionsRowMargin" type="MarginContainer" parent="Hidden/ActionsRowOuter"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-
-[node name="ActionsInner" type="HBoxContainer" parent="Hidden/ActionsRowOuter/ActionsRowMargin"]
-layout_mode = 2
-
-[node name="RowOuter" type="PanelContainer" parent="Hidden"]
-layout_mode = 0
-offset_left = -213.0
-offset_top = 106.0
-offset_right = -173.0
-offset_bottom = 146.0
-
-[node name="MarginContainer" type="MarginContainer" parent="Hidden/RowOuter"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Hidden/RowOuter/MarginContainer"]
-layout_mode = 2
-
-[node name="LabelOuter" type="PanelContainer" parent="Hidden"]
-layout_mode = 0
-offset_left = -244.0
-offset_top = 15.0
-offset_right = -212.0
-offset_bottom = 110.0
-
-[node name="Label" type="Label" parent="Hidden/LabelOuter"]
-layout_mode = 2

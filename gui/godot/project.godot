@@ -18,7 +18,6 @@ config/features=PackedStringArray("4.4")
 
 window/size/viewport_width=1280
 window/size/viewport_height=800
-window/size/borderless=true
 window/stretch/mode="canvas_items"
 window/stretch/aspect="ignore"
 

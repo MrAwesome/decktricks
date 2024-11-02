@@ -1,6 +1,7 @@
 [] figure out why integration test is happening by default
 
 Providers
+[] luxtorpeda directly (see the readme)
 [] Moonlight!
 [] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
     [] individual launchers from within this?
@@ -23,6 +24,10 @@ Actions:
 [] ssh-server (launch an sshd with safe/known/set password)
 
 GUI
+[] have launched programs run in the background
+[] don't freeze when launching program (same as above?)
+[] check if it's decktricks freezing vm or not
+[] resize to not be so obnoxious in desktop mode (just set a smaller 16:10 res as min?)
 [] rust e2e test for gui behavior
 [] way to have desktop:
     [] gamescope wine explorer /desktop=shell,640x480
@@ -82,6 +87,7 @@ General
 
 [] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"
+[] try out immutable disks in virtualbox for fresh-install testing
 
 [] dependencies between tricks
 
@@ -105,6 +111,10 @@ Controller support:
 Media outlets:
 [] steamdeckhq
 [] gamingonlinux
+
+fun:
+[] selectable themes
+[] mid-oughts cd key haxx aesthetic with 8-bit theme
 
 Tips:
 * Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click

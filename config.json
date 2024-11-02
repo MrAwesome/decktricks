@@ -1,4 +1,6 @@
 {
+    "NOTE": "Changes to this file will not be reflected in the CLI or the GUI until you've run `cargo build` or `cargo build --release`, depending on mode.",
+
     "tricks": [
         {
             "id": "protonup-qt",
@@ -56,7 +58,7 @@
             },
             "icon": "XXX",
             "display_name": "Dolphin Emulator",
-            "description": "Gamecube/Wii emulator. Great support for Gamecube controllers over USB."
+            "description": "Gamecube/Wii emulator."
         },
         {
             "id": "heroic",

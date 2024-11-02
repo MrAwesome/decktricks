@@ -1,19 +1,21 @@
 #!/bin/bash
+set -euxo pipefail
+
+# [] TODO: debug builds too?
 
 cd "$(dirname "$0")"
 
-set -euxo pipefail
-
-# TODO: release builds too
-
+GUI_NAME="Decktricks"
 TMPDIR=$(mktemp -d)
-cargo build
-cp target/debug/decktricks "$TMPDIR"
 
-GUI_NAME="GUI Test"
-pushd godot_gui/godot/
+cp decktricks.desktop "$TMPDIR"
+
+cargo build --release
+cp target/release/decktricks "$TMPDIR"
+
+pushd gui/godot/
 godot --headless --export-debug "Linux"
-cp "$GUI_NAME"* "$TMPDIR"
+cp build/"$GUI_NAME"* "$TMPDIR"
 popd
 
 pushd "$TMPDIR"

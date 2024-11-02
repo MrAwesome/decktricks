@@ -1,14 +1,17 @@
 extends Control
 
+var actions_row = preload("res://scenes/actions_row.tscn")
+var action_button = preload("res://scenes/action_button.tscn")
+var label_outer = preload("res://scenes/label_outer.tscn")
+var row_outer = preload("res://scenes/row_outer.tscn")
+
 # Create function that takes action and display name (or icon)
 # Call it for each one
 
 # TODO: figure out how to remove $Button from the scene so it's not selectable with controller
 
-var first_button = null
-
 func create_action_button(action: String, target: String, contents: String):
-	var button = $Hidden/Button.duplicate()
+	var button = action_button.instantiate()
 	button.name = action
 	button.text = contents
 	button.pressed.connect(take_action.bind(action, target))
@@ -23,7 +26,7 @@ func take_action(action: String, target: String):
 
 # take [available, actions, like, this]
 func create_actions_row(target: String, available_actions, _display_name: String, _icon_path: String):
-	var actions_row_outer = $Hidden/ActionsRowOuter.duplicate()
+	var actions_row_outer = actions_row.instantiate()
 	var row = actions_row_outer.get_child(0).get_child(0)
 	
 	var did_first = false
@@ -50,6 +53,7 @@ func get_actions():
 		# TODO: fallback/error
 	
 func _ready():
+	var first_button = null
 	var games = $MainPanel/ScrollContainer/Games
 	var actions = get_actions()
 	print(actions['chromium'])
@@ -86,7 +90,7 @@ func _ready():
 				# TODO: make label selectable, have it just jump to the first option
 				# TODO: show tooltext when it's selected
 				
-				var label_box = $Hidden/LabelOuter.duplicate()
+				var label_box = label_outer.instantiate()
 				var label = label_box.get_child(0)
 				label.text = display_name
 				label_box.tooltip_text = description
@@ -97,16 +101,13 @@ func _ready():
 					first_button = trick_row.get_child(0).get_child(0).get_child(0)
 					marked_first = true
 				
-				var row_outer = $Hidden/RowOuter.duplicate()
-				var row_inner = row_outer.get_child(0).get_child(0)
+				var row_outer_here = row_outer.instantiate() as PanelContainer
+				var row_inner = row_outer_here.get_child(0).get_child(0)
 				row_inner.add_child(label_box)
 				row_inner.add_child(trick_row)
-				games.add_child(row_outer)
+				games.add_child(row_outer_here)
 
-	print(first_button.text)
 	first_button.grab_focus()
-	
-	$Hidden/Button.get_parent().remove_child($Hidden/Button)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_exit_decktricks"):

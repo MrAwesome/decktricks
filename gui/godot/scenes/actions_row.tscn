@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://dvtfukmcx6h7"]
+
+[node name="ActionsRowOuter" type="PanelContainer"]
+offset_left = -213.0
+offset_top = 106.0
+offset_right = -173.0
+offset_bottom = 146.0
+
+[node name="ActionsRowMargin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+
+[node name="ActionsInner" type="HBoxContainer" parent="ActionsRowMargin"]
+layout_mode = 2
