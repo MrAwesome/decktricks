@@ -20,12 +20,14 @@ enum_with_all_variants!(
     #[serde(rename_all = "kebab-case")]
     pub(crate) enum SpecificActionID {
         Run,
-        Install,
-        Kill,
-        Uninstall,
         AddToSteam,
-        Info,
+        Install,
+        Uninstall,
         Update,
+        Kill,
+
+        // NOTE: This should always be last
+        Info,
     }
 );
 

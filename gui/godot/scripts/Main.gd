@@ -1,5 +1,9 @@
 extends Control
 
+# TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
+# TODO: does selecting a node keep it from being cleaned up?
+
+var init = true
 var actions_row = preload("res://scenes/actions_row.tscn")
 var action_button = preload("res://scenes/action_button.tscn")
 var label_outer = preload("res://scenes/label_outer.tscn")
@@ -87,7 +91,7 @@ func refresh_ui():
 
 				var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
 				
-				if not marked_first:
+				if init and not marked_first:
 					first_button = trick_row.get_child(0).get_child(0).get_child(0)
 					marked_first = true
 				
@@ -104,7 +108,9 @@ func refresh_ui():
 
 	%ScrollContainer.add_child(games)
 
-	first_button.grab_focus()
+	if init:
+		first_button.grab_focus.call_deferred()
+	init = false
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_exit_decktricks"):

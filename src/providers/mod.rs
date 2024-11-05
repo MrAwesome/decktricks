@@ -80,12 +80,9 @@ pub(crate) trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync 
     fn get_available_actions(&self) -> Vec<SpecificActionID> {
         let all_variants = SpecificActionID::all_variants();
 
-        // Was once parallelized with par_iter, but all system checks are now
-        //   based on FullSystemContext.
         let results: Vec<&SpecificActionID> =
             all_variants.iter().filter(|x| self.can_id(x)).collect();
 
-        // Filter out any errors and throw them if found
         let mut allowed_actions = vec![];
         for res in results {
             allowed_actions.push(res.clone());
