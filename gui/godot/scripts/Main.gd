@@ -4,11 +4,7 @@ var actions_row = preload("res://scenes/actions_row.tscn")
 var action_button = preload("res://scenes/action_button.tscn")
 var label_outer = preload("res://scenes/label_outer.tscn")
 var row_outer = preload("res://scenes/row_outer.tscn")
-
-# Create function that takes action and display name (or icon)
-# Call it for each one
-
-# TODO: figure out how to remove $Button from the scene so it's not selectable with controller
+var tricks_list = preload("res://scenes/tricks_list.tscn")
 
 func create_action_button(action: String, target: String, contents: String):
 	var button = action_button.instantiate()
@@ -20,7 +16,7 @@ func create_action_button(action: String, target: String, contents: String):
 func take_action(action: String, target: String):
 	# TODO: special handling for "info" etc
 	print('Running: ', './decktricks ', action, ' ', target)
-	var res = OS.execute_with_pipe("./decktricks", [action, target])
+	OS.execute_with_pipe("./decktricks", [action, target])
 	# TODO: check res
 
 # take [available, actions, like, this]
@@ -28,7 +24,6 @@ func create_actions_row(target: String, available_actions, _display_name: String
 	var actions_row_outer = actions_row.instantiate()
 	var row = actions_row_outer.get_child(0).get_child(0)
 	
-	var did_first = false
 	for action in available_actions:
 		# Fix this to take display names etc from the config
 		# TODO: fix ordering so info is last
@@ -52,24 +47,20 @@ func get_actions():
 		# TODO: fallback/error
 	
 func _ready():
-	var first_button = null
-	var games = $MainPanel/ScrollContainer/Games
-	var actions = get_actions()
-	print(actions['chromium'])
+	refresh_ui()
 	
-	#var file = FileAccess.open("res://assets/config.json", FileAccess.READ)
+func refresh_ui():
+	var first_button = null
+	var games = tricks_list.instantiate()
+	var actions = get_actions()
+	
 	var config_output = []
 	var config_res = OS.execute("./decktricks", ["get-config"], config_output)
 	
-	
 	if config_res == 0:
-		#var config_data = file.get_as_text()
-		#file.close()
 		var config_data = "".join(config_output)
 		var json = JSON.new()
 		var ret = json.parse(config_data)
-		
-		
 		
 		if ret == OK:
 			var tricks = json.data.get("tricks", [])
@@ -100,14 +91,24 @@ func _ready():
 					first_button = trick_row.get_child(0).get_child(0).get_child(0)
 					marked_first = true
 				
-				var row_outer_here = row_outer.instantiate() as PanelContainer
+				var row_outer_here = row_outer.instantiate()
 				var row_inner = row_outer_here.get_child(0).get_child(0)
 				row_inner.add_child(label_box)
 				row_inner.add_child(trick_row)
 				games.add_child(row_outer_here)
+	
+	var old_games = %ScrollContainer.find_child("TricksList")
+	if old_games != null:
+		%ScrollContainer.remove_child(old_games)
+		old_games.queue_free()
+
+	%ScrollContainer.add_child(games)
 
 	first_button.grab_focus()
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
+
+func _on_ui_refresh_timer_timeout() -> void:
+	refresh_ui()

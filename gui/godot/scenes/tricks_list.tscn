@@ -1,0 +1,4 @@
+[gd_scene format=3 uid="uid://do4v7dct1d2rl"]
+
+[node name="TricksList" type="VBoxContainer"]
+size_flags_horizontal = 0
