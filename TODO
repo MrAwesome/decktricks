@@ -1,30 +1,51 @@
 [] figure out why integration test is happening by default
 
 Providers
+[] minecraft (prism launcher?) (org.prismlauncher.PrismLauncher / com.mojang.Minecraft)
+[] system commands - *file browser* (what's the name in plasma)
+[] yuzu/etc switch emulators
 [] luxtorpeda directly (see the readme)
-[] Moonlight!
 [] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
     [] individual launchers from within this?
 [] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin
     [] especially for Decky
 [] implement full updates for all providers
-[] system commands - *file browser* (what's the name in plasma)
 [] playstation plus
 [] junk store
 [] "nested desktop" from the software center
 [] steamtinkerlaunch
 [] prism launcher (minecraft)
 [] mod: RDO lobby manager
-[] yuzu/etc steam emulators
 [] customscript, bash scripts which are compiled into the binary
 [] blizzard launcher (NonSteamLaunchers probably adds this)
+[] modorganizer2: https://github.com/rockerbacon/modorganizer2-linux-installer/
+    [] mkdir ~/.steam/root/steamapps/compatdata/22370/pfx/drive_c/users/steamuser/Temp
+    [] sudo chattr +i ~/.steam/root/steamapps/compatdata/22370/pfx/drive_c/users/steamuser/Temp
 
-Actions:
+Actions/Programs:
+[] Moonlight!
+[] websites: google, etc
+[] discord! vesktop, webcord, etc
+    [] confirmation dialog: "NOTE! The official Discord app has issues with (....)"
 [] "essentials" - just installs essentials
-[] ssh-server (launch an sshd with safe/known/set password)
+[] systemctl enable --now sshd (requires keys, how to handle that?)
+[] sshfs - commands to access an sshfs (or nfs?) share, or show an rsync command
+[] temporary ssh server (launch an sshd with safe/known/set password):
+    # ensure user has pw:
+    passwd -S $USER # | grep -q " P " &&
+
+    #if not, prompt user for pw and set it
+
+    ssh-keygen -A # check for how this functions on a new system
+    /usr/sbin/sshd -D -p 2222 -o "PasswordAuthentication=yes" -o "HostKey=~/.ssh/id_rsa"
+
+    # show connection instructions
+
+[] display IP address to user
 
 GUI
 [] have launched programs run in the background
+[] don't take gamepad/keypad input when in background (or at least not when in "run" mode while in game mode?)
 [] don't freeze when launching program (same as above?)
 [] check if it's decktricks freezing vm or not
 [] resize to not be so obnoxious in desktop mode (just set a smaller 16:10 res as min?)
