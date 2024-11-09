@@ -3,6 +3,20 @@
 
     "tricks": [
         {
+            "id": "prisma-launcher",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "org.prismlauncher.PrismLauncher"
+            },
+            "icon": "XXX",
+            "tags": [
+                "minecraft",
+                "prisma"
+            ],
+            "display_name": "Minecraft (Prisma Launcher)",
+            "description": " A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
+        },
+        {
             "id": "protonup-qt",
             "provider_config": {
                 "type": "flatpak",

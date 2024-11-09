@@ -4,7 +4,7 @@
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_rvslj"]
 [ext_resource type="PackedScene" uid="uid://do4v7dct1d2rl" path="res://scenes/tricks_list.tscn" id="3_0bbpv"]
 
-[node name="Control" type="Control"]
+[node name="Decktricks" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1280.0

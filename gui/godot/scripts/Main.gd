@@ -3,6 +3,7 @@ extends Control
 # TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
 # TODO: does selecting a node keep it from being cleaned up?
 # TODO: fix follow logic on click vs up
+# TODO: handle 720p since that's a common resolution on TVs
 
 var init = true
 var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")
@@ -27,7 +28,7 @@ func focus_button(button: Button, action, trick_id):
 	focused_trick_and_action = [trick_id, action]
 
 func create_action_button(action: String, trick_id: String, contents: String):
-	var button = ACTION_BUTTON.instantiate()
+	var button: Button = ACTION_BUTTON.instantiate()
 	button.name = action
 	button.text = contents
 	button.pressed.connect(take_action.bind(action, trick_id))
@@ -64,9 +65,10 @@ func create_actions_row(trick_id: String, available_actions, _display_name: Stri
 
 func get_actions():
 	var output = []
+
+	# NOTE: we should not need to check validity of this output if it returns successfully,
+	# 		thanks to robust error-checking on the Rust side
 	var res = OS.execute("./decktricks", ["actions", "--json"], output)
-	print(output[0])
-	# TODO: check output is legitimate
 
 	if res == 0:
 		var config_data = output[0]

@@ -1,5 +1,8 @@
 [] figure out why integration test is happening by default
 
+Comms
+[] use https://github.com/wez/wezterm as inspiration for the gh page
+
 Providers
 [] minecraft (prism launcher?) (org.prismlauncher.PrismLauncher / com.mojang.Minecraft)
 [] system commands - *file browser* (what's the name in plasma)
