@@ -4,6 +4,8 @@ extends Control
 # TODO: does selecting a node keep it from being cleaned up?
 # TODO: fix follow logic on click vs up
 # TODO: handle 720p since that's a common resolution on TVs
+# TODO: use this to set the STEAM_ID as needed for gamescope? https://docs.godotengine.org/en/stable/classes/class_window.html#class-window-method-set-flag
+
 
 var init = true
 var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")
@@ -45,19 +47,22 @@ func take_action(action: String, trick_id: String):
 			print('Error! Failed to run', './decktricks ', action, ' ', trick_id)
 
 		# TODO: test for extremely long info strings
+		# TODO: figure out why keybindings and themes don't work here
 		var info_json = JSON.new()
 		var ret = info_json.parse(output[0])
 		if ret == OK:
 			var info = info_json.data
 
+			var root = get_tree().root
 			var dialog = TRICK_INFO.instantiate()
+			dialog.set_theme(root.theme)
 			dialog.get_ok_button().set_text("OK")
 
 			dialog.set_title(info["display_name"])
 			dialog.set_text(info["description"])
 
-			get_tree().root.add_child(dialog)
-			dialog.popup_centered()
+			root.add_child(dialog)
+			dialog.popup_centered_ratio(0.7)
 	else:
 		OS.execute_with_pipe("./decktricks", [action, trick_id])
 
