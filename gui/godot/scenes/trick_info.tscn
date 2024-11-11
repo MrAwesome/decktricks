@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://61rro6gvfnsg"]
+
+[ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_2wb5u"]
+
+[node name="TrickInfo" type="AcceptDialog"]
+auto_translate_mode = 1
+gui_embed_subwindows = true
+size = Vector2i(600, 400)
+theme = ExtResource("1_2wb5u")
+dialog_autowrap = true

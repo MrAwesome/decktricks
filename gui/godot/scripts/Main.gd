@@ -11,6 +11,7 @@ var ACTION_BUTTON = preload("res://scenes/action_button.tscn")
 var LABEL_OUTER = preload("res://scenes/label_outer.tscn")
 var ROW_OUTER = preload("res://scenes/row_outer.tscn")
 var TRICKS_LIST = preload("res://scenes/tricks_list.tscn")
+var TRICK_INFO = preload("res://scenes/trick_info.tscn")
 
 var did_focus = false
 var focused_trick_and_action = [null, null]
@@ -36,10 +37,29 @@ func create_action_button(action: String, trick_id: String, contents: String):
 	return button
 
 func take_action(action: String, trick_id: String):
-	# TODO: special handling for "info" etc
 	print('Running: ', './decktricks ', action, ' ', trick_id)
-	OS.execute_with_pipe("./decktricks", [action, trick_id])
-	# TODO: check res
+	if action == "info":
+		var output = []
+		var res = OS.execute("./decktricks", [action, trick_id], output)
+		if res != OK:
+			print('Error! Failed to run', './decktricks ', action, ' ', trick_id)
+
+		# TODO: test for extremely long info strings
+		var info_json = JSON.new()
+		var ret = info_json.parse(output[0])
+		if ret == OK:
+			var info = info_json.data
+
+			var dialog = TRICK_INFO.instantiate()
+			dialog.get_ok_button().set_text("OK")
+
+			dialog.set_title(info["display_name"])
+			dialog.set_text(info["description"])
+
+			get_tree().root.add_child(dialog)
+			dialog.popup_centered()
+	else:
+		OS.execute_with_pipe("./decktricks", [action, trick_id])
 
 # take [available, actions, like, this]
 func create_actions_row(trick_id: String, available_actions, _display_name: String, _icon_path: String):
@@ -109,8 +129,6 @@ func refresh_ui():
 				# check on the Rust side that we're only generating valid actions
 				var available_actions = actions[trick_id]
 
-
-				# TODO: make label selectable, have it just jump to the first option
 				# TODO: show tooltext when it's selected
 
 				var label_box = LABEL_OUTER.instantiate()
