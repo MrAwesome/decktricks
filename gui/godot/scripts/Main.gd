@@ -175,6 +175,8 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
+	# var screen_size: Vector2i = DisplayServer.screen_get_size()
+	# print(screen_size.x)
 
 func _on_ui_refresh_timer_timeout() -> void:
 	refresh_ui()

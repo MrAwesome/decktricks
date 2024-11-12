@@ -1,9 +1,12 @@
 [] figure out why integration test is happening by default
+[] fix tooltip wrapping
 
 Comms
 [] use https://github.com/wez/wezterm as inspiration for the gh page
 
 Providers
+[] emudeck
+[] kodi (for streaming) (tv.kodi.Kodi)
 [] minecraft (prism launcher?) (org.prismlauncher.PrismLauncher / com.mojang.Minecraft)
 [] system commands - *file browser* (what's the name in plasma)
 [] yuzu/etc switch emulators
