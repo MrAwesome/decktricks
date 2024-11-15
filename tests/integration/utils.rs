@@ -1,4 +1,4 @@
-use decktricks::{errors::DeckTricksError, prelude::DynamicError};
+use decktricks::{errors::DecktricksError, prelude::DynamicError};
 
 use std::process::Command;
 
@@ -10,7 +10,7 @@ pub(crate) fn run_cli_with_args(args: Vec<&str>) -> CliResult {
     if result.status.success() {
         Ok(String::from_utf8_lossy(&result.stdout).into())
     } else {
-        Err(Box::new(DeckTricksError::new(format!(
+        Err(Box::new(DecktricksError::new(format!(
             "Command failed!\nCommand: {} {}\nResult: {:#?}",
             BINARY_NAME,
             args.join(" "),

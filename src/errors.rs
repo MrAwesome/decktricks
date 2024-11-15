@@ -15,6 +15,7 @@ pub enum KnownError {
     ConfigParsing(serde_json::Error),
     ConfigRead(std::io::Error),
     DeckyInstall(DynamicError),
+    EmuDeckInstall(DynamicError),
     ErrorDuringRun(&'static str),
     LoggerInitializationFail(log::SetLoggerError),
     NoAvailableActions(TrickID),
@@ -37,8 +38,12 @@ impl Display for KnownError {
             Self::CommandLineParseError(cmd_parse_err) => {
                 write!(f, "Error parsing command line: {cmd_parse_err:#?}")
             }
+            // TODO: merge custom installer errs
             Self::DeckyInstall(decky_install_err) => {
                 write!(f, "Error installing Decky: {decky_install_err:#?}")
+            }
+            Self::EmuDeckInstall(emudeck_install_err) => {
+                write!(f, "Error installing EmuDeck: {emudeck_install_err:#?}")
             }
             Self::LoggerInitializationFail(logger_err) => {
                 write!(f, "Logger initialization failure: {logger_err:#?}")
@@ -88,23 +93,23 @@ impl From<std::io::Error> for KnownError {
 }
 
 #[derive(Debug)]
-pub struct DeckTricksError {
+pub struct DecktricksError {
     pub message: String,
 }
 
-impl DeckTricksError {
+impl DecktricksError {
     #[must_use]
     pub fn new(message: String) -> Self {
         Self { message }
     }
 }
 
-impl std::fmt::Display for DeckTricksError {
+impl std::fmt::Display for DecktricksError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "An error has occurred: {}", self.message)
     }
 }
-impl std::error::Error for DeckTricksError {}
+impl std::error::Error for DecktricksError {}
 
 #[derive(Debug)]
 pub struct SeriousError {

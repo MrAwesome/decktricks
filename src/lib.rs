@@ -13,3 +13,4 @@ pub mod tricks_config;
 pub mod executor;
 pub mod command;
 pub mod gui;
+pub mod utils;

@@ -61,7 +61,7 @@ fn zenity_run_action(executor: &Executor) -> DeckResult<Vec<DeckResult<ActionSuc
     let action_id_untrimmed = String::from_utf8_lossy(&action_output.stdout);
     let action_id = action_id_untrimmed.trim();
     let command =
-        DeckTricksCommand::try_parse_from(["decktricks", action_id, trick_id]).map_err(KnownError::from)?;
+        DecktricksCommand::try_parse_from(["decktricks", action_id, trick_id]).map_err(KnownError::from)?;
     let action = command.action;
 
     let results = executor.execute(&action);

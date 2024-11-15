@@ -3,7 +3,7 @@ pub use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[clap(name = "decktricks")]
-pub struct DeckTricksCommand {
+pub struct DecktricksCommand {
     // The actual command to be executed, such as "run" or "install"
     #[clap(subcommand)]
     pub action: Action,

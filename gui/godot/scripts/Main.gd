@@ -3,9 +3,8 @@ extends Control
 # TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
 # TODO: does selecting a node keep it from being cleaned up?
 # TODO: fix follow logic on click vs up
-# TODO: handle 720p since that's a common resolution on TVs
+# TODO: handle 720p since that's a common resolution on TVs?
 # TODO: use this to set the STEAM_ID as needed for gamescope? https://docs.godotengine.org/en/stable/classes/class_window.html#class-window-method-set-flag
-
 
 var init = true
 var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")

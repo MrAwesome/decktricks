@@ -1,8 +1,5 @@
 use crate::prelude::*;
-use std::fs::File;
-use std::io::copy;
-use std::os::unix::fs::PermissionsExt;
-use std::process::Command;
+use crate::utils::run_remote_script;
 
 // TODO: detect if on steam deck or not, and *do not mark as installable if not on steam deck*
 
@@ -90,7 +87,8 @@ impl ProviderActions for DeckyInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        install_decky().map_err(KnownError::DeckyInstall)?;
+        run_remote_script(DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)
+            .map_err(KnownError::DeckyInstall)?;
         success!("Decky installed successfully!")
     }
 
@@ -114,25 +112,4 @@ impl GeneralProvider for DeckyInstallerGeneralProvider {
         // TODO: run the decky update command here
         not_implemented("Decky update is not implemented yet!")
     }
-}
-
-fn install_decky() -> Result<(), DynamicError> {
-    let response = reqwest::blocking::get(DECKY_DOWNLOAD_URL)?;
-
-    // These are in blocks to ensure that files are closed out
-    // before attempting to do further changes
-    {
-        let mut dest = File::create(DECKY_INSTALLER_TEMP_FILENAME)?;
-        copy(&mut response.bytes()?.as_ref(), &mut dest)?;
-    }
-
-    {
-        std::fs::set_permissions(
-            DECKY_INSTALLER_TEMP_FILENAME,
-            std::fs::Permissions::from_mode(0o755),
-        )?;
-    }
-
-    Command::new(DECKY_INSTALLER_TEMP_FILENAME).status()?;
-    Ok(())
 }

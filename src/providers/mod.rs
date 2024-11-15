@@ -5,6 +5,7 @@ use flatpak::{FlatpakProvider, FlatpakSystemContext};
 use std::fmt::Debug;
 
 pub mod decky_installer;
+pub mod emudeck_installer;
 pub mod flatpak;
 mod flatpak_helpers;
 pub mod simple_command;

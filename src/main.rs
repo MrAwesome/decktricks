@@ -3,7 +3,7 @@ use decktricks::prelude::*;
 fn main() -> DeckResult<()> {
     pretty_env_logger::try_init().map_err(KnownError::LoggerInitializationFail)?;
 
-    let cmd = DeckTricksCommand::parse();
+    let cmd = DecktricksCommand::parse();
 
     let executor = Executor::new(&cmd)?;
     let results = executor.execute(&cmd.action);

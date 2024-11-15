@@ -15,7 +15,7 @@ impl Executor {
     /// Any errors that might arise from parsing the config
     /// or from gathering system resources.
     ///
-    pub fn new(command: &DeckTricksCommand) -> DeckResult<Self> {
+    pub fn new(command: &DecktricksCommand) -> DeckResult<Self> {
         let maybe_config_path = command.config.as_ref();
         let loader = match maybe_config_path {
             Some(config_path) => TricksLoader::from_config(config_path)?,
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn top_level_install() -> DeckResult<()> {
-        let command = DeckTricksCommand {
+        let command = DecktricksCommand {
             action: Action::Install {
                 id: "lutris".into(),
             },
@@ -117,7 +117,7 @@ mod tests {
 
     #[test]
     fn top_level_incorrect_run() -> DeckResult<()> {
-        let command = DeckTricksCommand {
+        let command = DecktricksCommand {
             action: Action::Run {
                 id: "FAKE_PACKAGE".into(),
             },
@@ -139,7 +139,7 @@ mod tests {
 
     #[test]
     fn top_level_general_list() -> DeckResult<()> {
-        let command = DeckTricksCommand {
+        let command = DecktricksCommand {
             action: Action::List { installed: false },
             config: None,
         };
@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn top_level_general_list_installed() -> DeckResult<()> {
-        let command = DeckTricksCommand {
+        let command = DecktricksCommand {
             action: Action::List { installed: true },
             config: None,
         };

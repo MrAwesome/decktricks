@@ -38,4 +38,9 @@ follow_focus = true
 unique_name_in_owner = true
 layout_mode = 2
 
+[node name="ActionButton" type="ActionButton" parent="."]
+layout_mode = 0
+offset_right = 168.0
+offset_bottom = 189.0
+
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
