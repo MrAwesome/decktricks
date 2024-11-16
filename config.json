@@ -17,21 +17,35 @@
             "description": " A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
         },
         {
-            "id": "protonup-qt",
+            "id": "emudeck",
             "provider_config": {
-                "type": "flatpak",
-                "id": "net.davidotek.pupgui2"
+                "type": "emu-deck-installer"
             },
-            "icon": "XXX",
             "tags": [
-                "openmw",
-                "daggerfall-unity",
-                "protonup",
-                "compatibility",
-                "stalker"
+                "emudeck",
+                "emulation",
+                "gamecube",
+                "snes",
+                "sega",
+                "mame",
+                "n64"
             ],
-            "display_name": "ProtonUp-Qt",
-            "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
+            "icon": "XXX",
+            "display_name": "EmuDeck",
+            "description": "Easy setup tool for emulation. Has many, many different emulators available."
+        },
+        {
+            "id": "decky",
+            "provider_config": {
+                "type": "decky-installer"
+            },
+            "tags": [
+                "decky"
+            ],
+            "icon": "XXX",
+            "display_name": "Decky Loader",
+            "description": "Homebrew plugin launcher for the Steam Deck.",
+            "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         },
         {
             "id": "Moonlight",
@@ -47,6 +61,23 @@
             ],
             "display_name": "Moonlight",
             "description": "Stream games and other applications from another PC running Sunshine or GeForce Experience."
+        },
+        {
+            "id": "protonup-qt",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "net.davidotek.pupgui2"
+            },
+            "icon": "XXX",
+            "tags": [
+                "openmw",
+                "daggerfall-unity",
+                "protonup",
+                "compatibility",
+                "stalker"
+            ],
+            "display_name": "ProtonUp-Qt",
+            "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
         },
         {
             "id": "lutris",
@@ -90,19 +121,6 @@
             "icon": "XXX",
             "display_name": "Heroic",
             "description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
-        },
-        {
-            "id": "decky",
-            "provider_config": {
-                "type": "decky-installer"
-            },
-            "tags": [
-                "decky"
-            ],
-            "icon": "XXX",
-            "display_name": "Decky Loader",
-            "description": "Homebrew plugin launcher for the Steam Deck.",
-            "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         },
         {
             "id": "systemsettings",

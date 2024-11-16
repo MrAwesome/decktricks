@@ -5,7 +5,7 @@ pub(crate) use crate::tricks_config::*;
 
 pub(crate) use crate::run_system_command::*;
 
-pub(crate) use crate::err;
+pub(crate) use crate::dterr;
 pub(crate) use crate::success;
 pub(crate) use crate::join_all;
 
@@ -19,7 +19,7 @@ pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
 pub const DEFAULT_USER: &str = "deck";
 pub const PID_ENV_STRING: &str = "DECKTRICKS_TRICK_ID";
 
-pub type ProcessID = isize;
+pub type ProcessID = String;
 
 #[must_use]
 pub fn is_debug() -> bool {

@@ -114,6 +114,22 @@ impl SysCommandResult {
             },
         }
     }
+
+    pub(crate) fn success_output(
+        stdout: &str,
+    ) -> Self {
+        Self {
+            sys_command: SysCommand::new(
+                "nothingburger".to_string(),
+                vec!["you should not care about this".into()],
+            ),
+            raw_output: std::process::Output {
+                status: std::process::ExitStatus::from_raw(0),
+                stdout: stdout.as_bytes().to_vec(),
+                stderr: b"".to_vec(),
+            },
+        }
+    }
 }
 
 pub(crate) trait SysCommandResultChecker {

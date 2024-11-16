@@ -10,7 +10,7 @@ pub(super) fn get_running_flatpak_applications(runner: &RunnerRc) -> DeckResult<
             let lines = text.lines().map(String::from).collect();
             Ok(lines)
         }
-        Err(e) => Err(KnownError::SystemCommandParse(err!(
+        Err(e) => Err(KnownError::SystemCommandParse(dterr!(
             "Failed to parse 'flatpak ps' output: {e:?}"
         ))),
     }
@@ -26,7 +26,7 @@ pub(super) fn get_installed_flatpak_applications(runner: &RunnerRc) -> DeckResul
             let lines = text.lines().map(String::from).collect();
             Ok(lines)
         }
-        Err(e) => Err(KnownError::SystemCommandParse(err!(
+        Err(e) => Err(KnownError::SystemCommandParse(dterr!(
             "Failed to parse 'flatpak list' output: {e:?}"
         ))),
     }
