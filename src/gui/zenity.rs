@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::providers::system_context::FullSystemContext;
 use std::process::{Command, Stdio};
 
 pub(super) fn zenity_launch(executor: &Executor) -> DeckResult<ActionSuccess> {

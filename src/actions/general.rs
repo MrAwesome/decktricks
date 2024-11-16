@@ -1,6 +1,7 @@
 use crate::gui::GuiType;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerGeneralProvider;
+use crate::providers::system_context::FullSystemContext;
 use crate::providers::flatpak::FlatpakGeneralProvider;
 use rayon::prelude::*;
 

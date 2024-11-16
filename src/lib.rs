@@ -14,3 +14,5 @@ pub mod executor;
 pub mod command;
 pub mod gui;
 pub mod utils;
+
+pub use rayon;

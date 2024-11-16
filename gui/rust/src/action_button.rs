@@ -14,18 +14,12 @@ struct ActionButton {
     sender: Option<mpsc::Sender<(String, String)>>,
 }
 
-impl ActionButton {
-    fn set_sender(sender: mpsc::Sender<(String, String)>) {
-        
-    }
-}
-
 #[godot_api]
 impl IButton for ActionButton {
     fn ready(&mut self) {
         let contents = self.contents.clone();
         let action = self.action.clone();
-        let trick_id = self.trick_id.clone();
+        let _trick_id = self.trick_id.clone();
         let sender = self.sender.clone();
 
         let mut base = self.base_mut();
@@ -35,8 +29,8 @@ impl IButton for ActionButton {
         base.connect(
             "focus_entered".into(),
             Callable::from_fn("remember_focused_node", move |_| {
-                if let Some(sender) = sender.clone() {
-                    sender.send((action.clone(), trick_id.clone()));
+                if let Some(_sender) = sender.clone() {
+                    //sender.send((action.clone(), trick_id.clone()));
                 }
                 Ok(().to_variant())
             }),
@@ -69,6 +63,6 @@ fn perform_button_action(action: &str, trick_id: &str) {
     godot_print!("Taking action: {action} {trick_id}")
 }
 
-fn store_focused_node(action: String, trick_id: String) {
+fn _store_focused_node(action: String, trick_id: String) {
     godot_print!("STORING FOCUSED NODE: {action} {trick_id}")
 }

@@ -1,7 +1,8 @@
 use crate::prelude::*;
+use crate::providers::decky_installer::DeckyInstallerProvider;
+use crate::providers::flatpak::FlatpakProvider;
 use crate::providers::simple_command::SimpleCommandProvider;
-use decky_installer::{DeckyInstallerProvider, DeckySystemContext};
-use flatpak::{FlatpakProvider, FlatpakSystemContext};
+use crate::providers::system_context::FullSystemContext;
 use std::fmt::Debug;
 
 pub mod decky_installer;
@@ -9,6 +10,7 @@ pub mod emudeck_installer;
 pub mod flatpak;
 mod flatpak_helpers;
 pub mod simple_command;
+pub mod system_context;
 
 pub(super) const fn not_possible(reason: &'static str) -> DeckResult<ActionSuccess> {
     Err(KnownError::ActionNotPossible(reason))
@@ -18,30 +20,6 @@ pub(super) const fn not_implemented(reason: &'static str) -> DeckResult<ActionSu
     Err(KnownError::ActionNotImplementedYet(reason))
 }
 
-// TODO: test
-pub struct FullSystemContext {
-    flatpak_ctx: FlatpakSystemContext,
-    decky_ctx: DeckySystemContext,
-}
-
-impl FullSystemContext {
-    // TODO: can be parallelized
-    /// # Errors
-    ///
-    /// Can return system errors from trying to gather system information
-    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
-        let (decky_ctx, flatpak_ctx) =
-            join_all!(|| DeckySystemContext::gather_with(runner), || {
-                FlatpakSystemContext::gather_with(runner)
-            });
-
-        Ok(Self {
-            decky_ctx: decky_ctx?,
-            flatpak_ctx: flatpak_ctx?,
-        })
-    }
-}
-
 pub(crate) type DynProvider<'a> = Box<dyn TrickProvider>;
 impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
     type Error = KnownError;
@@ -49,6 +27,13 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
     fn try_from(
         (trick, full_ctx, runner): (&Trick, &FullSystemContext, &RunnerRc),
     ) -> Result<Self, Self::Error> {
+        let running_instances = full_ctx
+            .procs_ctx
+            .tricks_to_running_pids
+            .get(&trick.id)
+            .cloned()
+            .unwrap_or_default();
+
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(FlatpakProvider::new(
                 flatpak,
@@ -60,6 +45,7 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
                     simple_command.command.clone(),
                     simple_command.args.clone().unwrap_or_default(),
                     runner.clone(),
+                    running_instances,
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(

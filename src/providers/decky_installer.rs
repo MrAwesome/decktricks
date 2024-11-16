@@ -21,9 +21,9 @@ impl DeckyInstallerProvider {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct DeckySystemContext {
-    is_installed: bool,
-    is_running: bool,
+pub struct DeckySystemContext {
+    pub is_installed: bool,
+    pub is_running: bool,
 }
 
 impl DeckySystemContext {

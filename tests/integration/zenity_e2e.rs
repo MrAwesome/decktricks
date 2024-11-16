@@ -1,5 +1,5 @@
 // Comment this out to make LSP features work
-//#![cfg(feature = "e2e")]
+#![cfg(feature = "e2e")]
 
 use std::process::Command;
 use std::thread;

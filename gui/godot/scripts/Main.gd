@@ -38,17 +38,18 @@ func create_action_button(action: String, trick_id: String, contents: String):
 	return button
 
 func take_action(action: String, trick_id: String):
+	var args: Array[String] = [action, trick_id]
 	print('Running: ', './decktricks ', action, ' ', trick_id)
 	if action == "info":
-		var output = []
-		var res = OS.execute("./decktricks", [action, trick_id], output)
-		if res != OK:
+		var output = %DecktricksDispatcher.sync_run_with_decktricks(args)
+		if output == "":
 			print('Error! Failed to run', './decktricks ', action, ' ', trick_id)
+			return
 
 		# TODO: test for extremely long info strings
 		# TODO: figure out why keybindings and themes don't work here
 		var info_json = JSON.new()
-		var ret = info_json.parse(output[0])
+		var ret = info_json.parse(output)
 		if ret == OK:
 			var info = info_json.data
 
@@ -63,7 +64,7 @@ func take_action(action: String, trick_id: String):
 			root.add_child(dialog)
 			dialog.popup_centered_ratio(0.7)
 	else:
-		OS.execute_with_pipe("./decktricks", [action, trick_id])
+		%DecktricksDispatcher.async_run_with_decktricks(args)
 
 # take [available, actions, like, this]
 func create_actions_row(trick_id: String, available_actions, _display_name: String, _icon_path: String):

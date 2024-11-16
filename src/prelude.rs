@@ -16,6 +16,10 @@ pub use crate::errors::*;
 pub use crate::providers::*;
 
 pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
+pub const DEFAULT_USER: &str = "deck";
+pub const PID_ENV_STRING: &str = "DECKTRICKS_TRICK_ID";
+
+pub type ProcessID = isize;
 
 #[must_use]
 pub fn is_debug() -> bool {

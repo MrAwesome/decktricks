@@ -1,18 +1,25 @@
-use crate::prelude::*;
+use crate::{prelude::*, utils::kill_pids};
 
 #[derive(Debug)]
 pub struct SimpleCommandProvider {
     pub command: String,
     pub args: Vec<String>,
     pub runner: RunnerRc,
+    pub running_instances: Vec<ProcessID>,
 }
 
 impl SimpleCommandProvider {
-    pub(crate) fn new<S: Into<String>>(command: S, args: Vec<S>, runner: RunnerRc) -> Self {
+    pub(crate) fn new<S: Into<String>>(
+        command: S,
+        args: Vec<S>,
+        runner: RunnerRc,
+        running_instances: Vec<ProcessID>
+    ) -> Self {
         Self {
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),
             runner,
+            running_instances,
         }
     }
 }
@@ -36,9 +43,7 @@ impl ProviderChecks for SimpleCommandProvider {
         true
     }
     fn is_running(&self) -> bool {
-        // NOTE: for now, we aren't going to implement this until it's needed
-        // (an easy way to implement this would be to have 'unique_grep_regex' for each command)
-        false
+        !self.running_instances.is_empty()
     }
     fn is_killable(&self) -> bool {
         self.is_running()
@@ -72,7 +77,7 @@ impl ProviderActions for SimpleCommandProvider {
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        not_implemented("Simple commands cannot be killed yet.")
+        kill_pids(&self.runner, &self.running_instances)
     }
 
     fn update(&self) -> DeckResult<ActionSuccess> {
@@ -100,7 +105,7 @@ mod tests {
     #[test]
     fn basic_expectations() {
         let runner = Arc::new(MockTestActualRunner::new());
-        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner);
+        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner, Default::default());
         assert!(!sc.is_installable());
         assert!(!sc.is_installed());
         assert!(sc.is_runnable());
@@ -113,12 +118,18 @@ mod tests {
         let cmd = "echo";
         let args = vec!["lol"];
         let mut mock = MockTestActualRunner::new();
-        mock.expect_run()
-            .times(1)
-            .returning(move |_| Ok(SysCommandResult::fake_for_test("echo", vec!["lol"], 0, "lol", "")));
+        mock.expect_run().times(1).returning(move |_| {
+            Ok(SysCommandResult::fake_for_test(
+                "echo",
+                vec!["lol"],
+                0,
+                "lol",
+                "",
+            ))
+        });
 
         let runner = Arc::new(mock);
-        let sc = SimpleCommandProvider::new(cmd, args, runner);
+        let sc = SimpleCommandProvider::new(cmd, args, runner, Default::default());
         // TODO: generalize these to be default implementations?
 
         assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));
