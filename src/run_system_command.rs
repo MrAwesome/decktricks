@@ -15,6 +15,7 @@ pub type RunnerRc = Arc<Runner>;
 pub(crate) struct SysCommand {
     pub cmd: String,
     pub args: Vec<String>,
+    pub desired_env_vars: Vec<(String, String)>
 }
 
 impl SysCommand {
@@ -22,12 +23,15 @@ impl SysCommand {
         Self {
             cmd: cmd.into(),
             args: args.into_iter().map(Into::into).collect(),
+            desired_env_vars: Vec::default(),
         }
     }
 }
 
 pub(crate) trait SysCommandRunner {
     fn get_cmd(&self) -> &SysCommand;
+
+    fn env(&mut self, varname: &str, value: &str) -> &Self;
 
     fn run_with(&self, runner: &RunnerRc) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
@@ -37,6 +41,11 @@ pub(crate) trait SysCommandRunner {
 
 impl SysCommandRunner for SysCommand {
     fn get_cmd(&self) -> &SysCommand {
+        self
+    }
+
+    fn env(&mut self, varname: &str, value: &str) -> &Self {
+        self.desired_env_vars.push((varname.into(), value.into()));
         self
     }
 }
@@ -54,6 +63,8 @@ impl SysCommandResult {
             sys_command: SysCommand {
                 cmd,
                 args,
+                // NOTE: this is incorrect
+                desired_env_vars: Vec::default()
             },
             raw_output: output,
         }
@@ -189,8 +200,14 @@ impl ActualRunner for LiveActualRunner {
         let cmd = &sys_command.cmd;
         let args = &sys_command.args;
 
-        let output = std::process::Command::new(cmd)
-            .args(args)
+        let mut command = std::process::Command::new(cmd);
+        command.args(args);
+
+        for (var, val) in &sys_command.desired_env_vars {
+            command.env(var, val);
+        }
+
+        let output = command
             .output()
             .map_err(KnownError::from)?;
 

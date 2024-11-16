@@ -1,10 +1,12 @@
 use crate::{prelude::*, utils::kill_pids};
+use crate::run_system_command::{SysCommand, SysCommandResultChecker, SysCommandRunner};
 
 #[derive(Debug)]
 pub struct SimpleCommandProvider {
     pub command: String,
     pub args: Vec<String>,
     pub runner: RunnerRc,
+    pub trick_id: TrickID,
     pub running_instances: Vec<ProcessID>,
 }
 
@@ -13,12 +15,14 @@ impl SimpleCommandProvider {
         command: S,
         args: Vec<S>,
         runner: RunnerRc,
+        trick_id: TrickID,
         running_instances: Vec<ProcessID>
     ) -> Self {
         Self {
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),
             runner,
+            trick_id,
             running_instances,
         }
     }
@@ -70,8 +74,8 @@ impl ProviderActions for SimpleCommandProvider {
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        use crate::run_system_command::{SysCommand, SysCommandResultChecker, SysCommandRunner};
         SysCommand::new(&self.command, self.args.iter().collect())
+            .env(PID_ENV_STRING, &self.trick_id)
             .run_with(&self.runner)?
             .as_success()
     }
@@ -105,7 +109,7 @@ mod tests {
     #[test]
     fn basic_expectations() {
         let runner = Arc::new(MockTestActualRunner::new());
-        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner, Default::default());
+        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner, "echo-lol".into(), Vec::default());
         assert!(!sc.is_installable());
         assert!(!sc.is_installed());
         assert!(sc.is_runnable());
@@ -129,7 +133,7 @@ mod tests {
         });
 
         let runner = Arc::new(mock);
-        let sc = SimpleCommandProvider::new(cmd, args, runner, Default::default());
+        let sc = SimpleCommandProvider::new(cmd, args, runner, "echo-lol".into(), Vec::default());
         // TODO: generalize these to be default implementations?
 
         assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));

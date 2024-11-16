@@ -45,6 +45,7 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
                     simple_command.command.clone(),
                     simple_command.args.clone().unwrap_or_default(),
                     runner.clone(),
+                    trick.id.clone(),
                     running_instances,
                 )))
             }
