@@ -120,6 +120,7 @@ pub struct Trick {
 pub enum ProviderConfig {
     Flatpak(Flatpak),
     DeckyInstaller(DeckyInstaller),
+    EmuDeckInstaller(EmuDeckInstaller),
     SimpleCommand(SimpleCommand),
     //SystemPackage(SystemPackage)
     Custom,
@@ -130,6 +131,7 @@ impl std::fmt::Display for ProviderConfig {
         match self {
             ProviderConfig::Flatpak(_) => write!(f, "Flatpak"),
             ProviderConfig::DeckyInstaller(_) => write!(f, "DeckyInstaller"),
+            ProviderConfig::EmuDeckInstaller(_) => write!(f, "EmuDeckInstaller"),
             ProviderConfig::SimpleCommand(_) => write!(f, "SimpleCommand"),
             ProviderConfig::Custom => write!(f, "Custom"),
         }
@@ -154,6 +156,9 @@ pub struct SimpleCommand {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DeckyInstaller;
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct EmuDeckInstaller;
 
 //#[derive(Debug, Deserialize, Serialize)]
 //struct SystemPackage {

@@ -1,5 +1,5 @@
-use crate::{prelude::*, utils::kill_pids};
 use crate::run_system_command::{SysCommand, SysCommandResultChecker, SysCommandRunner};
+use crate::{prelude::*, utils::kill_pids};
 
 #[derive(Debug)]
 pub struct SimpleCommandProvider {
@@ -16,7 +16,7 @@ impl SimpleCommandProvider {
         args: Vec<S>,
         runner: RunnerRc,
         trick_id: TrickID,
-        running_instances: Vec<ProcessID>
+        running_instances: Vec<ProcessID>,
     ) -> Self {
         Self {
             command: command.into(),
@@ -109,7 +109,13 @@ mod tests {
     #[test]
     fn basic_expectations() {
         let runner = Arc::new(MockTestActualRunner::new());
-        let sc = SimpleCommandProvider::new("echo", vec!["lol"], runner, "echo-lol".into(), Vec::default());
+        let sc = SimpleCommandProvider::new(
+            "echo",
+            vec!["lol"],
+            runner,
+            "echo-lol".into(),
+            Vec::default(),
+        );
         assert!(!sc.is_installable());
         assert!(!sc.is_installed());
         assert!(sc.is_runnable());
@@ -145,10 +151,7 @@ mod tests {
             sc.install(),
             Err(KnownError::ActionNotPossible(_))
         ));
-        assert!(matches!(
-            sc.kill(),
-            Err(KnownError::ActionNotImplementedYet(_))
-        ));
+        assert!(sc.kill().is_ok());
         assert!(matches!(sc.update(), Err(KnownError::ActionNotPossible(_))));
         assert!(matches!(
             sc.add_to_steam(AddToSteamContext::default()),

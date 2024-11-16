@@ -1,3 +1,4 @@
+use crate::providers::emudeck_installer::EmuDeckInstallerProvider;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerProvider;
 use crate::providers::flatpak::FlatpakProvider;
@@ -51,6 +52,9 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
                 DeckyInstallerProvider::new(full_ctx.decky_ctx.clone()),
+            )),
+            ProviderConfig::EmuDeckInstaller(_emudeck_installer) => Ok(Box::new(
+                EmuDeckInstallerProvider::new(full_ctx.emudeck_ctx.clone()),
             )),
             ProviderConfig::Custom => provider_not_implemented(trick),
         }

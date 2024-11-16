@@ -1,7 +1,8 @@
 use crate::prelude::*;
-use crate::utils::*;
+use crate::utils::{exists_and_executable, get_homedir, run_remote_script};
 
-// TODO: "installed" is $HOME/EmuDeck.AppImage
+// TODO: determine differences between "running" (games being played) and "running the installer"
+// TODO: "installed" is $HOME/Applications/EmuDeck.AppImage
 
 const EMUDECK_DOWNLOAD_URL: &str =
     "https://raw.githubusercontent.com/dragoonDorise/EmuDeck/main/install.sh";
@@ -23,15 +24,19 @@ impl EmuDeckInstallerProvider {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct EmuDeckSystemContext {
+pub struct EmuDeckSystemContext {
     is_installed: bool,
     is_running: bool,
 }
 
 impl EmuDeckSystemContext {
+    #[allow(clippy::unnecessary_wraps)]
+    /// # Errors
+    ///
+    /// Returns errors relating to running pgrep and checking file existence/permissions.
     pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
-            || exists_and_executable(&format!("{}/{}", get_homedir(), EMUDECK_BINARY_NAME)),
+            || exists_and_executable(runner, &format!("{}/{}", get_homedir(), EMUDECK_BINARY_NAME)),
             || SysCommand::new("pgrep", vec!["-f", EMUDECK_BINARY_NAME])
                 .run_with(runner)
                 .map(|x| x.ran_successfully())
@@ -49,23 +54,19 @@ impl TrickProvider for EmuDeckInstallerProvider {}
 
 impl ProviderChecks for EmuDeckInstallerProvider {
     fn is_installable(&self) -> bool {
-        // TODO: check
         !self.is_installed()
     }
 
     fn is_uninstallable(&self) -> bool {
-        // TODO: check
         self.is_installed()
     }
 
     fn is_installed(&self) -> bool {
-        // TODO: check
         self.ctx.is_installed
     }
 
     fn is_killable(&self) -> bool {
-        // TODO: check
-        false
+        self.is_running()
     }
 
     fn is_updateable(&self) -> bool {
@@ -79,12 +80,10 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_running(&self) -> bool {
-        // TODO: check
         self.ctx.is_running
     }
     fn is_addable_to_steam(&self) -> bool {
-        // TODO: check
-        false
+        true
     }
 }
 
@@ -100,10 +99,9 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        // TODO: check
         run_remote_script(EMUDECK_DOWNLOAD_URL, EMUDECK_INSTALLER_TEMP_FILENAME)
             .map_err(KnownError::EmuDeckInstall)?;
-        success!("EmuDeck installed successfully!")
+        success!("EmuDeck installer installed successfully! Run now to fully install EmuDeck.")
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
@@ -123,8 +121,8 @@ impl ProviderActions for EmuDeckInstallerProvider {
 }
 
 #[derive(Debug)]
-pub(crate) struct EmuDeckInstallerGeneralProvider;
-impl GeneralProvider for EmuDeckInstallerGeneralProvider {
+pub(crate) struct _EmuDeckInstallerGeneralProvider;
+impl GeneralProvider for _EmuDeckInstallerGeneralProvider {
     fn update_all(&self) -> DeckResult<ActionSuccess> {
         // TODO: run the emudeck update command here
         // TODO: check

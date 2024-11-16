@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::providers::emudeck_installer::EmuDeckSystemContext;
 use decky_installer::DeckySystemContext;
 use flatpak::FlatpakSystemContext;
 use std::collections::HashMap;
@@ -8,6 +9,7 @@ pub struct FullSystemContext {
     pub flatpak_ctx: FlatpakSystemContext,
     pub decky_ctx: DeckySystemContext,
     pub procs_ctx: RunningProgramSystemContext,
+    pub emudeck_ctx: EmuDeckSystemContext,
 }
 
 impl FullSystemContext {
@@ -15,31 +17,25 @@ impl FullSystemContext {
     ///
     /// Can return system errors from trying to gather system information
     pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
-        let (decky_ctx, flatpak_ctx, procs_ctx) = join_all!(
+        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx) = join_all!(
             || DeckySystemContext::gather_with(runner),
             || FlatpakSystemContext::gather_with(runner),
-            || RunningProgramSystemContext::gather_with(runner)
+            || RunningProgramSystemContext::gather_with(runner),
+            || EmuDeckSystemContext::gather_with(runner)
         );
 
         Ok(Self {
             decky_ctx: decky_ctx?,
             flatpak_ctx: flatpak_ctx?,
             procs_ctx: procs_ctx?,
+            emudeck_ctx: emudeck_ctx?,
         })
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RunningProgramSystemContext {
     pub tricks_to_running_pids: HashMap<TrickID, Vec<ProcessID>>,
-}
-
-impl Default for RunningProgramSystemContext {
-    fn default() -> Self {
-        Self {
-            tricks_to_running_pids: Default::default()
-        }
-    }
 }
 
 impl RunningProgramSystemContext {
@@ -60,7 +56,10 @@ impl RunningProgramSystemContext {
             // but we can safely skip those.
             if let Ok(filetext) = maybe_filetext {
                 if let Some((trick_id, pid)) = get_pid_and_trick_id_for_environ(&dir, &filetext) {
-                    tricks_to_running_pids.entry(trick_id).or_default().push(pid);
+                    tricks_to_running_pids
+                        .entry(trick_id)
+                        .or_default()
+                        .push(pid);
                 }
             }
         }
@@ -72,24 +71,24 @@ impl RunningProgramSystemContext {
 }
 
 fn get_proc_dirs_for_user(runner: &RunnerRc) -> DeckResult<Vec<String>> {
-        let username = SysCommand::new("whoami", vec![])
-            .run_with(runner)?
-            .as_success()?
-            .get_message()
-            .map_or(DEFAULT_USER.into(), |x| x.trim().to_string());
+    let username = SysCommand::new("whoami", vec![])
+        .run_with(runner)?
+        .as_success()?
+        .get_message()
+        .map_or(DEFAULT_USER.into(), |x| x.trim().to_string());
 
-        // TODO: instead of find via SysCommand, make a test-safe file finder?
-        let res = SysCommand::new(
-            "find",
-            vec!["/proc", "-maxdepth", "1", "-type", "d", "-user", &username],
-        )
-        .run_with(runner)?;
+    // TODO: instead of find via SysCommand, make a test-safe file finder?
+    let res = SysCommand::new(
+        "find",
+        vec!["/proc", "-maxdepth", "1", "-type", "d", "-user", &username],
+    )
+    .run_with(runner)?;
 
-        // Just attempt to use whatever find gives us
-        Ok(String::from_utf8_lossy(&res.raw_output().stdout)
-            .lines()
-            .map(String::from)
-            .collect())
+    // Just attempt to use whatever find gives us
+    Ok(String::from_utf8_lossy(&res.raw_output().stdout)
+        .lines()
+        .map(String::from)
+        .collect())
 }
 
 fn get_file_contents(runner: &RunnerRc, filename: &str) -> DeckResult<String> {
@@ -97,7 +96,8 @@ fn get_file_contents(runner: &RunnerRc, filename: &str) -> DeckResult<String> {
     Ok(SysCommand::new("cat", vec![filename])
         .run_with(runner)?
         .as_success()?
-        .get_message().unwrap_or(String::new()))
+        .get_message()
+        .unwrap_or(String::new()))
 }
 
 fn get_pid_and_trick_id_for_environ(dir: &str, filetext: &str) -> Option<(TrickID, ProcessID)> {
@@ -109,7 +109,9 @@ fn get_pid_and_trick_id_for_environ(dir: &str, filetext: &str) -> Option<(TrickI
 
                 match pidstr.parse() {
                     Ok(pid) => return Some((trick_id.into(), pid)),
-                    Err(err) => warn!("Failed to parse pid: '{pidstr}' for '{env}' in '{dir}': {err:?}"),
+                    Err(err) => {
+                        warn!("Failed to parse pid: '{pidstr}' for '{env}' in '{dir}': {err:?}");
+                    }
                 }
             } else {
                 warn!("Error parsing env '{env}' in '{dir}'");
@@ -125,7 +127,9 @@ fn test_environ_file_parsing() {
     let muh_trick_id = "muh-trick-id";
     let desired_pid: isize = 12345;
     let dirname = format!("/proc/{desired_pid}");
-    let filetext = format!("SOME_ENV=JKFLDJS\0OTHER_ENV=1231231\0{PID_ENV_STRING}={muh_trick_id}\0ENNNVVVV=848297");
+    let filetext = format!(
+        "SOME_ENV=JKFLDJS\0OTHER_ENV=1231231\0{PID_ENV_STRING}={muh_trick_id}\0ENNNVVVV=848297"
+    );
     let res = get_pid_and_trick_id_for_environ(&dirname, &filetext);
     assert_eq!(res, Some((muh_trick_id.into(), desired_pid)));
 }

@@ -1,6 +1,8 @@
 use crate::prelude::*;
 use std::sync::Arc;
 
+// TODO: prevent Command module-wide
+
 #[cfg(test)]
 use std::os::unix::process::ExitStatusExt;
 
@@ -58,13 +60,13 @@ pub struct SysCommandResult {
 
 #[cfg(not(test))]
 impl SysCommandResult {
-    fn new(cmd: String, args: Vec<String>, output: std::process::Output) -> Self {
+    fn new(cmd: String, args: Vec<String>, env: Vec<(String, String)>, output: std::process::Output) -> Self {
         Self {
             sys_command: SysCommand {
                 cmd,
                 args,
                 // NOTE: this is incorrect
-                desired_env_vars: Vec::default()
+                desired_env_vars: env,
             },
             raw_output: output,
         }
@@ -81,10 +83,10 @@ impl std::fmt::Debug for SysCommandResult {
 impl SysCommandResult {
     pub(crate) fn fake_success() -> Self {
         Self {
-            sys_command: SysCommand {
-                cmd: "nothingburger".into(),
-                args: vec!["you should not care about this".into()],
-            },
+            sys_command: SysCommand::new(
+                "nothingburger".to_string(),
+                vec!["you should not care about this".into()],
+            ),
             raw_output: std::process::Output {
                 status: std::process::ExitStatus::from_raw(0),
                 stdout: b"".to_vec(),
@@ -100,10 +102,10 @@ impl SysCommandResult {
         stderr: &str,
     ) -> Self {
         Self {
-            sys_command: SysCommand {
-                cmd: cmd.into(),
-                args: args.into_iter().map(String::from).collect(),
-            },
+            sys_command: SysCommand::new(
+                cmd.to_string(),
+                args.into_iter().map(String::from).collect(),
+            ),
 
             raw_output: std::process::Output {
                 status: std::process::ExitStatus::from_raw(code),
@@ -211,7 +213,7 @@ impl ActualRunner for LiveActualRunner {
             .output()
             .map_err(KnownError::from)?;
 
-        Ok(SysCommandResult::new(cmd.clone(), args.clone(), output))
+        Ok(SysCommandResult::new(cmd.clone(), args.clone(), sys_command.desired_env_vars.clone(), output))
     }
 }
 
