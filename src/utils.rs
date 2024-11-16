@@ -2,19 +2,20 @@ use crate::prelude::*;
 
 #[allow(clippy::unnecessary_wraps)]
 #[cfg(test)]
-pub(crate) fn run_remote_script(url: &str, local_filename: &str) -> Result<(), DynamicError> {
+pub(crate) fn run_remote_script(_runner: &RunnerRc, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {
     warn!("Not running run_remote_script({url}, {local_filename}) from test...");
-    Ok(())
+    success!()
 }
 
 #[cfg(not(test))]
-pub(crate) fn run_remote_script(url: &str, local_filename: &str) -> Result<(), DynamicError> {
+pub(crate) fn run_remote_script(runner: &RunnerRc, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {
     use std::fs::File;
     use std::io::copy;
     use std::os::unix::fs::PermissionsExt;
-    use std::process::Command;
 
-    let response = reqwest::blocking::get(url)?;
+    // TODO: make this and the operations below test-safe
+    let response = reqwest::blocking::get(url)
+        .map_err(KnownError::from)?;
 
     // These are in blocks to ensure that files are closed out
     // before attempting to do further changes
@@ -27,8 +28,7 @@ pub(crate) fn run_remote_script(url: &str, local_filename: &str) -> Result<(), D
         std::fs::set_permissions(local_filename, std::fs::Permissions::from_mode(0o755))?;
     }
 
-    Command::new(local_filename).status()?;
-    Ok(())
+    SysCommand::new(local_filename, vec![]).run_with(runner)?.as_success()
 }
 
 pub(crate) fn get_homedir() -> String {

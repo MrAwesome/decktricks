@@ -51,10 +51,14 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
-                DeckyInstallerProvider::new(full_ctx.decky_ctx.clone()),
+                DeckyInstallerProvider::new(runner.clone(), full_ctx.decky_ctx.clone()),
             )),
             ProviderConfig::EmuDeckInstaller(_emudeck_installer) => Ok(Box::new(
-                EmuDeckInstallerProvider::new(full_ctx.emudeck_ctx.clone()),
+                EmuDeckInstallerProvider::new(
+                    runner.clone(),
+                    full_ctx.emudeck_ctx.clone(),
+                    running_instances,
+                ),
             )),
             ProviderConfig::Custom => provider_not_implemented(trick),
         }

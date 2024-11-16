@@ -1,3 +1,4 @@
+use crate::utils::kill_pids;
 use crate::prelude::*;
 use crate::utils::{exists_and_executable, get_homedir, run_remote_script};
 
@@ -12,21 +13,29 @@ const EMUDECK_BINARY_NAME: &str = "EmuDeck.AppImage";
 
 #[derive(Debug)]
 pub struct EmuDeckInstallerProvider {
+    runner: RunnerRc,
     ctx: EmuDeckSystemContext,
-    //runner: RunnerRc,
+    running_instances: Vec<ProcessID>,
 }
 
 impl EmuDeckInstallerProvider {
     #[must_use]
-    pub(super) fn new(ctx: EmuDeckSystemContext) -> Self {
-        Self { ctx }
+    pub(super) fn new(
+        runner: RunnerRc,
+        ctx: EmuDeckSystemContext,
+        running_instances: Vec<ProcessID>,
+    ) -> Self {
+        Self {
+            runner,
+            ctx,
+            running_instances,
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct EmuDeckSystemContext {
     is_installed: bool,
-    is_running: bool,
 }
 
 impl EmuDeckSystemContext {
@@ -35,17 +44,15 @@ impl EmuDeckSystemContext {
     ///
     /// Returns errors relating to running pgrep and checking file existence/permissions.
     pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
-        let (is_installed, is_running) = join_all!(
-            || exists_and_executable(runner, &format!("{}/{}", get_homedir(), EMUDECK_BINARY_NAME)),
-            || SysCommand::new("pgrep", vec!["-f", EMUDECK_BINARY_NAME])
-                .run_with(runner)
-                .map(|x| x.ran_successfully())
-                .unwrap_or(false)
+        let is_installed = join_all!(
+            || exists_and_executable(
+                runner,
+                &format!("{}/{}", get_homedir(), EMUDECK_BINARY_NAME)
+            )
         );
 
         Ok(Self {
             is_installed,
-            is_running,
         })
     }
 }
@@ -80,7 +87,7 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_running(&self) -> bool {
-        self.ctx.is_running
+        !self.running_instances.is_empty()
     }
     fn is_addable_to_steam(&self) -> bool {
         true
@@ -99,8 +106,7 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        run_remote_script(EMUDECK_DOWNLOAD_URL, EMUDECK_INSTALLER_TEMP_FILENAME)
-            .map_err(KnownError::EmuDeckInstall)?;
+        run_remote_script(&self.runner, EMUDECK_DOWNLOAD_URL, EMUDECK_INSTALLER_TEMP_FILENAME)?;
         success!("EmuDeck installer installed successfully! Run now to fully install EmuDeck.")
     }
 
@@ -110,8 +116,7 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        // TODO: check
-        not_possible("EmuDeck is not killable!")
+        kill_pids(&self.runner, &self.running_instances)
     }
 
     fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {

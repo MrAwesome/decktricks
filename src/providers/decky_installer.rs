@@ -9,14 +9,14 @@ const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 
 #[derive(Debug)]
 pub struct DeckyInstallerProvider {
+    runner: RunnerRc,
     ctx: DeckySystemContext,
-    //runner: RunnerRc,
 }
 
 impl DeckyInstallerProvider {
     #[must_use]
-    pub(super) fn new(ctx: DeckySystemContext) -> Self {
-        Self { ctx }
+    pub(super) fn new(runner: RunnerRc, ctx: DeckySystemContext) -> Self {
+        Self { runner, ctx }
     }
 }
 
@@ -87,8 +87,7 @@ impl ProviderActions for DeckyInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        run_remote_script(DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)
-            .map_err(KnownError::DeckyInstall)?;
+        run_remote_script(&self.runner, DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)?;
         success!("Decky installed successfully!")
     }
 
