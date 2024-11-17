@@ -1,5 +1,5 @@
-use crate::utils::kill_pids;
 use crate::prelude::*;
+use crate::utils::kill_pids;
 use crate::utils::{exists_and_executable, get_homedir, run_remote_script};
 
 // TODO: determine differences between "running" (games being played) and "running the installer"
@@ -11,10 +11,15 @@ const EMUDECK_INSTALLER_TEMP_FILENAME: &str = "/tmp/emudeck_installer.sh";
 
 const EMUDECK_BINARY_NAME: &str = "EmuDeck.AppImage";
 
+fn get_emudeck_binary_path() -> String {
+    format!("{}/Applications/{}", get_homedir(), EMUDECK_BINARY_NAME)
+}
+
 #[derive(Debug)]
 pub struct EmuDeckInstallerProvider {
     runner: RunnerRc,
     ctx: EmuDeckSystemContext,
+    trick_id: TrickID,
     running_instances: Vec<ProcessID>,
 }
 
@@ -23,11 +28,13 @@ impl EmuDeckInstallerProvider {
     pub(super) fn new(
         runner: RunnerRc,
         ctx: EmuDeckSystemContext,
+        trick_id: TrickID,
         running_instances: Vec<ProcessID>,
     ) -> Self {
         Self {
             runner,
             ctx,
+            trick_id,
             running_instances,
         }
     }
@@ -44,16 +51,9 @@ impl EmuDeckSystemContext {
     ///
     /// Returns errors relating to running pgrep and checking file existence/permissions.
     pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
-        let is_installed = join_all!(
-            || exists_and_executable(
-                runner,
-                &format!("{}/{}", get_homedir(), EMUDECK_BINARY_NAME)
-            )
-        );
+        let is_installed = join_all!(|| exists_and_executable(runner, &get_emudeck_binary_path()));
 
-        Ok(Self {
-            is_installed,
-        })
+        Ok(Self { is_installed })
     }
 }
 
@@ -82,8 +82,7 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_runnable(&self) -> bool {
-        // TODO: check
-        false
+        self.is_installed()
     }
 
     fn is_running(&self) -> bool {
@@ -106,13 +105,21 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        run_remote_script(&self.runner, EMUDECK_DOWNLOAD_URL, EMUDECK_INSTALLER_TEMP_FILENAME)?;
+        run_remote_script(
+            &self.runner,
+            EMUDECK_DOWNLOAD_URL,
+            EMUDECK_INSTALLER_TEMP_FILENAME,
+        )?;
         success!("EmuDeck installer installed successfully! Run now to fully install EmuDeck.")
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        // TODO: check
-        not_possible("EmuDeck is not runnable!")
+        // TODO: why isn't the env var sticking?
+        todo!();
+        SysCommand::new(get_emudeck_binary_path(), vec![])
+            .env(PID_ENV_STRING, &self.trick_id)
+            .run_with(&self.runner)?
+            .as_success()
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {

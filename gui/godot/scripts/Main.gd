@@ -1,5 +1,7 @@
 extends Control
 
+# TODO: some kind of error display system
+# TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
 # TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
 # TODO: does selecting a node keep it from being cleaned up?
 # TODO: fix follow logic on click vs up
@@ -39,7 +41,6 @@ func create_action_button(action: String, trick_id: String, contents: String):
 
 func take_action(action: String, trick_id: String):
 	var args: Array[String] = [action, trick_id]
-	print('Running: ', './decktricks ', action, ' ', trick_id)
 	if action == "info":
 		var output = %DecktricksDispatcher.sync_run_with_decktricks(args)
 		if output == "":
@@ -89,20 +90,17 @@ func create_actions_row(trick_id: String, available_actions, _display_name: Stri
 	return actions_row_outer
 
 func get_actions():
-	var output = []
-
 	# NOTE: we should not need to check validity of this output if it returns successfully,
 	# 		thanks to robust error-checking on the Rust side
-	var res = OS.execute("./decktricks", ["actions", "--json"], output)
+	var args: Array[String] = ["actions", "--json"]
+	var config_data = %DecktricksDispatcher.sync_run_with_decktricks(args)
 
-	if res == 0:
-		var config_data = output[0]
-		var actions_json = JSON.new()
-		var ret = actions_json.parse(config_data)
+	var actions_json = JSON.new()
+	var ret = actions_json.parse(config_data)
 
-		if ret == OK:
-			return actions_json.data
-		# TODO: fallback/error
+	if ret == OK:
+		return actions_json.data
+	# TODO: fallback/error
 
 func _ready():
 	refresh_ui()
@@ -112,46 +110,44 @@ func refresh_ui():
 	var games = TRICKS_LIST.instantiate()
 	var actions = get_actions()
 
-	var config_output = []
-	var config_res = OS.execute("./decktricks", ["get-config"], config_output)
+	var args: Array[String] = ["get-config"]
+	var config_data = %DecktricksDispatcher.sync_run_with_decktricks(args)
 
-	if config_res == 0:
-		var config_data = "".join(config_output)
-		var json = JSON.new()
-		var ret = json.parse(config_data)
+	var json = JSON.new()
+	var ret = json.parse(config_data)
 
-		if ret == OK:
-			var tricks = json.data.get("tricks", [])
+	if ret == OK:
+		var tricks = json.data.get("tricks", [])
 
-			var marked_first = false
-			for trick in tricks:
-				var trick_id = trick.get("id")
-				var display_name = trick.get("display_name")
-				var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
-				var description = trick.get("description")
+		var marked_first = false
+		for trick in tricks:
+			var trick_id = trick.get("id")
+			var display_name = trick.get("display_name")
+			var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
+			var description = trick.get("description")
 
-				# Error checking should never be needed for this access, since we
-				# check on the Rust side that we're only generating valid actions
-				var available_actions = actions[trick_id]
+			# Error checking should never be needed for this access, since we
+			# check on the Rust side that we're only generating valid actions
+			var available_actions = actions[trick_id]
 
-				# TODO: show tooltext when it's selected
+			# TODO: show tooltext when it's selected
 
-				var label_box = LABEL_OUTER.instantiate()
-				var label = label_box.get_child(0)
-				label.text = display_name
-				label_box.tooltip_text = description
+			var label_box = LABEL_OUTER.instantiate()
+			var label = label_box.get_child(0)
+			label.text = display_name
+			label_box.tooltip_text = description
 
-				var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
+			var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
 
-				if init and not marked_first:
-					first_button = trick_row.get_child(0).get_child(0).get_child(0)
-					marked_first = true
+			if init and not marked_first:
+				first_button = trick_row.get_child(0).get_child(0).get_child(0)
+				marked_first = true
 
-				var row_outer_here = ROW_OUTER.instantiate()
-				var row_inner = row_outer_here.get_child(0).get_child(0)
-				row_inner.add_child(label_box)
-				row_inner.add_child(trick_row)
-				games.add_child(row_outer_here)
+			var row_outer_here = ROW_OUTER.instantiate()
+			var row_inner = row_outer_here.get_child(0).get_child(0)
+			row_inner.add_child(label_box)
+			row_inner.add_child(trick_row)
+			games.add_child(row_outer_here)
 
 	var old_lists = %ScrollContainer.get_children()
 

@@ -48,7 +48,7 @@
             "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         },
         {
-            "id": "Moonlight",
+            "id": "moonlight",
             "provider_config": {
                 "type": "flatpak",
                 "id": "com.moonlight_stream.Moonlight"
