@@ -3,10 +3,14 @@
 [] figure out why integration test is happening by default
 [] fix tooltip wrapping
 [] "launch in nested desktop mode" (implement how? flag to SysCommand telling it to look for nested session, start it if not running, and run the command inside the nested X session? or just start a nested session each time we request it?)
+[] test inputs in nested desktop mode
+[] fix --export-release
 
 Comms
 [] use https://github.com/wez/wezterm as inspiration for the gh page
 [] later on, run polls for feature priority (game pass streaming, etc)
+[] https://www.facebook.com/groups/steamdeck/
+[] compile list of steam deck subreddits
 
 Providers
 [] chiaki4deck: easy with flatpak, io.github.streetpea.Chiaki4deck
@@ -24,7 +28,7 @@ Providers
 [] implement full updates for all providers
 [] playstation plus
 [] junk store
-[] "nested desktop" from the software center
+[x?] "nested desktop" from the software center
 [] steamtinkerlaunch
 [] prism launcher (minecraft)
 [] mod: RDO lobby manager
@@ -33,6 +37,7 @@ Providers
 [] modorganizer2: https://github.com/rockerbacon/modorganizer2-linux-installer/
     [] mkdir ~/.steam/root/steamapps/compatdata/22370/pfx/drive_c/users/steamuser/Temp
     [] sudo chattr +i ~/.steam/root/steamapps/compatdata/22370/pfx/drive_c/users/steamuser/Temp
+[] "greatest hits" tab for favorite games that just sends you to store page, "sponsored games" tab obviously
 
 Actions/Programs:
 [] Moonlight!
