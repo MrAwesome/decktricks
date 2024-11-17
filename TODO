@@ -3,6 +3,10 @@
 [] figure out why integration test is happening by default
 [] fix tooltip wrapping
 [] "launch in nested desktop mode" (implement how? flag to SysCommand telling it to look for nested session, start it if not running, and run the command inside the nested X session? or just start a nested session each time we request it?)
+    [] DISPLAY=:1 QT_QPA_PLATFORM=wayland <cmd>
+    [] find correct DISPLAY programmatically
+    [] xdpyinfo -display :1 
+    [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
 [] test inputs in nested desktop mode
 [] fix --export-release
 
