@@ -1,3 +1,5 @@
+[] hide commands that aren't present automatically? or just hide anything that doesn't have a single option besides info?
+[] look for libraries that will warn you of potential panics
 [] figure out why integration test is happening by default
 [] fix tooltip wrapping
 

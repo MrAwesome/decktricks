@@ -17,6 +17,23 @@
             "description": " A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
         },
         {
+            "id": "nested-desktop",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "steamos-nested-desktop"
+            },
+            "tags": [
+                "system",
+                "desktop",
+                "nested"
+            ],
+            "icon": "XXX",
+            "display_name": "Nested Desktop Mode",
+            "description": "Temporarily launch Desktop Mode from inside Game Mode.",
+            "todos": "hide when not present, or just on non-steam/chimera/etc",
+            "always_present_on_steamdeck": true
+        },
+        {
             "id": "emudeck",
             "provider_config": {
                 "type": "emu-deck-installer"

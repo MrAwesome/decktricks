@@ -115,7 +115,7 @@ impl ProviderActions for EmuDeckInstallerProvider {
 
     fn run(&self) -> DeckResult<ActionSuccess> {
         // TODO: why isn't the env var sticking?
-        todo!();
+        let todo = "fix env var";
         SysCommand::new(get_emudeck_binary_path(), vec![])
             .env(PID_ENV_STRING, &self.trick_id)
             .run_with(&self.runner)?
