@@ -9,12 +9,14 @@
     [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
 [] test inputs in nested desktop mode
 [] fix --export-release
+[] design about page, settings page
 
 Comms
 [] use https://github.com/wez/wezterm as inspiration for the gh page
 [] later on, run polls for feature priority (game pass streaming, etc)
 [] https://www.facebook.com/groups/steamdeck/
 [] compile list of steam deck subreddits
+[] ask for gh stars, include a direct link
 
 Providers
 [] chiaki4deck: easy with flatpak, io.github.streetpea.Chiaki4deck
@@ -44,7 +46,7 @@ Providers
 [] "greatest hits" tab for favorite games that just sends you to store page, "sponsored games" tab obviously
 
 Actions/Programs:
-[] Moonlight!
+[x] Moonlight!
 [] websites: google, etc
 [] discord! vesktop, webcord, etc
     [] confirmation dialog: "NOTE! The official Discord app has issues with (....)"
@@ -63,18 +65,19 @@ Actions/Programs:
     # show connection instructions
 
 [] display IP address to user
+[] any other system settings? bluetooth, audio(!), etc
 
 GUI
-[] have launched programs run in the background
-[] don't take gamepad/keypad input when in background (or at least not when in "run" mode while in game mode?)
-[] don't freeze when launching program (same as above?)
+[] try converting a Kenney GUI pack into a Godot theme: https://kenney.nl/assets/ui-pack-sci-fi
+[x] have launched programs run in the background
+[x] don't take gamepad/keypad input when in background (or at least not when in "run" mode while in game mode?)
+[x] don't freeze when launching program (same as above?)
 [] check if it's decktricks freezing vm or not
 [] resize to not be so obnoxious in desktop mode (just set a smaller 16:10 res as min?)
 [] rust e2e test for gui behavior
-[] way to have desktop:
-    [] gamescope wine explorer /desktop=shell,640x480
+[] way to have desktop, if there are problems with nested: gamescope wine explorer /desktop=shell,640x480
 [] top menu with quit/etc (labeled with button labels?)
-[] handle config.json updates for godot editor (just use 'decktricks get-config'?)
+[x] handle config.json updates for godot editor (just use 'decktricks get-config'?)
 [] zenity: resize the window to fit the deck
 [] restart/refresh if config file hash changes?
 [] icons: clicking will install, run, or stop when clicked (if installable/runnable/stoppable)
@@ -157,6 +160,7 @@ Media outlets:
 fun:
 [] selectable themes
 [] mid-oughts cd key haxx aesthetic with 8-bit theme
+[] a 2d game where you can run around and select things to launch
 
 Tips:
 * Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click

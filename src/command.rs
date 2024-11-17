@@ -14,7 +14,6 @@ pub struct DecktricksCommand {
     // Filename of an override config
     #[clap(short, long)]
     pub config: Option<String>,
-
     // Currently unused since pretty_env_logger uses env variables.
     // #[clap(short, long)]
     // pub debug: bool,
@@ -79,4 +78,6 @@ pub enum Action {
         gui: GuiType,
     },
     GetConfig,
+    #[clap(hide = true)]
+    GetActionDisplayNameMapping,
 }

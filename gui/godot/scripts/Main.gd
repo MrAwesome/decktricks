@@ -1,5 +1,6 @@
 extends Control
 
+
 # TODO: some kind of error display system
 # TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
 # TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
@@ -16,6 +17,8 @@ var ROW_OUTER = preload("res://scenes/row_outer.tscn")
 var TRICKS_LIST = preload("res://scenes/tricks_list.tscn")
 var TRICK_INFO = preload("res://scenes/trick_info.tscn")
 
+
+@onready var display_name_mapping: Dictionary = %DecktricksDispatcher.get_display_name_mapping()
 var did_focus = false
 var focused_trick_and_action = [null, null]
 
@@ -31,10 +34,10 @@ func focus_button(button: Button, action, trick_id):
 	# Store the focused button to be re-focused on refresh
 	focused_trick_and_action = [trick_id, action]
 
-func create_action_button(action: String, trick_id: String, contents: String):
+func create_action_button(action: String, trick_id: String):
 	var button: Button = ACTION_BUTTON.instantiate()
 	button.name = action
-	button.text = contents
+	button.text = display_name_mapping[action]
 	button.pressed.connect(take_action.bind(action, trick_id))
 	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
 	return button
@@ -56,7 +59,7 @@ func take_action(action: String, trick_id: String):
 
 			var root = get_tree().root
 			var dialog = TRICK_INFO.instantiate()
-			dialog.set_theme(root.theme)
+			dialog.theme = theme
 			dialog.get_ok_button().set_text("OK")
 
 			dialog.set_title(info["display_name"])
@@ -77,7 +80,7 @@ func create_actions_row(trick_id: String, available_actions, _display_name: Stri
 	for action in available_actions:
 		# Fix this to take display names etc from the config
 		# TODO: fix ordering so info is last
-		var button = create_action_button(action, trick_id, action)
+		var button = create_action_button(action, trick_id)
 		actions_row.add_child(button)
 
 		if should_focus and action == focused_trick_and_action[1]:
@@ -103,6 +106,7 @@ func get_actions():
 	# TODO: fallback/error
 
 func _ready():
+	Engine.set_max_fps(30)
 	refresh_ui()
 
 func refresh_ui():

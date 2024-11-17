@@ -12,6 +12,7 @@ pub(crate) enum GeneralAction {
     Actions { id: Option<String>, json: bool },
     UpdateAll,
     GetConfig,
+    GetActionDisplayNameMapping,
 }
 
 impl GeneralAction {
@@ -77,6 +78,14 @@ impl GeneralAction {
             Self::GetConfig => {
                 // TODO: if using live configs, use here
                 vec![success!(DEFAULT_CONFIG_CONTENTS)]
+            },
+            Self::GetActionDisplayNameMapping => {
+                let display_mapping = SpecificActionID::get_display_name_mapping();
+                let maybe_json_display_mapping = serde_json::to_string(&display_mapping).map_err(KnownError::from);
+                match maybe_json_display_mapping {
+                    Ok(json_display_mapping) => vec![success!(json_display_mapping)],
+                    Err(err) => vec![Err(err)],
+                }
             }
         }
     }

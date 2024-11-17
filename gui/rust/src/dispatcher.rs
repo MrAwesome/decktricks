@@ -1,6 +1,7 @@
 use decktricks::prelude::*;
 use godot::prelude::*;
 use decktricks::rayon::spawn;
+use decktricks::actions::SpecificActionID;
 
 #[derive(GodotClass)]
 #[class(init,base=Node)]
@@ -8,7 +9,6 @@ struct DecktricksDispatcher {
     base: Base<Node>,
 }
 
-// TODO: just rewrite the action buttons in rust so that they can call rust funcs directly
 #[godot_api]
 impl DecktricksDispatcher {
     #[func]
@@ -26,6 +26,12 @@ impl DecktricksDispatcher {
         spawn(move || {
             run_with_decktricks(args).unwrap_or("".into());
         });
+    }
+
+    // TODO: move this out of dispatcher and into a more general object?
+    #[func]
+    fn get_display_name_mapping() -> Dictionary {
+        Dictionary::from_iter(SpecificActionID::get_display_name_mapping())
     }
 }
 

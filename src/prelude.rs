@@ -1,4 +1,5 @@
 pub(crate) use crate::actions::*;
+pub use crate::actions::SpecificActionID;
 pub use crate::command::*;
 pub use crate::executor::*;
 pub(crate) use crate::tricks_config::*;

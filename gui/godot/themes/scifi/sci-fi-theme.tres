@@ -615,7 +615,7 @@ region_rect = Rect2(102, 65, 3, 3)
 
 [resource]
 default_font = ExtResource("1")
-default_font_size = 10
+default_font_size = 32
 Button/colors/font_color = Color(1, 1, 1, 1)
 Button/colors/font_disabled_color = Color(0.9, 0.9, 0.9, 0.2)
 Button/colors/font_hover_color = Color(0.94, 0.94, 0.94, 1)

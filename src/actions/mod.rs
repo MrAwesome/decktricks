@@ -7,6 +7,7 @@ mod specific;
 
 pub(crate) use general::*;
 pub(crate) use specific::*;
+pub use specific::SpecificActionID;
 
 pub(crate) enum TypedAction {
     Specific(SpecificAction),
@@ -31,6 +32,7 @@ impl From<&Action> for TypedAction {
             Action::Actions { id, json } => Self::General(GeneralAction::Actions { id, json }),
             Action::Gui { gui } => Self::General(GeneralAction::Gui { gui }),
             Action::GetConfig => Self::General(GeneralAction::GetConfig),
+            Action::GetActionDisplayNameMapping => Self::General(GeneralAction::GetActionDisplayNameMapping),
         }
     }
 }

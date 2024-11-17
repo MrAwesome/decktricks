@@ -5,21 +5,22 @@ set -euxo pipefail
 
 cd "$(dirname "$0")"
 
-GUI_NAME="Decktricks"
 TMPDIR=$(mktemp -d)
+BUILDDIR="$TMPDIR/build"
 
-cp decktricks.desktop "$TMPDIR"
+mkdir -p "$BUILDDIR"
+
+cp decktricks.desktop "$BUILDDIR"
 
 cargo build --release
-cp target/release/decktricks "$TMPDIR"
 
 pushd gui/godot/
 godot --headless --export-debug "Linux"
-cp build/"$GUI_NAME"* "$TMPDIR"
+cp build/* "$BUILDDIR"
 popd
 
 pushd "$TMPDIR"
-tar czf decktricks.tar.gz "$GUI_NAME"* decktricks
+tar czf decktricks.tar.gz build/*
 popd
 
 cp "$TMPDIR"/decktricks.tar.gz build/

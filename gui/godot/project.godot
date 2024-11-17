@@ -14,10 +14,15 @@ config/name="Decktricks"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.4")
 
+[debug]
+
+settings/stdout/print_fps=true
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=800
+window/size/borderless=true
 window/stretch/mode="canvas_items"
 window/stretch/aspect="ignore"
 
@@ -52,5 +57,5 @@ ui_exit_decktricks={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0.294118, 0.317647, 0.384314, 1)
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
 quality/driver/driver_name="GLES3"
