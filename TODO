@@ -2,14 +2,18 @@
 [] look for libraries that will warn you of potential panics
 [] figure out why integration test is happening by default
 [] fix tooltip wrapping
+[] "launch in nested desktop mode" (implement how? flag to SysCommand telling it to look for nested session, start it if not running, and run the command inside the nested X session? or just start a nested session each time we request it?)
 
 Comms
 [] use https://github.com/wez/wezterm as inspiration for the gh page
+[] later on, run polls for feature priority (game pass streaming, etc)
 
 Providers
-[] emudeck: https://www.emudeck.com/EmuDeck.desktop
+[] chiaki4deck: easy with flatpak, io.github.streetpea.Chiaki4deck
+[] xbox streaming (would require full add-to-steam support for adding launch args): https://support.microsoft.com/en-gb/topic/xbox-cloud-gaming-in-microsoft-edge-with-steam-deck-43dd011b-0ce8-4810-8302-965be6d53296
+[x] emudeck: https://www.emudeck.com/EmuDeck.desktop
 [] kodi (for streaming) (tv.kodi.Kodi)
-[] minecraft (prism launcher?) (org.prismlauncher.PrismLauncher / com.mojang.Minecraft)
+[x] minecraft (prism launcher?) (org.prismlauncher.PrismLauncher / com.mojang.Minecraft)
 [] system commands - *file browser* (what's the name in plasma)
 [] yuzu/etc switch emulators
 [] luxtorpeda directly (see the readme)

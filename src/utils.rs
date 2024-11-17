@@ -47,6 +47,17 @@ pub(crate) fn exists_and_executable(runner: &RunnerRc, path: &str) -> bool {
 
 }
 
+pub(crate) fn get_running_pids_exact(runner: &RunnerRc, binary_name: &str) -> DeckResult<Vec<String>> {
+    Ok(SysCommand::new("ps", vec!["-C", binary_name, "-o", "pid="])
+        .run_with(runner)?
+        .as_success()?
+        .get_message_or_blank()
+        .split_whitespace()
+        .map(ToString::to_string)
+        .collect())
+
+}
+
 pub(crate) fn kill_pids(runner: &RunnerRc, pids: &[ProcessID]) -> DeckResult<ActionSuccess> {
     let mut outputs = vec![];
     let string_pids: Vec<String> = pids.iter().map(ToString::to_string).collect();

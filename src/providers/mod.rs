@@ -57,8 +57,6 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
                 EmuDeckInstallerProvider::new(
                     runner.clone(),
                     full_ctx.emudeck_ctx.clone(),
-                    trick.id.clone(),
-                    running_instances,
                 ),
             )),
             ProviderConfig::Custom => provider_not_implemented(trick),
