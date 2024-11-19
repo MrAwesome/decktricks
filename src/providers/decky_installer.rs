@@ -20,7 +20,7 @@ impl DeckyInstallerProvider {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DeckySystemContext {
     pub is_installed: bool,
     pub is_running: bool,
@@ -29,8 +29,8 @@ pub struct DeckySystemContext {
 impl DeckySystemContext {
     pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
-            || SysCommand::new("systemctl", vec!["is-enabled", "plugin_loader"]).run_with(runner),
-            || SysCommand::new("systemctl", vec!["is-active", "plugin_loader"]).run_with(runner)
+            || SysCommand::new("/usr/bin/systemctl", vec!["is-enabled", "plugin_loader"]).run_with(runner),
+            || SysCommand::new("/usr/bin/systemctl", vec!["is-active", "plugin_loader"]).run_with(runner)
         );
 
         Ok(Self {

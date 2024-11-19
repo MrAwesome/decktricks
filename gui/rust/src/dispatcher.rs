@@ -33,6 +33,11 @@ impl DecktricksDispatcher {
     fn get_display_name_mapping() -> Dictionary {
         Dictionary::from_iter(SpecificActionID::get_display_name_mapping())
     }
+
+    // TODO: check these definitions in the editor
+    #[signal]
+    fn take_action(gargs: Array<GString>) {
+    }
 }
 
 fn gargs_to_args(gargs: Array<GString>) -> Vec<String> {

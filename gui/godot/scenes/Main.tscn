@@ -25,10 +25,9 @@ custom_minimum_size = Vector2(1280, 800)
 layout_mode = 0
 offset_right = 1280.0
 offset_bottom = 800.0
-current_tab = 1
+current_tab = 0
 
 [node name="Home" type="PanelContainer" parent="TabContainer"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 0
 
@@ -42,7 +41,6 @@ unique_name_in_owner = true
 layout_mode = 2
 
 [node name="Settings" parent="TabContainer" instance=ExtResource("4_rarhs")]
-visible = true
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="TabContainer/Settings"]
@@ -52,19 +50,6 @@ theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 5
 
-[node name="PanelContainer" type="VBoxContainer" parent="TabContainer/Settings/MarginContainer"]
-layout_mode = 2
-
-[node name="FPSLabel" type="Label" parent="TabContainer/Settings/MarginContainer/PanelContainer"]
-layout_mode = 2
-text = "Max FPS
-"
-
-[node name="FPSButtons" type="HBoxContainer" parent="TabContainer/Settings/MarginContainer/PanelContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-script = ExtResource("5_vcsgt")
-
 [node name="About" type="PanelContainer" parent="TabContainer"]
 visible = false
 layout_mode = 2
@@ -72,5 +57,28 @@ metadata/_tab_index = 2
 
 [node name="DecktricksDispatcher" type="DecktricksDispatcher" parent="."]
 unique_name_in_owner = true
+
+[node name="HiddenForLater" type="Control" parent="."]
+visible = false
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HiddenForLater"]
+layout_mode = 2
+offset_left = 20.0
+offset_top = 92.0
+offset_right = 1270.0
+offset_bottom = 795.0
+
+[node name="FPSLabel" type="Label" parent="HiddenForLater/VBoxContainer"]
+layout_mode = 2
+text = "Max FPS
+"
+
+[node name="FPSButtons" type="HBoxContainer" parent="HiddenForLater/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("5_vcsgt")
 
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]

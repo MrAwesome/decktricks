@@ -35,7 +35,7 @@ impl EmuDeckInstallerProvider {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EmuDeckSystemContext {
     is_installed: bool,
     running_pids: Vec<String>

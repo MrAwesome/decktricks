@@ -1,3 +1,4 @@
+// Disabled, this file is only for reference on how to make a new e2e test
 // Comment this out to make LSP features work
 #![cfg(feature = "e2e")]
 
@@ -45,7 +46,7 @@ fn get_zenity_window_id() -> String {
         .into()
 }
 
-#[test]
+//#[test]
 fn test_zenity_e2e() -> DeckResult<()> {
     let thrd = thread::spawn(|| {
         let ret = decktricks_cli!["-c", "tests/integration/test_config.json", "gui", "zenity"];

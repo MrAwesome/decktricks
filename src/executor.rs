@@ -1,5 +1,5 @@
-use crate::providers::system_context::FullSystemContext;
 use crate::prelude::*;
+use crate::providers::system_context::FullSystemContext;
 use std::sync::Arc;
 
 pub struct Executor {
@@ -25,7 +25,12 @@ impl Executor {
 
         let runner = Arc::new(Runner::new());
 
-        let full_ctx = FullSystemContext::gather_with(&runner)?;
+        // TODO: unit test
+        let full_ctx = if command.action.does_not_need_system_context() {
+            FullSystemContext::default()
+        } else {
+            FullSystemContext::gather_with(&runner)?
+        };
 
         Ok(Self::with(loader, full_ctx, runner))
     }
@@ -172,15 +177,17 @@ mod tests {
         let args = vec!["list", "--app", "--columns=application"];
         let returned_args = args.clone();
         let arg = SysCommand::new(cmd, args);
-        mock.expect_run().with(predicate::eq(arg)).returning(move |_| {
-            Ok(SysCommandResult::fake_for_test(
-                cmd,
-                returned_args.clone(),
-                0,
-                "net.lutris.Lutris",
-                "dooker",
-            ))
-        });
+        mock.expect_run()
+            .with(predicate::eq(arg))
+            .returning(move |_| {
+                Ok(SysCommandResult::fake_for_test(
+                    cmd,
+                    returned_args.clone(),
+                    0,
+                    "net.lutris.Lutris",
+                    "dooker",
+                ))
+            });
 
         mock.expect_run()
             .returning(|_| Ok(SysCommandResult::fake_success()));

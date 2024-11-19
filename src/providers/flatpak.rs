@@ -19,7 +19,7 @@ impl FlatpakProvider {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct FlatpakSystemContext {
     pub running: Vec<FlatpakID>,
     pub installed: Vec<FlatpakID>,

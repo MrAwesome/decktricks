@@ -1,15 +1,20 @@
+[] full-system-context-not-needed flag for certain commands?
+[] bind A to ui_accept
 [] hide commands that aren't present automatically? or just hide anything that doesn't have a single option besides info?
 [] look for libraries that will warn you of potential panics
 [] figure out why integration test is happening by default
 [] fix tooltip wrapping
 [] "launch in nested desktop mode" (implement how? flag to SysCommand telling it to look for nested session, start it if not running, and run the command inside the nested X session? or just start a nested session each time we request it?)
-    [] DISPLAY=:1 QT_QPA_PLATFORM=wayland <cmd>
+    [] DISPLAY=:1 QT_QPA_PLATFORM=wayland <cmd> https://community.kde.org/KWin/Wayland
     [] find correct DISPLAY programmatically
     [] xdpyinfo -display :1 
     [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
 [] test inputs in nested desktop mode
 [] fix --export-release
 [] design about page, settings page
+
+Add to Steam:
+[] investigate the blank entry appearing on first run? (just don't use the default script, use something more robust)
 
 Comms
 [] use https://github.com/wez/wezterm as inspiration for the gh page
@@ -68,6 +73,9 @@ Actions/Programs:
 [] any other system settings? bluetooth, audio(!), etc
 
 GUI
+[] lower default FPS for battery
+    [] fix battery/settings page selection behavior (main.gd stealing focus back)
+    [] store settings permanently in json file
 [] try converting a Kenney GUI pack into a Godot theme: https://kenney.nl/assets/ui-pack-sci-fi
 [x] have launched programs run in the background
 [x] don't take gamepad/keypad input when in background (or at least not when in "run" mode while in game mode?)
@@ -161,6 +169,14 @@ fun:
 [] selectable themes
 [] mid-oughts cd key haxx aesthetic with 8-bit theme
 [] a 2d game where you can run around and select things to launch
+
+dependencies list:
+systemd
+ps
+
+Notes from running in container:
+cp in /usr/lib/libcrypto.so.3 and /usr/lib/libssl.so.3
+systemctl is not accessible, and most relevant binaries probably won't be
 
 Tips:
 * Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click

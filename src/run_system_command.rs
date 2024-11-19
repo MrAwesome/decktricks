@@ -13,8 +13,14 @@ pub type Runner = LiveActualRunner;
 
 pub type RunnerRc = Arc<Runner>;
 
+#[derive(Debug)]
+pub struct SysCommandRunError {
+    pub cmd: SysCommand,
+    pub error: std::io::Error,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct SysCommand {
+pub struct SysCommand {
     pub cmd: String,
     pub args: Vec<String>,
     pub desired_env_vars: Vec<(String, String)>
@@ -227,7 +233,12 @@ impl ActualRunner for LiveActualRunner {
 
         let output = command
             .output()
-            .map_err(KnownError::from)?;
+            .map_err(|e| {
+                KnownError::SystemCommandRunFailure(SysCommandRunError {
+                    cmd: sys_command.clone(),
+                    error: e,
+                })
+            })?;
 
         Ok(SysCommandResult::new(cmd.clone(), args.clone(), sys_command.desired_env_vars.clone(), output))
     }

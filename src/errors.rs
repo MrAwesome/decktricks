@@ -22,9 +22,10 @@ pub enum KnownError {
     ProviderNotImplemented(String),
     SeriousError(SeriousError),
     ReqwestFailure(reqwest::Error),
+    RawSystemFailureDONOTUSE(std::io::Error),
     SystemCommandFailed(SysCommandResult),
     SystemCommandParse(DynamicError),
-    SystemCommandRun(std::io::Error),
+    SystemCommandRunFailure(SysCommandRunError),
     TestError(String),
     UnknownTrickID(TrickID),
 }
@@ -56,11 +57,14 @@ impl Display for KnownError {
             Self::SystemCommandParse(sys_parse_err) => {
                 write!(f, "Error parsing system command: {sys_parse_err:#?}")
             }
-            Self::SystemCommandRun(sys_run_err) => {
+            Self::SystemCommandRunFailure(sys_run_err) => {
                 write!(f, "Error running system command: {sys_run_err:#?}")
             }
             Self::SystemCommandFailed(output) => {
-                write!(f, "System command failed to run: {output:?}")
+                write!(f, "System command failed: {output:?}")
+            }
+            Self::RawSystemFailureDONOTUSE(output) => {
+                write!(f, "System command error: {output:?}")
             }
             Self::UnknownTrickID(trick_id) => write!(f, "Unknown trick ID: {trick_id}"),
             Self::NoAvailableActions(trick_id) => write!(
@@ -90,15 +94,15 @@ impl From<clap::error::Error> for KnownError {
     }
 }
 
-impl From<std::io::Error> for KnownError {
-    fn from(e: std::io::Error) -> Self {
-        Self::SystemCommandRun(e)
-    }
-}
-
 impl From<reqwest::Error> for KnownError {
     fn from(e: reqwest::Error) -> Self {
         Self::ReqwestFailure(e)
+    }
+}
+
+impl From<std::io::Error> for KnownError {
+    fn from(e: std::io::Error) -> Self {
+        Self::RawSystemFailureDONOTUSE(e)
     }
 }
 

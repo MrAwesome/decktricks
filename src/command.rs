@@ -81,3 +81,10 @@ pub enum Action {
     #[clap(hide = true)]
     GetActionDisplayNameMapping,
 }
+
+impl Action {
+    #[must_use]
+    pub fn does_not_need_system_context(&self) -> bool {
+        matches!(self, Self::Info { .. } | Self::GetConfig)
+    }
+}

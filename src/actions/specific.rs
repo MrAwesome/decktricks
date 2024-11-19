@@ -28,8 +28,8 @@ enum_with_all_variants!(
         //  are displayed in the GUI!
         // XXX IMPORTANT! XXX
         Run,
-        AddToSteam,
         Install,
+        AddToSteam,
         Uninstall,
         Update,
         Kill,

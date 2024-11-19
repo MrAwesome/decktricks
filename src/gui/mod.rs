@@ -1,11 +1,8 @@
 use clap::Subcommand;
 use crate::prelude::*;
 
-pub mod zenity;
-
 #[derive(Debug, Clone, Subcommand)]
 pub enum GuiType {
-    Zenity,
 }
 
 impl GuiType {
@@ -14,12 +11,8 @@ impl GuiType {
     /// Can return any error from running any of our actions.
     pub fn launch(
         &self,
-        executor: &Executor,
+        _executor: &Executor,
     ) -> DeckResult<ActionSuccess> {
-        match self {
-            Self::Zenity => {
-                zenity::zenity_launch(executor)
-            }
-        }
+        success!("No GUIs implemented through this flow.")
     }
 }

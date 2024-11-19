@@ -5,6 +5,7 @@ use flatpak::FlatpakSystemContext;
 use std::collections::HashMap;
 
 // TODO: test
+#[derive(Debug, Clone, Default)]
 pub struct FullSystemContext {
     pub flatpak_ctx: FlatpakSystemContext,
     pub decky_ctx: DeckySystemContext,
