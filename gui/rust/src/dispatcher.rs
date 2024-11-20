@@ -4,18 +4,11 @@ use decktricks::rayon::spawn;
 use godot::prelude::*;
 use std::sync::{Arc, RwLock};
 
-#[derive(Debug, Default)]
-struct WrappedExecutor {
-}
-
-impl WrappedExecutor {
-}
-
 #[derive(GodotClass)]
 #[class(init,base=Node)]
 struct DecktricksDispatcher {
     base: Base<Node>,
-    executor: Arc<RwLock<Arc<Option<Executor>>>>
+    executor: Arc<RwLock<Arc<Option<Executor>>>>,
 }
 
 #[godot_api]
@@ -45,10 +38,22 @@ impl DecktricksDispatcher {
                     godot_error!("Failed to access executor while writing! This is a serious error, please report it: {err:?}")
             }
         };
+
         if sync_run {
             task();
         } else {
             spawn(task);
+        }
+    }
+
+    fn get_executor(&self) -> Option<Arc<Option<Executor>>> {
+        let read_result = self.executor.try_read();
+        match read_result {
+            Ok(guard) => Some((*guard).clone()),
+            Err(err) => {
+                godot_error!("Failed to access executor while reading! This is a serious error, please report it: {err:?}");
+                None
+            }
         }
     }
 
@@ -57,15 +62,9 @@ impl DecktricksDispatcher {
         godot_print!("Running command synchronously with decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
-        // TODO: try_read instead
-        let read_result = self.executor.read();
-        match read_result {
-            Ok(guard) => run_with_decktricks((*guard).clone(), args).unwrap_or("".into()),
-            Err(err) => {
-                godot_error!("Failed to access executor while reading! This is a serious error, please report it: {err:?}");
-                "".into()
-            }
-        }
+        self.get_executor()
+            .map(|executor_ptr| run_with_decktricks(executor_ptr, args).unwrap_or("".into()))
+            .unwrap_or("".into())
     }
 
     #[func]
@@ -73,23 +72,13 @@ impl DecktricksDispatcher {
         godot_print!("Dispatching command to decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
-        let read_result = self.executor.read();
-        // TODO: use async-rust or tokio or whatever, if we're using it elsewhere
-        let guard = match read_result {
-            Ok(guard) => {
-                guard
-            },
-            Err(err) => {
-                godot_error!("Failed to access executor while reading! This is a serious error, please report it: {err:?}");
-                return;
-            }
-        };
+        let maybe_executor_ptr = self.get_executor();
 
-        let executor = (*guard).clone();
-
-        spawn(move || {
-            run_with_decktricks(executor, args).unwrap_or("".into());
-        });
+        if let Some(executor_ptr) = maybe_executor_ptr {
+            spawn(move || {
+                run_with_decktricks(executor_ptr, args).unwrap_or("".into());
+            });
+        }
     }
 
     // TODO: move this out of dispatcher and into a more general object?
@@ -116,18 +105,13 @@ fn run_with_decktricks(
     let maybe_cmd = DecktricksCommand::try_parse_from(args_with_cmd);
 
     match maybe_cmd {
-        Ok(cmd) => {
-            match maybe_executor.as_ref().as_ref() {
-                Some(executor) => {
-                    run_with_decktricks_inner(executor, cmd)
-                },
-                None => {
-                    godot_error!("No executor found! This is a serious error, please report it.");
-                    Err(())
-                }
+        Ok(cmd) => match maybe_executor.as_ref().as_ref() {
+            Some(executor) => run_with_decktricks_inner(executor, cmd),
+            None => {
+                godot_error!("No executor found! This is a serious error, please report it.");
+                Err(())
             }
-
-        }
+        },
         Err(cmd_parse_err) => {
             godot_print!(
                 "Decktricks command {args:?} encountered a parse error: {cmd_parse_err:?}"
@@ -137,10 +121,7 @@ fn run_with_decktricks(
     }
 }
 
-fn run_with_decktricks_inner(
-    executor: &Executor,
-    cmd: DecktricksCommand,
-) -> Result<GString, ()> {
+fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Result<GString, ()> {
     let mut experienced_error = false;
     let action = &cmd.action;
     let results = executor.execute(action);
@@ -155,9 +136,7 @@ fn run_with_decktricks_inner(
         }
         Err(known_error) => {
             experienced_error = true;
-            godot_error!(
-                "Decktricks command {action:?} encountered an error: {known_error}"
-            );
+            godot_error!("Decktricks command {action:?} encountered an error: {known_error}");
         }
     });
 

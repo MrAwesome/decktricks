@@ -1,7 +1,7 @@
 extends Control
 
 
-# TODO: don't read config every refresh?
+# TODO: don't read config every refresh
 # TODO: some kind of error display system
 # TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
 # TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
@@ -20,6 +20,7 @@ var TRICK_INFO = preload("res://scenes/trick_info.tscn")
 
 
 @onready var display_name_mapping: Dictionary = %DecktricksDispatcher.get_display_name_mapping()
+var config: Variant = {}
 var did_focus = false
 var focused_trick_and_action = [null, null]
 
@@ -99,22 +100,18 @@ func get_actions():
 	var args: Array[String] = ["actions", "--json"]
 	var config_data = %DecktricksDispatcher.sync_run_with_decktricks(args)
 
-	var actions_json = JSON.new()
-	var ret = actions_json.parse(config_data)
+	var json = JSON.new()
+	var ret = json.parse(config_data)
 
 	if ret == OK:
-		return actions_json.data
-	# TODO: fallback/error
+		return json.data
+	else:
+		print("Error parsing actions JSON: ", config_data)
+		return {}
 
-func _ready():
-	Engine.set_max_fps(30)
-	refresh_ui()
-
-func refresh_ui():
-	var first_button = null
-	var games = TRICKS_LIST.instantiate()
-	var actions = get_actions()
-
+func get_config():
+	# NOTE: we should not need to check validity of this output if it returns successfully,
+	# 		thanks to robust error-checking on the Rust side
 	var args: Array[String] = ["get-config"]
 	var config_data = %DecktricksDispatcher.sync_run_with_decktricks(args)
 
@@ -122,37 +119,52 @@ func refresh_ui():
 	var ret = json.parse(config_data)
 
 	if ret == OK:
-		var tricks = json.data.get("tricks", [])
+		return json.data
+	else:
+		print("Error parsing config JSON: ", config_data)
+		return {}
 
-		var marked_first = false
-		for trick in tricks:
-			var trick_id = trick.get("id")
-			var display_name = trick.get("display_name")
-			var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
-			var description = trick.get("description")
+func _ready():
+	Engine.set_max_fps(30)
+	config = get_config()
+	refresh_ui()
 
-			# Error checking should never be needed for this access, since we
-			# check on the Rust side that we're only generating valid actions
-			var available_actions = actions[trick_id]
+func refresh_ui():
+	var first_button = null
+	var games = TRICKS_LIST.instantiate()
+	var actions = get_actions()
 
-			# TODO: show tooltext when it's selected
+	var tricks = config.get("tricks", [])
 
-			var label_box = LABEL_OUTER.instantiate()
-			var label = label_box.get_child(0)
-			label.text = display_name
-			label_box.tooltip_text = description
+	var marked_first = false
+	for trick in tricks:
+		var trick_id = trick.get("id")
+		var display_name = trick.get("display_name")
+		var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
+		var description = trick.get("description")
 
-			var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
+		# Error checking should never be needed for this access, since we
+		# check on the Rust side that we're only generating valid actions
+		var available_actions = actions[trick_id]
 
-			if init and not marked_first:
-				first_button = trick_row.get_child(0).get_child(0).get_child(0)
-				marked_first = true
+		# TODO: show tooltext when it's selected
 
-			var row_outer_here = ROW_OUTER.instantiate()
-			var row_inner = row_outer_here.get_child(0).get_child(0)
-			row_inner.add_child(label_box)
-			row_inner.add_child(trick_row)
-			games.add_child(row_outer_here)
+		var label_box = LABEL_OUTER.instantiate()
+		var label = label_box.get_child(0)
+		label.text = display_name
+		label_box.tooltip_text = description
+
+		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
+
+		if init and not marked_first:
+			first_button = trick_row.get_child(0).get_child(0).get_child(0)
+			marked_first = true
+
+		var row_outer_here = ROW_OUTER.instantiate()
+		var row_inner = row_outer_here.get_child(0).get_child(0)
+		row_inner.add_child(label_box)
+		row_inner.add_child(trick_row)
+		games.add_child(row_outer_here)
 
 	var old_lists = %ScrollContainer.get_children()
 
