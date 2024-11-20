@@ -30,6 +30,7 @@ impl From<serde_json::Error> for KnownError {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TricksLoader {
     tricks: HashMap<TrickID, Trick>,
 }

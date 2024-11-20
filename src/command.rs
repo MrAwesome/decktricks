@@ -1,12 +1,20 @@
 use crate::gui::GuiType;
+use crate::prelude::TypedAction;
 pub use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[clap(name = "decktricks")]
 pub struct DecktricksCommand {
-    // The actual command to be executed, such as "run" or "install"
+    // The actual command to be executed, such as "run" or "install".
+    // To seed an Executor for repeated use, use "actions".
     #[clap(subcommand)]
     pub action: Action,
+
+    // Whether or not to gather system context before running an Action.
+    // Most useful from a GUI, where we should be relatively
+    // sure that a SpecificAction is valid/possible.
+    #[clap(short, long)]
+    pub gather_context_on_specific_actions: bool,
 
     // Anything below this line is global context for Actions: //
     // ------------------------------------------------------- //
@@ -17,6 +25,16 @@ pub struct DecktricksCommand {
     // Currently unused since pretty_env_logger uses env variables.
     // #[clap(short, long)]
     // pub debug: bool,
+}
+
+impl DecktricksCommand {
+    pub fn new(action: Action) -> Self {
+        Self {
+            action,
+            gather_context_on_specific_actions: false,
+            config: None,
+        }
+    }
 }
 
 // * "Run"
@@ -80,11 +98,15 @@ pub enum Action {
     GetConfig,
     #[clap(hide = true)]
     GetActionDisplayNameMapping,
+    #[clap(hide = true)]
+    GatherContext,
 }
 
 impl Action {
     #[must_use]
-    pub fn does_not_need_system_context(&self) -> bool {
+    pub fn does_not_need_system_context(&self, gather_context_on_specific_actions: bool) -> bool {
         matches!(self, Self::Info { .. } | Self::GetConfig)
+            || (gather_context_on_specific_actions
+                && matches!(TypedAction::from(self), TypedAction::Specific(_)))
     }
 }

@@ -2,7 +2,15 @@ use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
 use std::sync::Arc;
 
+#[derive(Debug, Copy, Clone)]
+pub enum ExecutorMode {
+    Continuous,
+    OnceOff,
+}
+
+#[derive(Debug, Clone)]
 pub struct Executor {
+    pub mode: ExecutorMode,
     pub loader: TricksLoader,
     pub full_ctx: FullSystemContext,
     pub runner: RunnerRc,
@@ -16,7 +24,7 @@ impl Executor {
     /// Any errors that might arise from parsing the config
     /// or from gathering system resources.
     ///
-    pub fn new(command: &DecktricksCommand) -> DeckResult<Self> {
+    pub fn new(mode: ExecutorMode, command: &DecktricksCommand) -> DeckResult<Self> {
         let maybe_config_path = command.config.as_ref();
         let loader = match maybe_config_path {
             Some(config_path) => TricksLoader::from_config(config_path)?,
@@ -26,18 +34,38 @@ impl Executor {
         let runner = Arc::new(Runner::new());
 
         // TODO: unit test
-        let full_ctx = if command.action.does_not_need_system_context() {
-            FullSystemContext::default()
+        //
+        // If we're running in CLI mode, we're only going to run a single time
+        //      and so we need to know *here* whether or not the desired action
+        //      needs to bother querying system state.
+        // If we're running in GUI mode, we're planning to reuse this executor
+        //      multiple times with the same system context and so we always
+        //      want to gather context.
+        let full_ctx = if matches!(mode, ExecutorMode::OnceOff) {
+            let do_not_gather = command
+                .action
+                .does_not_need_system_context(command.gather_context_on_specific_actions);
+            if do_not_gather {
+                FullSystemContext::default()
+            } else {
+                FullSystemContext::gather_with(&runner)?
+            }
         } else {
             FullSystemContext::gather_with(&runner)?
         };
 
-        Ok(Self::with(loader, full_ctx, runner))
+        Ok(Self::with(mode, loader, full_ctx, runner))
     }
 
     #[must_use]
-    pub fn with(loader: TricksLoader, full_ctx: FullSystemContext, runner: RunnerRc) -> Self {
+    pub fn with(
+        mode: ExecutorMode,
+        loader: TricksLoader,
+        full_ctx: FullSystemContext,
+        runner: RunnerRc,
+    ) -> Self {
         Self {
+            mode,
             loader,
             full_ctx,
             runner,
@@ -95,18 +123,15 @@ mod tests {
 
         let ctx = FullSystemContext::gather_with(&runner)?;
 
-        let executor = Executor::with(loader, ctx, runner);
+        let executor = Executor::with(ExecutorMode::OnceOff, loader, ctx, runner);
         Ok(executor)
     }
 
     #[test]
     fn top_level_install() -> DeckResult<()> {
-        let command = DecktricksCommand {
-            action: Action::Install {
-                id: "lutris".into(),
-            },
-            config: None,
-        };
+        let command = DecktricksCommand::new(Action::Install {
+            id: "lutris".into(),
+        });
 
         let executor = get_executor(None)?;
         let results = executor.execute(&command.action);
@@ -123,12 +148,9 @@ mod tests {
 
     #[test]
     fn top_level_incorrect_run() -> DeckResult<()> {
-        let command = DecktricksCommand {
-            action: Action::Run {
-                id: "FAKE_PACKAGE".into(),
-            },
-            config: None,
-        };
+        let command = DecktricksCommand::new(Action::Run {
+            id: "FAKE_PACKAGE".into(),
+        });
 
         let executor = get_executor(None)?;
         let results = executor.execute(&command.action);
@@ -145,10 +167,7 @@ mod tests {
 
     #[test]
     fn top_level_general_list() -> DeckResult<()> {
-        let command = DecktricksCommand {
-            action: Action::List { installed: false },
-            config: None,
-        };
+        let command = DecktricksCommand::new(Action::List { installed: false });
 
         let executor = get_executor(None)?;
         let results = executor.execute(&command.action);
@@ -166,10 +185,7 @@ mod tests {
 
     #[test]
     fn top_level_general_list_installed() -> DeckResult<()> {
-        let command = DecktricksCommand {
-            action: Action::List { installed: true },
-            config: None,
-        };
+        let command = DecktricksCommand::new(Action::List { installed: true });
 
         let mut mock = MockTestActualRunner::new();
 

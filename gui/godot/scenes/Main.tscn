@@ -20,6 +20,10 @@ script = ExtResource("1")
 wait_time = 5.0
 autostart = true
 
+[node name="ExecutorRefreshTimer" type="Timer" parent="."]
+wait_time = 5.0
+autostart = true
+
 [node name="TabContainer" type="TabContainer" parent="."]
 custom_minimum_size = Vector2(1280, 800)
 layout_mode = 0
@@ -82,3 +86,4 @@ layout_mode = 2
 script = ExtResource("5_vcsgt")
 
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
+[connection signal="timeout" from="ExecutorRefreshTimer" to="DecktricksDispatcher" method="on_executor_refresh_timer_timeout"]

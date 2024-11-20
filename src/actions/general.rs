@@ -13,6 +13,7 @@ pub(crate) enum GeneralAction {
     UpdateAll,
     GetConfig,
     GetActionDisplayNameMapping,
+    GatherContext,
 }
 
 impl GeneralAction {
@@ -75,6 +76,7 @@ impl GeneralAction {
                 )]
             }
             Self::Gui { gui } => vec![gui.launch(executor)],
+            Self::GatherContext => vec![],
             Self::GetConfig => {
                 // TODO: if using live configs, use here
                 vec![success!(DEFAULT_CONFIG_CONTENTS)]

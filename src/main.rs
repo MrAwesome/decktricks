@@ -5,7 +5,7 @@ fn main() -> DeckResult<()> {
 
     let cmd = DecktricksCommand::parse();
 
-    let executor = Executor::new(&cmd)?;
+    let executor = Executor::new(ExecutorMode::OnceOff, &cmd)?;
     let results = executor.execute(&cmd.action);
 
     let mut experienced_error = false;

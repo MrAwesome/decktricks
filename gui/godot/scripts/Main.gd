@@ -1,6 +1,7 @@
 extends Control
 
 
+# TODO: don't read config every refresh?
 # TODO: some kind of error display system
 # TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
 # TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
@@ -180,3 +181,4 @@ func _input(event: InputEvent) -> void:
 
 func _on_ui_refresh_timer_timeout() -> void:
 	refresh_ui()
+	

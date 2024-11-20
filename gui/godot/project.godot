@@ -14,10 +14,6 @@ config/name="Decktricks"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.4")
 
-[debug]
-
-settings/stdout/print_fps=true
-
 [display]
 
 window/size/viewport_width=1280

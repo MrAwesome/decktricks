@@ -13,6 +13,9 @@
 [] fix --export-release
 [] design about page, settings page
 
+Settings:
+[] "All Conditional Actions Always Available (Expert)" / "Allow force install / force uninstall"
+
 Add to Steam:
 [] investigate the blank entry appearing on first run? (just don't use the default script, use something more robust)
 
@@ -169,6 +172,9 @@ fun:
 [] selectable themes
 [] mid-oughts cd key haxx aesthetic with 8-bit theme
 [] a 2d game where you can run around and select things to launch
+
+Optimizations:
+[] make executor only trigger system context gathering for relevant programs on specific commands
 
 dependencies list:
 systemd

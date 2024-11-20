@@ -33,6 +33,7 @@ impl From<&Action> for TypedAction {
             Action::Gui { gui } => Self::General(GeneralAction::Gui { gui }),
             Action::GetConfig => Self::General(GeneralAction::GetConfig),
             Action::GetActionDisplayNameMapping => Self::General(GeneralAction::GetActionDisplayNameMapping),
+            Action::GatherContext => Self::General(GeneralAction::GatherContext),
         }
     }
 }
