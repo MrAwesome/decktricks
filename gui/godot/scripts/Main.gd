@@ -22,6 +22,7 @@ var TRICK_INFO = preload("res://scenes/trick_info.tscn")
 @onready var display_name_mapping: Dictionary = DecktricksDispatcher.get_display_name_mapping()
 var config: Variant = {}
 var did_focus = false
+var last_actions_string = "jdsklaj"
 var focused_trick_and_action = [null, null]
 
 func focus_button(button: Button, action, trick_id):
@@ -142,13 +143,15 @@ func _ready():
 	refresh_ui(actions_text)
 
 func refresh_ui(actions_json_string: String):
-	print("OUTER")
 	refresh_ui_inner.call_deferred(actions_json_string)
 
 func refresh_ui_inner(actions_json_string: String):
-	print("INNER")
-	print(actions_json_string)
+	# Comment this out to test focus behavior on UI change
+	if actions_json_string == last_actions_string:
+		return
+
 	var actions = parse_actions(actions_json_string)
+
 	var first_button = null
 	var games = TRICKS_LIST.instantiate()
 
@@ -197,6 +200,8 @@ func refresh_ui_inner(actions_json_string: String):
 	init = false
 	did_focus = false
 
+	last_actions_string = actions_json_string
+
 func _input(event: InputEvent) -> void:
 	# If this window loses focus, do not accept any input (otherwise,
 	# we would process gamepad input while child programs are in focus
@@ -209,8 +214,8 @@ func _input(event: InputEvent) -> void:
 	# var screen_size: Vector2i = DisplayServer.screen_get_size()
 	# print(screen_size.x)
 
+# TODO: come up with reasonable values for these timers
 func _on_ui_refresh_timer_timeout() -> void:
-	print("ui refresh")
 	DecktricksDispatcher.async_update_actions()
 
 func _on_actions_refresh_timer_timeout() -> void:

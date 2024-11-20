@@ -109,6 +109,8 @@ fn get_all_available_actions_for_all_tricks(
         }
     }
 
+    name_to_actions.sort_by_key(|k| k.0.clone());
+
     Ok(name_to_actions)
 }
 
@@ -166,7 +168,7 @@ fn get_all_available_actions(
 
         // TODO: unit test this
         let output = if json {
-            let results_map: std::collections::HashMap<_, _> = results.into_iter().collect();
+            let results_map: std::collections::BTreeMap<_, _> = results.into_iter().collect();
             serde_json::to_string(&results_map).map_err(KnownError::from)?
         } else {
             // Convert the results from above into a commandline-friendly format
