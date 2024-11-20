@@ -2,32 +2,33 @@ use decktricks::actions::SpecificActionID;
 use decktricks::prelude::*;
 use decktricks::rayon::spawn;
 use godot::prelude::*;
+use std::sync::LazyLock;
 use std::sync::{Arc, RwLock};
 
-#[derive(GodotClass)]
-#[class(init,base=Node)]
-struct DecktricksDispatcher {
-    base: Base<Node>,
-    executor: Arc<RwLock<Arc<Option<Executor>>>>,
-}
+static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
+    std::sync::LazyLock::new(|| Arc::new(RwLock::new(Arc::new(None))));
 
-#[godot_api]
-impl INode for DecktricksDispatcher {
-    fn ready(&mut self) {
-        self.spawn_executor_refresh(true)
-    }
+#[derive(GodotClass)]
+#[class(init,base=Object)]
+pub struct DecktricksDispatcher {
+    base: Base<Object>,
 }
 
 #[godot_api]
 impl DecktricksDispatcher {
-    // Try sending signal or mpsc with new executor?
-    #[func]
-    fn on_executor_refresh_timer_timeout(&self) {
-        self.spawn_executor_refresh(false)
+    // TODO: figure out how to send parsed tricksconfig?
+    #[signal]
+    fn actions(actions_json_string: GString);
+
+    fn get_singleton() -> Gd<Object> {
+        godot::classes::Engine::singleton()
+            .get_singleton(StringName::from("DecktricksDispatcher"))
+            .expect("Could not get DecktricksDispatcher singleton!")
     }
 
-    fn spawn_executor_refresh(&self, sync_run: bool) {
-        let lock = self.executor.clone();
+    #[func]
+    fn spawn_executor_refresh(sync_run: bool) {
+        let lock = EXECUTOR_GUARD.clone();
         let task = move || {
             let new_inner_arc = Arc::new(gather_new_executor());
             match lock.write() {
@@ -46,8 +47,8 @@ impl DecktricksDispatcher {
         }
     }
 
-    fn get_executor(&self) -> Option<Arc<Option<Executor>>> {
-        let read_result = self.executor.try_read();
+    fn get_executor() -> Option<Arc<Option<Executor>>> {
+        let read_result = EXECUTOR_GUARD.try_read();
         match read_result {
             Ok(guard) => Some((*guard).clone()),
             Err(err) => {
@@ -58,21 +59,21 @@ impl DecktricksDispatcher {
     }
 
     #[func]
-    fn sync_run_with_decktricks(&self, gargs: Array<GString>) -> GString {
+    fn sync_run_with_decktricks(gargs: Array<GString>) -> GString {
         godot_print!("Running command synchronously with decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
-        self.get_executor()
+        Self::get_executor()
             .map(|executor_ptr| run_with_decktricks(executor_ptr, args).unwrap_or("".into()))
             .unwrap_or("".into())
     }
 
     #[func]
-    fn async_run_with_decktricks(&self, gargs: Array<GString>) {
+    fn async_run_with_decktricks(gargs: Array<GString>) {
         godot_print!("Dispatching command to decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
-        let maybe_executor_ptr = self.get_executor();
+        let maybe_executor_ptr = Self::get_executor();
 
         if let Some(executor_ptr) = maybe_executor_ptr {
             spawn(move || {
@@ -87,9 +88,32 @@ impl DecktricksDispatcher {
         Dictionary::from_iter(SpecificActionID::get_display_name_mapping())
     }
 
-    // TODO: check these definitions in the editor
-    #[signal]
-    fn take_action(gargs: Array<GString>) {}
+    #[func]
+    fn async_update_actions() {
+            let maybe_executor_ptr = Self::get_executor();
+
+            if let Some(executor_ptr) = maybe_executor_ptr {
+                spawn(move || {
+                    let maybe_actions = run_with_decktricks(executor_ptr, vec!["actions".into(), "--json".into()]);
+
+                    if let Ok(actions_json_string) = maybe_actions {
+                        let mut singleton = Self::get_singleton();
+                        singleton.emit_signal("actions".into(), &[Variant::from(actions_json_string)]);
+                    }
+                });
+            }
+    }
+
+    //    fn get_config() -> Variant {
+    //        if let Some(executor) = Self::get_executor() {
+    //            let config_text = run_with_decktricks(executor, &["get-config"]).unwrap_or("{}".into());
+    //            let x = HashMap::<GString, GString>::new();
+    //            x.insert("lawl".into(), "wut".into());
+    //            Variant::from(x)
+    //        } else {
+    //            Variant::from(())
+    //        }
+    //    }
 }
 
 fn gargs_to_args(gargs: Array<GString>) -> Vec<String> {

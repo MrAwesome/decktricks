@@ -17,7 +17,11 @@ theme = ExtResource("1_0bbpv")
 script = ExtResource("1")
 
 [node name="UIRefreshTimer" type="Timer" parent="."]
-wait_time = 5.0
+wait_time = 1.0
+autostart = true
+
+[node name="ActionsRefreshTimer" type="Timer" parent="."]
+wait_time = 3.0
 autostart = true
 
 [node name="ExecutorRefreshTimer" type="Timer" parent="."]
@@ -59,9 +63,6 @@ visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="DecktricksDispatcher" type="DecktricksDispatcher" parent="."]
-unique_name_in_owner = true
-
 [node name="HiddenForLater" type="Control" parent="."]
 visible = false
 anchors_preset = 0
@@ -86,4 +87,4 @@ layout_mode = 2
 script = ExtResource("5_vcsgt")
 
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
-[connection signal="timeout" from="ExecutorRefreshTimer" to="DecktricksDispatcher" method="on_executor_refresh_timer_timeout"]
+[connection signal="timeout" from="ActionsRefreshTimer" to="." method="_on_actions_refresh_timer_timeout"]

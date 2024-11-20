@@ -27,7 +27,12 @@ impl Executor {
     pub fn new(mode: ExecutorMode, command: &DecktricksCommand) -> DeckResult<Self> {
         let maybe_config_path = command.config.as_ref();
         let loader = match maybe_config_path {
-            Some(config_path) => TricksLoader::from_config(config_path)?,
+            Some(config_path) => match TricksLoader::from_config(config_path) {
+                Ok(config) => config,
+                Err(err) => {
+                    error!("Failed to load config from path '{config_path}'. Will fall back to default config. Error was: {err:?}");
+                    TricksLoader::from_default_config()?
+            }},
             None => TricksLoader::from_default_config()?,
         };
 

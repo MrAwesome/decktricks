@@ -1,6 +1,5 @@
 extends Control
 
-
 # TODO: don't read config every refresh
 # TODO: some kind of error display system
 # TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
@@ -10,6 +9,8 @@ extends Control
 # TODO: handle 720p since that's a common resolution on TVs?
 # TODO: use this to set the STEAM_ID as needed for gamescope? https://docs.godotengine.org/en/stable/classes/class_window.html#class-window-method-set-flag
 
+const DEFAULT_MAX_FPS = 30
+
 var init = true
 var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")
 var ACTION_BUTTON = preload("res://scenes/action_button.tscn")
@@ -18,8 +19,7 @@ var ROW_OUTER = preload("res://scenes/row_outer.tscn")
 var TRICKS_LIST = preload("res://scenes/tricks_list.tscn")
 var TRICK_INFO = preload("res://scenes/trick_info.tscn")
 
-
-@onready var display_name_mapping: Dictionary = %DecktricksDispatcher.get_display_name_mapping()
+@onready var display_name_mapping: Dictionary = DecktricksDispatcher.get_display_name_mapping()
 var config: Variant = {}
 var did_focus = false
 var focused_trick_and_action = [null, null]
@@ -44,10 +44,13 @@ func create_action_button(action: String, trick_id: String):
 	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
 	return button
 
+func async_action_result(action: String, trick_id: String, results: Array[String]):
+	pass
+
 func take_action(action: String, trick_id: String):
 	var args: Array[String] = [action, trick_id]
 	if action == "info":
-		var output = %DecktricksDispatcher.sync_run_with_decktricks(args)
+		var output = DecktricksDispatcher.sync_run_with_decktricks(args)
 		if output == "":
 			print('Error! Failed to run', './decktricks ', action, ' ', trick_id)
 			return
@@ -70,7 +73,7 @@ func take_action(action: String, trick_id: String):
 			root.add_child(dialog)
 			dialog.popup_centered_ratio(0.7)
 	else:
-		%DecktricksDispatcher.async_run_with_decktricks(args)
+		DecktricksDispatcher.async_run_with_decktricks(args)
 
 # take [available, actions, like, this]
 func create_actions_row(trick_id: String, available_actions, _display_name: String, _icon_path: String):
@@ -94,26 +97,28 @@ func create_actions_row(trick_id: String, available_actions, _display_name: Stri
 		did_focus = true
 	return actions_row_outer
 
-func get_actions():
+func get_actions_text_sync():
 	# NOTE: we should not need to check validity of this output if it returns successfully,
 	# 		thanks to robust error-checking on the Rust side
 	var args: Array[String] = ["actions", "--json"]
-	var config_data = %DecktricksDispatcher.sync_run_with_decktricks(args)
+	var actions_text = DecktricksDispatcher.sync_run_with_decktricks(args)
+	return actions_text
 
+func parse_actions(actions_text: String):
 	var json = JSON.new()
-	var ret = json.parse(config_data)
+	var ret = json.parse(actions_text)
 
 	if ret == OK:
 		return json.data
 	else:
-		print("Error parsing actions JSON: ", config_data)
+		print("Error parsing actions JSON: ", actions_text)
 		return {}
 
 func get_config():
 	# NOTE: we should not need to check validity of this output if it returns successfully,
 	# 		thanks to robust error-checking on the Rust side
 	var args: Array[String] = ["get-config"]
-	var config_data = %DecktricksDispatcher.sync_run_with_decktricks(args)
+	var config_data = DecktricksDispatcher.sync_run_with_decktricks(args)
 
 	var json = JSON.new()
 	var ret = json.parse(config_data)
@@ -125,14 +130,27 @@ func get_config():
 		return {}
 
 func _ready():
-	Engine.set_max_fps(30)
-	config = get_config()
-	refresh_ui()
+	# This is synchronous for now
+	DecktricksDispatcher.spawn_executor_refresh(true);
 
-func refresh_ui():
+	Engine.set_max_fps(DEFAULT_MAX_FPS)
+	DecktricksDispatcher.connect("actions", refresh_ui)
+
+
+	config = get_config()
+	var actions_text = get_actions_text_sync()
+	refresh_ui(actions_text)
+
+func refresh_ui(actions_json_string: String):
+	print("OUTER")
+	refresh_ui_inner.call_deferred(actions_json_string)
+
+func refresh_ui_inner(actions_json_string: String):
+	print("INNER")
+	print(actions_json_string)
+	var actions = parse_actions(actions_json_string)
 	var first_button = null
 	var games = TRICKS_LIST.instantiate()
-	var actions = get_actions()
 
 	var tricks = config.get("tricks", [])
 
@@ -192,5 +210,8 @@ func _input(event: InputEvent) -> void:
 	# print(screen_size.x)
 
 func _on_ui_refresh_timer_timeout() -> void:
-	refresh_ui()
-	
+	print("ui refresh")
+	DecktricksDispatcher.async_update_actions()
+
+func _on_actions_refresh_timer_timeout() -> void:
+	DecktricksDispatcher.spawn_executor_refresh(false)
