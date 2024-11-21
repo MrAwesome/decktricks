@@ -156,6 +156,23 @@
             "always_present_on_steamdeck": true
         },
         {
+            "id": "file-browser-dolphin",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "dolphin"
+            },
+            "tags": [
+                "files",
+                "file browser",
+                "dolphin",
+                "plasma"
+            ],
+            "icon": "XXX",
+            "display_name": "File Browser",
+            "description": "The default file browser app from Desktop Mode.",
+            "always_present_on_steamdeck": true
+        },
+        {
             "id": "konsole",
             "provider_config": {
                 "type": "simple-command",

@@ -109,6 +109,8 @@ fn get_all_available_actions_for_all_tricks(
         }
     }
 
+    // We sort so that `actions --json` does not change between runs
+    // unless the system state has changed
     name_to_actions.sort_by_key(|k| k.0.clone());
 
     Ok(name_to_actions)
@@ -166,8 +168,9 @@ fn get_all_available_actions(
         let mut all_available = vec![];
         let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner)?;
 
-        // TODO: unit test this
+        // TODO: unit test this:
         let output = if json {
+            // NOTE: this is a BTreeMap so that sort order is maintained
             let results_map: std::collections::BTreeMap<_, _> = results.into_iter().collect();
             serde_json::to_string(&results_map).map_err(KnownError::from)?
         } else {
