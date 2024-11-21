@@ -233,6 +233,36 @@
             "icon": "XXX",
             "display_name": "Chrome",
             "description": "Free and open source web browser from Google."
+        },
+        {
+            "id": "discord",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "com.discordapp.Discord"
+            },
+            "tags": [
+                "discord",
+                "chat"
+            ],
+            "icon": "XXX",
+            "display_name": "Discord (Official App)",
+            "description": "Messaging, voice and video client."
+        },
+        {
+            "id": "vesktop",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "dev.vencord.Vesktop"
+            },
+            "tags": [
+                "discord",
+                "vencord",
+                "chat",
+                "vesktop"
+            ],
+            "icon": "XXX",
+            "display_name": "Discord (Vesktop)",
+            "description": "Community-maintained launcher for Discord that adds vencord and makes updates less intrusive."
         }
     ]
 }

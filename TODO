@@ -76,6 +76,10 @@ Actions/Programs:
 [] any other system settings? bluetooth, audio(!), etc
 
 GUI
+[] refocus after redraw
+    [] if trick and action match, reselect that. Otherwise, first action of trick, otherwise first action of first trick
+    [] if in other menu or on tab, you can just find the focused element before redraw and re-focus it (if that's even needed)
+
 [] lower default FPS for battery
     [] fix battery/settings page selection behavior (main.gd stealing focus back)
     [] store settings permanently in json file
