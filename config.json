@@ -263,6 +263,20 @@
             "icon": "XXX",
             "display_name": "Discord (Vesktop)",
             "description": "Community-maintained launcher for Discord that adds vencord and makes updates less intrusive."
+        },
+        {
+            "id": "spotify",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "com.spotify.Client"
+            },
+            "tags": [
+                "spotify",
+                "music"
+            ],
+            "icon": "XXX",
+            "display_name": "Spotify",
+            "description": "Online music streaming service."
         }
     ]
 }
