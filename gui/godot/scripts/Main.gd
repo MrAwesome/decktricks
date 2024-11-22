@@ -12,7 +12,7 @@ extends Control
 const DEFAULT_MAX_FPS = 30
 var dd = DecktricksDispatcher
 
-var init = true
+var initializing = true
 var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")
 var ACTION_BUTTON = preload("res://scenes/action_button.tscn")
 var LABEL_OUTER = preload("res://scenes/label_outer.tscn")
@@ -165,7 +165,7 @@ func refresh_ui_inner(actions_json_string: String):
 
 		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
 
-		if init and not marked_first:
+		if initializing and not marked_first:
 			first_button = trick_row.get_child(0).get_child(0).get_child(0)
 			marked_first = true
 
@@ -183,10 +183,10 @@ func refresh_ui_inner(actions_json_string: String):
 
 	%ScrollContainer.add_child(games)
 
-	if init or not did_focus:
+	if initializing or not did_focus:
 		if first_button:
 			first_button.grab_focus.call_deferred()
-	init = false
+	initializing = false
 	did_focus = false
 
 	last_actions_string = actions_json_string
@@ -203,6 +203,7 @@ func _init():
 
 func _ready():
 	dd.get_time_passed_ms("ready")
+
 	# IMPORTANT: Do not try to run any commands with the executor before this has finished:
 	dd.wait_for_executor();
 	dd.get_time_passed_ms("executor_ready")

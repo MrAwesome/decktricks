@@ -3,7 +3,8 @@ set -euxo pipefail
 
 # [] TODO: debug builds too?
 
-cd "$(dirname "$0")"
+REPOROOT="$(dirname "$0")"
+cd "$REPOROOT"
 
 TMPDIR=$(mktemp -d)
 BUILDDIR="$TMPDIR/build"
@@ -16,12 +17,14 @@ cp scripts/decktricks_post_install.sh "$BUILDDIR"
 cargo build --release
 
 pushd gui/godot/
+rm build/*
 godot --headless --export-debug "Linux"
 cp build/* "$BUILDDIR"
 popd
 
-pushd "$TMPDIR"
-tar czf decktricks.tar.gz build/*
+pushd "$BUILDDIR"
+tar czf "$TMPDIR"/decktricks.tar.gz ./*
 popd
 
 cp "$TMPDIR"/decktricks.tar.gz build/
+cp "$REPOROOT"/scripts/decktricks_install.desktop "$BUILDDIR"
