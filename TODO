@@ -1,3 +1,4 @@
+[] make cargo test in base repo run tests in GUI as well (and vice-versa?)
 [] full-system-context-not-needed flag for certain commands?
 [] bind A to ui_accept
 [] hide commands that aren't present automatically? or just hide anything that doesn't have a single option besides info?

@@ -1,7 +1,6 @@
-[gd_resource type="Theme" load_steps=37 format=3 uid="uid://bb6vwl0h1flws"]
+[gd_resource type="Theme" load_steps=36 format=3 uid="uid://bb6vwl0h1flws"]
 
 [ext_resource type="Texture2D" uid="uid://d00ws7wljnit4" path="res://themes/kennyUI/UIpack_vector.svg" id="1"]
-[ext_resource type="FontFile" uid="uid://8ldv42yp1y7h" path="res://assets/bookxel/bookxel_64.tres" id="1_v5h7g"]
 [ext_resource type="FontFile" uid="uid://cdqk21ls0o1xs" path="res://themes/kennyUI/kenvector_future.ttf" id="2"]
 [ext_resource type="FontFile" uid="uid://b34ueb2u6cdyf" path="res://assets/bookxel/bookxel.ttf" id="4_681c7"]
 
@@ -336,8 +335,8 @@ Button/colors/font_color = Color(0, 0, 0, 1)
 Button/colors/font_disabled_color = Color(0.9, 0.9, 0.9, 0.2)
 Button/colors/font_hover_color = Color(0.34902, 0.34902, 0.34902, 1)
 Button/colors/font_pressed_color = Color(0.388235, 0.388235, 0.388235, 1)
-Button/constants/h_separation = 2
-Button/fonts/font = ExtResource("1_v5h7g")
+Button/font_sizes/font_size = 64
+Button/fonts/font = ExtResource("4_681c7")
 Button/styles/disabled = SubResource("1")
 Button/styles/focus = SubResource("2")
 Button/styles/hover = SubResource("3")

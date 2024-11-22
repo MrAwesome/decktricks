@@ -1,8 +1,0 @@
-#!/usr/bin/env xdg-open
-[Desktop Entry]
-Name=Decktricks
-Exec=bash -xc 'DTDIR=.local/share/decktricks; mkdir -p "$DTDIR" && cd "$DTDIR"; curl -S -s -L -O --output-dir /tmp --connect-timeout 60 "http://gleesus.net:8888/decktricks.tar.gz" || err=1; [ -z "$err" ] && tar xvf /tmp/decktricks.tar.gz || err=2; [ ! -z "$err" ] && ( echo "Something went wrong. Are you connected to the Internet? If this looks like a bug, please report it at: https://github.com/MrAwesome/decktricks/issues" ); ./"GUI Test.sh"; read'
-Icon=steamdeck-gaming-return
-Terminal=true
-Type=Application
-StartupNotify=false

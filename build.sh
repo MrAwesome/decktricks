@@ -10,7 +10,8 @@ BUILDDIR="$TMPDIR/build"
 
 mkdir -p "$BUILDDIR"
 
-cp decktricks.desktop "$BUILDDIR"
+cp scripts/decktricks_install.desktop "$BUILDDIR"
+cp scripts/decktricks_post_install.sh "$BUILDDIR"
 
 cargo build --release
 
