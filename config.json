@@ -20,7 +20,7 @@
             "always_present_on_steamdeck": true
         },
         {
-            "id": "prisma-launcher",
+            "id": "prism-launcher",
             "provider_config": {
                 "type": "flatpak",
                 "id": "org.prismlauncher.PrismLauncher"
@@ -28,10 +28,10 @@
             "icon": "XXX",
             "tags": [
                 "minecraft",
-                "prisma"
+                "prism"
             ],
-            "display_name": "Minecraft (Prisma Launcher)",
-            "description": " A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
+            "display_name": "Minecraft (Prism Launcher)",
+            "description": "A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
         },
         {
             "id": "emudeck",

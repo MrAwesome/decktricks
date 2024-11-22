@@ -10,6 +10,7 @@ extends Control
 # TODO: use this to set the STEAM_ID as needed for gamescope? https://docs.godotengine.org/en/stable/classes/class_window.html#class-window-method-set-flag
 
 const DEFAULT_MAX_FPS = 30
+var dd = DecktricksDispatcher
 
 var init = true
 var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")
@@ -19,7 +20,7 @@ var ROW_OUTER = preload("res://scenes/row_outer.tscn")
 var TRICKS_LIST = preload("res://scenes/tricks_list.tscn")
 var TRICK_INFO = preload("res://scenes/trick_info.tscn")
 
-@onready var display_name_mapping: Dictionary = DecktricksDispatcher.get_display_name_mapping()
+@onready var display_name_mapping: Dictionary = dd.get_display_name_mapping()
 var config: Variant = {}
 var did_focus = false
 var last_actions_string = "jdsklaj"
@@ -45,13 +46,10 @@ func create_action_button(action: String, trick_id: String):
 	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
 	return button
 
-func async_action_result(action: String, trick_id: String, results: Array[String]):
-	pass
-
 func take_action(action: String, trick_id: String):
 	var args: Array[String] = [action, trick_id]
 	if action == "info":
-		var output = DecktricksDispatcher.sync_run_with_decktricks(args)
+		var output = dd.sync_run_with_decktricks(args)
 		if output == "":
 			print('Error! Failed to run', './decktricks ', action, ' ', trick_id)
 			return
@@ -64,7 +62,7 @@ func take_action(action: String, trick_id: String):
 			var info = info_json.data
 
 			var root = get_tree().root
-			var dialog = TRICK_INFO.instantiate()
+			var dialog: AcceptDialog = TRICK_INFO.instantiate()
 			dialog.theme = theme
 			dialog.get_ok_button().set_text("OK")
 
@@ -72,9 +70,9 @@ func take_action(action: String, trick_id: String):
 			dialog.set_text(info["description"])
 
 			root.add_child(dialog)
-			dialog.popup_centered_ratio(0.7)
+			dialog.popup_centered_ratio(0.8)
 	else:
-		DecktricksDispatcher.async_run_with_decktricks(args)
+		dd.async_run_with_decktricks(args)
 
 # take [available, actions, like, this]
 func create_actions_row(trick_id: String, available_actions, _display_name: String, _icon_path: String):
@@ -85,7 +83,6 @@ func create_actions_row(trick_id: String, available_actions, _display_name: Stri
 
 	for action in available_actions:
 		# Fix this to take display names etc from the config
-		# TODO: fix ordering so info is last
 		var button = create_action_button(action, trick_id)
 		actions_row.add_child(button)
 
@@ -102,7 +99,7 @@ func get_actions_text_sync():
 	# NOTE: we should not need to check validity of this output if it returns successfully,
 	# 		thanks to robust error-checking on the Rust side
 	var args: Array[String] = ["actions", "--json"]
-	var actions_text = DecktricksDispatcher.sync_run_with_decktricks(args)
+	var actions_text = dd.sync_run_with_decktricks(args)
 	return actions_text
 
 func parse_actions(actions_text: String):
@@ -118,8 +115,9 @@ func parse_actions(actions_text: String):
 func get_config():
 	# NOTE: we should not need to check validity of this output if it returns successfully,
 	# 		thanks to robust error-checking on the Rust side
-	var args: Array[String] = ["get-config"]
-	var config_data = DecktricksDispatcher.sync_run_with_decktricks(args)
+	#var args: Array[String] = ["get-config"]
+	#var config_data = dd.sync_run_with_decktricks(args)
+	var config_data = dd.get_config_text()
 
 	var json = JSON.new()
 	var ret = json.parse(config_data)
@@ -130,19 +128,9 @@ func get_config():
 		print("Error parsing config JSON: ", config_data)
 		return {}
 
-func _ready():
-	# This is synchronous for now
-	DecktricksDispatcher.spawn_executor_refresh(true);
-
-	Engine.set_max_fps(DEFAULT_MAX_FPS)
-	DecktricksDispatcher.connect("actions", refresh_ui)
-
-
-	config = get_config()
-	var actions_text = get_actions_text_sync()
-	refresh_ui(actions_text)
-
+# TODO: this should live on TricksList, not here?
 func refresh_ui(actions_json_string: String):
+	# Deferred so that this can be called from outside the main thread:
 	refresh_ui_inner.call_deferred(actions_json_string)
 
 func refresh_ui_inner(actions_json_string: String):
@@ -196,11 +184,38 @@ func refresh_ui_inner(actions_json_string: String):
 	%ScrollContainer.add_child(games)
 
 	if init or not did_focus:
-		first_button.grab_focus.call_deferred()
+		if first_button:
+			first_button.grab_focus.call_deferred()
 	init = false
 	did_focus = false
 
 	last_actions_string = actions_json_string
+
+func _init():
+	dd.get_time_passed_ms("init")
+
+	# IMPORTANT: this MUST be run before wait_for_executor:
+	dd.initialize_executor_with_lock()
+
+	Engine.set_max_fps(DEFAULT_MAX_FPS)
+
+	dd.get_time_passed_ms("init_finished")
+
+func _ready():
+	dd.get_time_passed_ms("ready")
+	# IMPORTANT: Do not try to run any commands with the executor before this has finished:
+	dd.wait_for_executor();
+	dd.get_time_passed_ms("executor_ready")
+
+	# Hook up the signal that refreshes our UI over time
+	dd.connect("actions", refresh_ui)
+
+	# Populate the config object
+	config = get_config()
+
+	# Synchronously build out our full UI for display
+	var actions_text = get_actions_text_sync()
+	refresh_ui(actions_text)
 
 func _input(event: InputEvent) -> void:
 	# If this window loses focus, do not accept any input (otherwise,
@@ -213,10 +228,13 @@ func _input(event: InputEvent) -> void:
 		get_tree().quit()
 	# var screen_size: Vector2i = DisplayServer.screen_get_size()
 	# print(screen_size.x)
-
 # TODO: come up with reasonable values for these timers
 func _on_ui_refresh_timer_timeout() -> void:
-	DecktricksDispatcher.async_update_actions()
+	dd.async_update_actions()
 
 func _on_actions_refresh_timer_timeout() -> void:
-	DecktricksDispatcher.spawn_executor_refresh(false)
+	dd.async_executor_refresh()
+
+
+func _on_exit_tab_focus_entered() -> void:
+	print("Would exit")

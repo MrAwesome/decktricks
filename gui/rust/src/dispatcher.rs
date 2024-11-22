@@ -1,12 +1,16 @@
 use decktricks::actions::SpecificActionID;
 use decktricks::prelude::*;
 use decktricks::rayon::spawn;
+use decktricks::tricks_config::DEFAULT_CONFIG_CONTENTS;
 use godot::prelude::*;
 use std::sync::LazyLock;
 use std::sync::{Arc, RwLock};
+use std::time::Instant;
 
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
     std::sync::LazyLock::new(|| Arc::new(RwLock::new(Arc::new(None))));
+
+static STARTUP: LazyLock<Instant> = std::sync::LazyLock::new(Instant::now);
 
 #[derive(GodotClass)]
 #[class(init,base=Object)]
@@ -27,12 +31,42 @@ impl DecktricksDispatcher {
     }
 
     #[func]
-    fn spawn_executor_refresh(sync_run: bool) {
+    fn sync_executor_refresh() {
+        Self::spawn_executor_refresh_inner(true, false)
+    }
+
+    #[func]
+    fn async_executor_refresh() {
+        Self::spawn_executor_refresh_inner(false, false)
+    }
+
+    #[func]
+    fn initialize_executor_with_lock() {
+        Self::spawn_executor_refresh_inner(false, true)
+    }
+
+    #[func]
+    fn wait_for_executor() {
+        let _unused = EXECUTOR_GUARD.read();
+    }
+
+    // sync_run: whether to create a new executor in the current thread or spawned elsewhere
+    // hold_write_lock: whether to hold the write lock *while creating the executor*
+    fn spawn_executor_refresh_inner(sync_run: bool, hold_write_lock: bool) {
         let lock = EXECUTOR_GUARD.clone();
         let task = move || {
-            let new_inner_arc = Arc::new(gather_new_executor());
+            let new_inner_arc: Arc<Option<Executor>> = if !hold_write_lock {
+                Arc::new(gather_new_executor())
+            } else {
+                Arc::new(None)
+            };
+
             match lock.write() {
                 Ok(mut old_arc) => {
+                    let new_inner_arc = match *new_inner_arc {
+                        Some(_) => new_inner_arc,
+                        None => Arc::new(gather_new_executor())
+                    };
                     *old_arc = new_inner_arc;
                 },
                 Err(err) =>
@@ -56,6 +90,13 @@ impl DecktricksDispatcher {
                 None
             }
         }
+    }
+
+    #[func]
+    fn get_time_passed_ms(section: GString) -> GString {
+        let time_passed_ms = STARTUP.elapsed().as_millis();
+        godot_print!("[{section}] Time passed: {}", time_passed_ms);
+        time_passed_ms.to_string().into()
     }
 
     #[func]
@@ -90,30 +131,27 @@ impl DecktricksDispatcher {
 
     #[func]
     fn async_update_actions() {
-            let maybe_executor_ptr = Self::get_executor();
+        let maybe_executor_ptr = Self::get_executor();
 
-            if let Some(executor_ptr) = maybe_executor_ptr {
-                spawn(move || {
-                    let maybe_actions = run_with_decktricks(executor_ptr, vec!["actions".into(), "--json".into()]);
+        if let Some(executor_ptr) = maybe_executor_ptr {
+            spawn(move || {
+                let maybe_actions =
+                    run_with_decktricks(executor_ptr, vec!["actions".into(), "--json".into()]);
 
-                    if let Ok(actions_json_string) = maybe_actions {
-                        let mut singleton = Self::get_singleton();
-                        singleton.emit_signal("actions".into(), &[Variant::from(actions_json_string)]);
-                    }
-                });
-            }
+                if let Ok(actions_json_string) = maybe_actions {
+                    let mut singleton = Self::get_singleton();
+                    singleton.emit_signal("actions".into(), &[Variant::from(actions_json_string)]);
+                }
+            });
+        }
     }
 
-    //    fn get_config() -> Variant {
-    //        if let Some(executor) = Self::get_executor() {
-    //            let config_text = run_with_decktricks(executor, &["get-config"]).unwrap_or("{}".into());
-    //            let x = HashMap::<GString, GString>::new();
-    //            x.insert("lawl".into(), "wut".into());
-    //            Variant::from(x)
-    //        } else {
-    //            Variant::from(())
-    //        }
-    //    }
+    #[func]
+    fn get_config_text() -> GString {
+        // NOTE: to use custom configs, you'll need to refactor or just
+        //       use "get-config" with an executor
+        DEFAULT_CONFIG_CONTENTS.into()
+    }
 }
 
 fn gargs_to_args(gargs: Array<GString>) -> Vec<String> {

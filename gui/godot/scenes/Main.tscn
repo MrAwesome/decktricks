@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=7 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
 [ext_resource type="PackedScene" uid="uid://do4v7dct1d2rl" path="res://scenes/tricks_list.tscn" id="3_0bbpv"]
+[ext_resource type="Script" path="res://scripts/exit_button.gd" id="4_c01mt"]
 [ext_resource type="PackedScene" uid="uid://4xc2w5wvrdl8" path="res://scenes/settings.tscn" id="4_rarhs"]
 [ext_resource type="Script" path="res://scripts/fps_buttons.gd" id="5_vcsgt"]
 
@@ -17,7 +18,6 @@ theme = ExtResource("1_0bbpv")
 script = ExtResource("1")
 
 [node name="UIRefreshTimer" type="Timer" parent="."]
-wait_time = 1.0
 autostart = true
 
 [node name="ActionsRefreshTimer" type="Timer" parent="."]
@@ -48,20 +48,17 @@ follow_focus = true
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Settings" parent="TabContainer" instance=ExtResource("4_rarhs")]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="TabContainer/Settings"]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
-
-[node name="About" type="PanelContainer" parent="TabContainer"]
+[node name="Exit" type="CenterContainer" parent="TabContainer"]
 visible = false
 layout_mode = 2
-metadata/_tab_index = 2
+metadata/_tab_index = 1
+
+[node name="ExitButton" type="Button" parent="TabContainer/Exit"]
+layout_mode = 2
+theme_override_constants/align_to_largest_stylebox = 1
+theme_override_font_sizes/font_size = 56
+text = "Exit"
+script = ExtResource("4_c01mt")
 
 [node name="HiddenForLater" type="Control" parent="."]
 visible = false
@@ -86,5 +83,24 @@ unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("5_vcsgt")
 
+[node name="Settings" parent="HiddenForLater" instance=ExtResource("4_rarhs")]
+layout_mode = 2
+offset_right = 30.0
+offset_bottom = 10.0
+
+[node name="MarginContainer" type="MarginContainer" parent="HiddenForLater/Settings"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="About" type="PanelContainer" parent="HiddenForLater"]
+visible = false
+layout_mode = 2
+
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
 [connection signal="timeout" from="ActionsRefreshTimer" to="." method="_on_actions_refresh_timer_timeout"]
+[connection signal="focus_entered" from="TabContainer/Exit/ExitButton" to="TabContainer/Exit/ExitButton" method="_on_focus_entered"]
+[connection signal="pressed" from="TabContainer/Exit/ExitButton" to="TabContainer/Exit/ExitButton" method="_on_pressed"]
+[connection signal="visibility_changed" from="TabContainer/Exit/ExitButton" to="TabContainer/Exit/ExitButton" method="_on_visibility_changed"]

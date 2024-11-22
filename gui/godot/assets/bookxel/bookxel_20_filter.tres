@@ -1,0 +1,10 @@
+[gd_resource type="DynamicFont" load_steps=2 format=2]
+
+[ext_resource path="res://assets/bookxel/bookxel.ttf" type="DynamicFontData" id=1]
+
+
+[resource]
+size = 20
+outline_color = Color( 0.396078, 0.396078, 0.396078, 1 )
+use_filter = true
+font_data = ExtResource( 1 )

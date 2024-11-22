@@ -30,8 +30,8 @@ enum_with_all_variants!(
         Run,
         Install,
         AddToSteam,
-        Uninstall,
         Update,
+        Uninstall,
         Kill,
 
         // Info should always be last:
