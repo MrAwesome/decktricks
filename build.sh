@@ -28,4 +28,4 @@ tar czf "$TMPDIR"/decktricks.tar.gz ./*
 popd
 
 cp "$TMPDIR"/decktricks.tar.gz build/
-cp "$REPOROOT"/scripts/decktricks_install.desktop "$BUILDDIR"
+cp "$REPOROOT"/scripts/decktricks_install.desktop "$REPOROOT"/build/
