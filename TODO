@@ -55,6 +55,18 @@ Providers
 [] "greatest hits" tab for favorite games that just sends you to store page, "sponsored games" tab obviously
 
 Actions/Programs:
+[] display IP address to user
+    use if_addrs::get_if_addrs;
+    use std::net::IpAddr;
+
+    fn main() {
+        let ifaces = get_if_addrs().unwrap();
+        for iface in ifaces {
+            if !iface.is_loopback() && iface.addr.is_ipv4() {
+                println!("{}", iface.addr);
+            }
+        }
+    }
 [x] Moonlight!
 [] websites: google, etc
 [] discord! vesktop, webcord, etc
@@ -73,10 +85,10 @@ Actions/Programs:
 
     # show connection instructions
 
-[] display IP address to user
 [] any other system settings? bluetooth, audio(!), etc
 
 GUI
+[] detect if in Game Mode (why?)
 [] refocus after redraw
     [] if trick and action match, reselect that. Otherwise, first action of trick, otherwise first action of first trick
     [] if in other menu or on tab, you can just find the focused element before redraw and re-focus it (if that's even needed)
