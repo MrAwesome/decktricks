@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://61rro6gvfnsg"]
 
-[node name="TrickInfoWindow" type="AcceptDialog"]
+[node name="InfoWindow" type="AcceptDialog"]
 auto_translate_mode = 1
 gui_embed_subwindows = true
 size = Vector2i(600, 558)

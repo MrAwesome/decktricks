@@ -1,11 +1,9 @@
 extends Control
 
-# TODO: don't read config every refresh
-# TODO: some kind of error display system
+# TODO: some kind of error display system (emit signal and handle it by displaying an AcceptDialog with the text and a report link/QR, and have a timeout for how many errors can be shown at a time (or how quickly)), and have an exit program option from errors
 # TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
-# TODO: keep track of selected option between refreshes, or actually replace children individually down to the button level
+# TODO: only re/populate new nodes on refresh (requires keeping full track of previous state)
 # TODO: does selecting a node keep it from being cleaned up?
-# TODO: fix follow logic on click vs up
 # TODO: handle 720p since that's a common resolution on TVs?
 # TODO: use this to set the STEAM_ID as needed for gamescope? https://docs.godotengine.org/en/stable/classes/class_window.html#class-window-method-set-flag
 
@@ -18,13 +16,14 @@ var ACTION_BUTTON = preload("res://scenes/action_button.tscn")
 var LABEL_OUTER = preload("res://scenes/label_outer.tscn")
 var ROW_OUTER = preload("res://scenes/row_outer.tscn")
 var TRICKS_LIST = preload("res://scenes/tricks_list.tscn")
-var TRICK_INFO = preload("res://scenes/trick_info.tscn")
+var INFO_WINDOW = preload("res://scenes/info_window.tscn")
+
+var did_focus = false
+var last_actions_string = "THROWAWAY_VALUE"
+var focused_trick_and_action = [null, null]
 
 @onready var display_name_mapping: Dictionary = dd.get_display_name_mapping()
-var config: Variant = {}
-var did_focus = false
-var last_actions_string = "jdsklaj"
-var focused_trick_and_action = [null, null]
+@onready var config: Dictionary = get_config()
 
 func focus_button(button: Button, action, trick_id):
 	# On button focus, make sure that at least one row above can be focused
@@ -46,6 +45,17 @@ func create_action_button(action: String, trick_id: String):
 	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
 	return button
 
+func popup_info_window(root: Window, info: Dictionary):
+		var dialog: AcceptDialog = INFO_WINDOW.instantiate()
+		dialog.theme = theme
+		dialog.get_ok_button().set_text("OK")
+
+		dialog.set_title(info["display_name"])
+		dialog.set_text(info["description"])
+
+		root.add_child(dialog)
+		dialog.popup_centered_ratio(0.8)
+
 func take_action(action: String, trick_id: String):
 	var args: Array[String] = [action, trick_id]
 	if action == "info":
@@ -55,27 +65,16 @@ func take_action(action: String, trick_id: String):
 			return
 
 		# TODO: test for extremely long info strings
-		# TODO: figure out why keybindings and themes don't work here
 		var info_json = JSON.new()
 		var ret = info_json.parse(output)
 		if ret == OK:
 			var info = info_json.data
-
 			var root = get_tree().root
-			var dialog: AcceptDialog = TRICK_INFO.instantiate()
-			dialog.theme = theme
-			dialog.get_ok_button().set_text("OK")
-
-			dialog.set_title(info["display_name"])
-			dialog.set_text(info["description"])
-
-			root.add_child(dialog)
-			dialog.popup_centered_ratio(0.8)
+			popup_info_window(root, info)
 	else:
 		dd.async_run_with_decktricks(args)
 
-# take [available, actions, like, this]
-func create_actions_row(trick_id: String, available_actions, _display_name: String, _icon_path: String):
+func create_actions_row(trick_id: String, available_actions: Array, _display_name: String, _icon_path: String):
 	var actions_row_outer = ACTIONS_ROW.instantiate()
 	var actions_row = actions_row_outer.get_child(0).get_child(0)
 
@@ -154,7 +153,7 @@ func refresh_ui_inner(actions_json_string: String):
 
 		# Error checking should never be needed for this access, since we
 		# check on the Rust side that we're only generating valid actions
-		var available_actions = actions[trick_id]
+		var available_actions: Array = actions[trick_id]
 
 		# TODO: show tooltext when it's selected
 
@@ -210,9 +209,6 @@ func _ready():
 
 	# Hook up the signal that refreshes our UI over time
 	dd.connect("actions", refresh_ui)
-
-	# Populate the config object
-	config = get_config()
 
 	# Synchronously build out our full UI for display
 	var actions_text = get_actions_text_sync()
