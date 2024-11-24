@@ -47,10 +47,7 @@ impl RunningProgramSystemContext {
         // This can be stored in an "initial system context" if needed
 
         let desired_string = format!("{PID_ENV_STRING}=");
-        let res = SysCommand::new("/bin/ps", vec!["eww"])
-            .run_with(runner)?
-            .as_success()?
-            .get_message();
+        let res = get_procs_with_env(runner);
 
         let mut tricks_to_running_pids: HashMap<TrickID, Vec<ProcessID>> = HashMap::new();
         if let Some(output) = res {
@@ -88,6 +85,25 @@ impl RunningProgramSystemContext {
 }
 
 
+fn get_procs_with_env(runner: &RunnerRc) -> Option<String> {
+    let run_res = SysCommand::new("/bin/ps", vec!["eww"])
+            .run_with(runner);
+
+    match run_res {
+        Ok(res) => match res.as_success() {
+            Ok(succ) => succ.get_message(),
+            Err(err) => {
+                error!("Program error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
+                None
+            }
+        },
+        Err(err) => {
+            error!("Run error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
+            None
+        }
+        
+    }
+}
 
 #[test]
 fn gather_procs() -> DeckResult<()> {
