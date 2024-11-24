@@ -1,5 +1,21 @@
 use crate::prelude::*;
 
+const KNOWN_CI_ENV_VARS: &[&str] = &[
+    "GITHUB_ACTIONS",
+    "TRAVIS",
+    "CIRCLECI",
+    "GITLAB_CI",
+];
+
+pub fn running_in_ci_container() ->  bool {
+    for var in KNOWN_CI_ENV_VARS {
+        if std::env::var(var).is_ok_and(|val| !val.is_empty()) {
+            return true
+        }
+    }
+    false
+}
+
 #[allow(clippy::unnecessary_wraps)]
 #[cfg(test)]
 pub(crate) fn run_remote_script(_runner: &RunnerRc, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {

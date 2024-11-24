@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::providers::emudeck_installer::EmuDeckSystemContext;
+use crate::utils::running_in_ci_container;
 use decky_installer::DeckySystemContext;
 use flatpak::FlatpakSystemContext;
 use std::collections::HashMap;
@@ -86,6 +87,11 @@ impl RunningProgramSystemContext {
 
 
 fn get_procs_with_env(runner: &RunnerRc) -> Option<String> {
+    // XXX: NOTE: we do not run this inside of containers in CI, as ps eww errors there.
+    if running_in_ci_container() {
+        return None
+    }
+
     let run_res = SysCommand::new("/bin/ps", vec!["eww"])
             .run_with(runner);
 
