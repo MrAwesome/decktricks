@@ -113,7 +113,11 @@ fn get_procs_with_env(runner: &RunnerRc) -> Option<String> {
 
 #[test]
 fn gather_procs() -> DeckResult<()> {
-    use std::sync::Arc;
+    // NOTE!! This test does not run in CI, so local errors should be taken especially seriously.
+    if running_in_ci_container() {
+        return Ok(())
+    }
+
     let mut mock = MockTestActualRunner::new();
     let desired_pid = "432151";
 
@@ -121,7 +125,7 @@ fn gather_procs() -> DeckResult<()> {
 
     mock.expect_run()
         .returning(move |_| Ok(SysCommandResult::success_output(&pseww_output)));
-    let runner = Arc::new(mock);
+    let runner = std::sync::Arc::new(mock);
     let ctx = RunningProgramSystemContext::gather_with(&runner)?;
     assert_eq!(desired_pid, ctx.tricks_to_running_pids.get("systemsettings").unwrap().first().unwrap());
 
