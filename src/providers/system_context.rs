@@ -47,7 +47,7 @@ impl RunningProgramSystemContext {
         // This can be stored in an "initial system context" if needed
 
         let desired_string = format!("{PID_ENV_STRING}=");
-        let res = SysCommand::new("ps", vec!["eww"])
+        let res = SysCommand::new("/bin/ps", vec!["eww"])
             .run_with(runner)?
             .as_success()?
             .get_message();
