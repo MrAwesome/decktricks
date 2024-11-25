@@ -7,6 +7,7 @@ const KNOWN_CI_ENV_VARS: &[&str] = &[
     "GITLAB_CI",
 ];
 
+#[must_use]
 pub fn running_in_ci_container() ->  bool {
     for var in KNOWN_CI_ENV_VARS {
         if std::env::var(var).is_ok_and(|val| !val.is_empty()) {

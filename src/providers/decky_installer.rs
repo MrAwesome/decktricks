@@ -33,7 +33,7 @@ pub struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+    pub(crate) fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
             || SysCommand::new("/usr/bin/systemctl", vec!["is-enabled", "plugin_loader"])
                 .run_with(ctx),

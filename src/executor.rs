@@ -12,6 +12,7 @@ pub struct ExecutionContext {
 }
 
 impl ExecutionContext {
+    #[must_use]
     pub fn trick_id_or_placeholder(&self) -> TrickID {
         match self.log_channel {
             LogChannel::TrickID(ref trick_id) => trick_id.clone(),
@@ -21,6 +22,7 @@ impl ExecutionContext {
         }
     }
 
+    #[must_use]
     pub fn general(runner: RunnerRc) -> Self {
         Self {
             log_channel: LogChannel::All,
@@ -28,6 +30,7 @@ impl ExecutionContext {
         }
     }
 
+    #[must_use]
     pub fn specific(trick_id: TrickID, runner: RunnerRc) -> Self {
         Self {
             log_channel: LogChannel::TrickID(trick_id),

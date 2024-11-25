@@ -305,7 +305,7 @@ mod tests {
 
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
-            Err(KnownError::SystemCommandFailed(output)) => assert_eq!(output, expected_failure),
+            Err(KnownError::SystemCommandFailed(output)) => assert_eq!(output, Box::new(expected_failure)),
             Err(e) => panic!("package installation in test failed in unexpected way: {e:?}"),
             Ok(action_success) => panic!(
                 "package installation in test succeeded but should not have: {action_success:?}"

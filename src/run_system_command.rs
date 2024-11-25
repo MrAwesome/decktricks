@@ -155,7 +155,7 @@ pub(crate) trait SysCommandResultChecker {
         if self.ran_successfully() {
             success!(String::from_utf8_lossy(&self.raw_output().stdout))
         } else {
-            Err(KnownError::SystemCommandFailed(self.as_concrete()))
+            Err(KnownError::SystemCommandFailed(Box::new(self.as_concrete())))
         }
     }
 
@@ -234,10 +234,10 @@ impl ActualRunner for LiveActualRunner {
         let output = command
             .output()
             .map_err(|e| {
-                KnownError::SystemCommandRunFailure(SysCommandRunError {
+                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
                     cmd: sys_command.clone(),
                     error: e,
-                })
+                }))
             })?;
 
         Ok(SysCommandResult::new(cmd.clone(), args.clone(), sys_command.desired_env_vars.clone(), output))

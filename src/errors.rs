@@ -23,9 +23,9 @@ pub enum KnownError {
     SeriousError(SeriousError),
     ReqwestFailure(reqwest::Error),
     RawSystemFailureDONOTUSE(std::io::Error),
-    SystemCommandFailed(SysCommandResult),
+    SystemCommandFailed(Box<SysCommandResult>),
     SystemCommandParse(DynamicError),
-    SystemCommandRunFailure(SysCommandRunError),
+    SystemCommandRunFailure(Box<SysCommandRunError>),
     TestError(String),
     UnknownTrickID(TrickID),
 }

@@ -41,6 +41,7 @@ enum_with_all_variants!(
 );
 
 impl SpecificActionID {
+    #[must_use]
     pub fn get_display_name(&self) -> &'static str {
         match self {
             Self::Run => "Run",
@@ -53,6 +54,7 @@ impl SpecificActionID {
         }
     }
 
+    #[must_use]
     pub fn get_display_name_mapping() -> HashMap<String, &'static str> {
         let all_vars = SpecificActionID::all_variants();
         all_vars

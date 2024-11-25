@@ -28,6 +28,7 @@ pub struct DecktricksCommand {
 }
 
 impl DecktricksCommand {
+    #[must_use]
     pub fn new(action: Action) -> Self {
         Self {
             action,
