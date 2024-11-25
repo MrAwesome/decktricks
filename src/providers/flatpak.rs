@@ -8,7 +8,6 @@ const FLATPAK_SYSTEM_COMMAND: &str = "flatpak";
 type FlatpakID = String;
 #[derive(Debug)]
 pub(crate) struct FlatpakProvider {
-    trick_id: TrickID,
     id: FlatpakID,
     flatpak_ctx: FlatpakSystemContext,
     ctx: ExecutionContext,
@@ -16,14 +15,12 @@ pub(crate) struct FlatpakProvider {
 
 impl FlatpakProvider {
     pub(crate) fn new(
-        trick_id: TrickID,
         flatpak: &Flatpak,
         flatpak_ctx: FlatpakSystemContext,
         ctx: ExecutionContext,
     ) -> Self {
         let id = flatpak.id.clone();
         Self {
-            trick_id,
             id,
             flatpak_ctx,
             ctx,
@@ -208,7 +205,6 @@ mod tests {
     fn fpak_prov(id: &str, ctx: ExecutionContext) -> FlatpakProvider {
         let flatpak_ctx = get_system_context();
         FlatpakProvider::new(
-            "fake_trick_id".into(),
             &Flatpak::new(id),
             flatpak_ctx,
             ctx,

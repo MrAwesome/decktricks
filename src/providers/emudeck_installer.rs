@@ -18,7 +18,6 @@ fn get_emudeck_binary_path() -> String {
 
 #[derive(Debug)]
 pub struct EmuDeckInstallerProvider {
-    trick_id: TrickID,
     ctx: ExecutionContext,
     emu_ctx: EmuDeckSystemContext,
 }
@@ -26,12 +25,10 @@ pub struct EmuDeckInstallerProvider {
 impl EmuDeckInstallerProvider {
     #[must_use]
     pub(super) fn new(
-        trick_id: TrickID,
         ctx: ExecutionContext,
         emu_ctx: EmuDeckSystemContext,
     ) -> Self {
         Self {
-            trick_id,
             ctx,
             emu_ctx,
         }

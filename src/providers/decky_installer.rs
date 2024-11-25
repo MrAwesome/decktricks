@@ -9,7 +9,6 @@ const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 
 #[derive(Debug)]
 pub struct DeckyInstallerProvider {
-    trick_id: TrickID,
     ctx: ExecutionContext,
     decky_ctx: DeckySystemContext,
 }
@@ -17,12 +16,10 @@ pub struct DeckyInstallerProvider {
 impl DeckyInstallerProvider {
     #[must_use]
     pub(super) fn new(
-        trick_id: TrickID,
         ctx: ExecutionContext,
         decky_ctx: DeckySystemContext,
     ) -> Self {
         Self {
-            trick_id,
             ctx,
             decky_ctx,
         }

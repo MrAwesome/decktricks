@@ -39,7 +39,6 @@ impl<'a> TryFrom<(&Trick, &ExecutionContext, &FullSystemContext)> for DynProvide
 
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(FlatpakProvider::new(
-                trick_id,
                 flatpak,
                 full_ctx.flatpak_ctx.clone(),
                 ctx.clone(),
@@ -54,10 +53,10 @@ impl<'a> TryFrom<(&Trick, &ExecutionContext, &FullSystemContext)> for DynProvide
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
-                DeckyInstallerProvider::new(trick_id, ctx.clone(), full_ctx.decky_ctx.clone()),
+                DeckyInstallerProvider::new(ctx.clone(), full_ctx.decky_ctx.clone()),
             )),
             ProviderConfig::EmuDeckInstaller(_emudeck_installer) => Ok(Box::new(
-                EmuDeckInstallerProvider::new(trick_id, ctx.clone(), full_ctx.emudeck_ctx.clone()),
+                EmuDeckInstallerProvider::new(ctx.clone(), full_ctx.emudeck_ctx.clone()),
             )),
             ProviderConfig::Custom => provider_not_implemented(trick),
         }
