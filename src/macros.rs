@@ -36,6 +36,7 @@ macro_rules! enum_with_all_variants {
         }
 
         impl $name {
+            #[must_use]
             $vis fn all_variants() -> Vec<$name> {
                 std::vec![$($name::$variant),*]
             }
