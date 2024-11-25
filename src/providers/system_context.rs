@@ -18,12 +18,12 @@ impl FullSystemContext {
     /// # Errors
     ///
     /// Can return system errors from trying to gather system information
-    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
         let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx) = join_all!(
-            || DeckySystemContext::gather_with(runner),
-            || FlatpakSystemContext::gather_with(runner),
-            || RunningProgramSystemContext::gather_with(runner),
-            || EmuDeckSystemContext::gather_with(runner)
+            || DeckySystemContext::gather_with(ctx),
+            || FlatpakSystemContext::gather_with(ctx),
+            || RunningProgramSystemContext::gather_with(ctx),
+            || EmuDeckSystemContext::gather_with(ctx)
         );
 
         Ok(Self {
@@ -44,11 +44,11 @@ impl RunningProgramSystemContext {
     /// # Errors
     ///
     /// Returns errors relating to finding, reading, and parsing files in /proc
-    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
         // This can be stored in an "initial system context" if needed
 
         let desired_string = format!("{PID_ENV_STRING}=");
-        let res = get_procs_with_env(runner);
+        let res = get_procs_with_env(ctx);
 
         let mut tricks_to_running_pids: HashMap<TrickID, Vec<ProcessID>> = HashMap::new();
         if let Some(output) = res {
@@ -86,14 +86,14 @@ impl RunningProgramSystemContext {
 }
 
 
-fn get_procs_with_env(runner: &RunnerRc) -> Option<String> {
+fn get_procs_with_env(ctx: &ExecutionContext) -> Option<String> {
     // XXX: NOTE: we do not run this inside of containers in CI, as ps eww errors there.
     if running_in_ci_container() {
         return None
     }
 
     let run_res = SysCommand::new("/bin/ps", vec!["eww"])
-            .run_with(runner);
+            .run_with(ctx);
 
     match run_res {
         Ok(res) => match res.as_success() {
@@ -125,9 +125,9 @@ fn gather_procs() -> DeckResult<()> {
 
     mock.expect_run()
         .returning(move |_| Ok(SysCommandResult::success_output(&pseww_output)));
-    let runner = std::sync::Arc::new(mock);
-    let ctx = RunningProgramSystemContext::gather_with(&runner)?;
-    assert_eq!(desired_pid, ctx.tricks_to_running_pids.get("systemsettings").unwrap().first().unwrap());
+    let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+    let proc_ctx = RunningProgramSystemContext::gather_with(&ctx)?;
+    assert_eq!(desired_pid, proc_ctx.tricks_to_running_pids.get("systemsettings").unwrap().first().unwrap());
 
     Ok(())
 }

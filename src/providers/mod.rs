@@ -22,11 +22,11 @@ pub(super) const fn not_implemented(reason: &'static str) -> DeckResult<ActionSu
 }
 
 pub(crate) type DynProvider<'a> = Box<dyn TrickProvider>;
-impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
+impl<'a> TryFrom<(&Trick, &ExecutionContext, &FullSystemContext)> for DynProvider<'a> {
     type Error = KnownError;
 
     fn try_from(
-        (trick, full_ctx, runner): (&Trick, &FullSystemContext, &RunnerRc),
+        (trick, ctx, full_ctx): (&Trick, &ExecutionContext, &FullSystemContext),
     ) -> Result<Self, Self::Error> {
         let running_instances = full_ctx
             .procs_ctx
@@ -42,22 +42,22 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
                 trick_id,
                 flatpak,
                 full_ctx.flatpak_ctx.clone(),
-                runner.clone(),
+                ctx.clone(),
             ))),
             ProviderConfig::SimpleCommand(simple_command) => {
                 Ok(Box::new(SimpleCommandProvider::new(
                     trick_id,
                     simple_command.command.clone(),
                     simple_command.args.clone().unwrap_or_default(),
-                    runner.clone(),
+                    ctx.clone(),
                     running_instances,
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
-                DeckyInstallerProvider::new(trick_id, runner.clone(), full_ctx.decky_ctx.clone()),
+                DeckyInstallerProvider::new(trick_id, ctx.clone(), full_ctx.decky_ctx.clone()),
             )),
             ProviderConfig::EmuDeckInstaller(_emudeck_installer) => Ok(Box::new(
-                EmuDeckInstallerProvider::new(trick_id, runner.clone(), full_ctx.emudeck_ctx.clone()),
+                EmuDeckInstallerProvider::new(trick_id, ctx.clone(), full_ctx.emudeck_ctx.clone()),
             )),
             ProviderConfig::Custom => provider_not_implemented(trick),
         }
@@ -133,7 +133,7 @@ pub(crate) trait ProviderActions {
     fn uninstall(&self) -> DeckResult<ActionSuccess>;
 
     // TODO: pop up an interstitial asking for args before running in GUI
-    fn add_to_steam(&self, ctx: AddToSteamContext) -> DeckResult<ActionSuccess>;
+    fn add_to_steam(&self, steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess>;
 
     // This is the version specific to a package. For general updates, maybe make a
     // special-case GeneralProvider<ProviderType> for general actions?
@@ -177,7 +177,7 @@ mod tests {
             fn install(&self) -> DeckResult<ActionSuccess>;
             fn uninstall(&self) -> DeckResult<ActionSuccess>;
             fn update(&self) -> DeckResult<ActionSuccess>;
-            fn add_to_steam(&self, ctx: AddToSteamContext) -> DeckResult<ActionSuccess>;
+            fn add_to_steam(&self, steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess>;
         }
     }
 

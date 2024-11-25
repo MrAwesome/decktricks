@@ -6,7 +6,7 @@ pub struct SimpleCommandProvider {
     pub trick_id: TrickID,
     pub command: String,
     pub args: Vec<String>,
-    pub runner: RunnerRc,
+    pub ctx: ExecutionContext,
     pub running_instances: Vec<ProcessID>,
 }
 
@@ -15,14 +15,14 @@ impl SimpleCommandProvider {
         trick_id: TrickID,
         command: S,
         args: Vec<S>,
-        runner: RunnerRc,
+        ctx: ExecutionContext,
         running_instances: Vec<ProcessID>,
     ) -> Self {
         Self {
             trick_id,
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),
-            runner,
+            ctx,
             running_instances,
         }
     }
@@ -76,19 +76,19 @@ impl ProviderActions for SimpleCommandProvider {
     fn run(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(&self.command, self.args.iter().collect())
             .env(PID_ENV_STRING, &self.trick_id)
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        kill_pids(&self.runner, &self.running_instances)
+        kill_pids(&self.ctx, &self.running_instances)
     }
 
     fn update(&self) -> DeckResult<ActionSuccess> {
         not_possible("Simple commands cannot be installed!")
     }
 
-    fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
+    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
         not_implemented("Simple commands cannot be added to Steam yet.")
     }
 }
@@ -104,16 +104,16 @@ mod tests {
     use super::SimpleCommandProvider;
     use crate::prelude::*;
     use crate::run_system_command::MockTestActualRunner;
-    use std::sync::Arc;
 
     #[test]
     fn basic_expectations() {
-        let runner = Arc::new(MockTestActualRunner::new());
+        let ctx = ExecutionContext::test();
+
         let sc = SimpleCommandProvider::new(
             "echo-lol".into(),
             "echo",
             vec!["lol"],
-            runner,
+            ctx,
             Vec::default(),
         );
         assert!(!sc.is_installable());
@@ -138,8 +138,8 @@ mod tests {
             ))
         });
 
-        let runner = Arc::new(mock);
-        let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, runner, Vec::default());
+        let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+        let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, ctx, Vec::default());
         // TODO: generalize these to be default implementations?
 
         assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));

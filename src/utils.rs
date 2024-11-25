@@ -18,13 +18,13 @@ pub fn running_in_ci_container() ->  bool {
 
 #[allow(clippy::unnecessary_wraps)]
 #[cfg(test)]
-pub(crate) fn run_remote_script(_runner: &RunnerRc, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {
+pub(crate) fn run_remote_script(_ctx: &ExecutionContext, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {
     warn!("Not running run_remote_script({url}, {local_filename}) from test...");
     success!()
 }
 
 #[cfg(not(test))]
-pub(crate) fn run_remote_script(runner: &RunnerRc, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {
+pub(crate) fn run_remote_script(ctx: &ExecutionContext, url: &str, local_filename: &str) -> DeckResult<ActionSuccess> {
     use std::fs::File;
     use std::io::copy;
     use std::os::unix::fs::PermissionsExt;
@@ -44,17 +44,17 @@ pub(crate) fn run_remote_script(runner: &RunnerRc, url: &str, local_filename: &s
         std::fs::set_permissions(local_filename, std::fs::Permissions::from_mode(0o755))?;
     }
 
-    SysCommand::new(local_filename, vec![]).run_with(runner)?.as_success()
+    SysCommand::new(local_filename, vec![]).run_with(ctx)?.as_success()
 }
 
 pub(crate) fn get_homedir() -> String {
     std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
 }
 
-pub(crate) fn exists_and_executable(runner: &RunnerRc, path: &str) -> bool {
+pub(crate) fn exists_and_executable(ctx: &ExecutionContext, path: &str) -> bool {
     // Using this instead of rust-native code to piggyback on the test-friendliness of SysCommand
     let res = SysCommand::new("/bin/test", vec!["-x", path])
-        .run_with(runner);
+        .run_with(ctx);
 
     match res {
         Ok(cmdres) => cmdres.ran_successfully(),
@@ -63,9 +63,9 @@ pub(crate) fn exists_and_executable(runner: &RunnerRc, path: &str) -> bool {
 
 }
 
-pub(crate) fn get_running_pids_exact(runner: &RunnerRc, binary_name: &str) -> DeckResult<Vec<String>> {
+pub(crate) fn get_running_pids_exact(ctx: &ExecutionContext, binary_name: &str) -> DeckResult<Vec<String>> {
     Ok(SysCommand::new("ps", vec!["-C", binary_name, "-o", "pid="])
-        .run_with(runner)?
+        .run_with(ctx)?
         .as_success()?
         .get_message_or_blank()
         .split_whitespace()
@@ -74,12 +74,12 @@ pub(crate) fn get_running_pids_exact(runner: &RunnerRc, binary_name: &str) -> De
 
 }
 
-pub(crate) fn kill_pids(runner: &RunnerRc, pids: &[ProcessID]) -> DeckResult<ActionSuccess> {
+pub(crate) fn kill_pids(ctx: &ExecutionContext, pids: &[ProcessID]) -> DeckResult<ActionSuccess> {
     let mut outputs = vec![];
     let string_pids: Vec<String> = pids.iter().map(ToString::to_string).collect();
     for pid in string_pids {
         let res = SysCommand::new("kill", vec![&pid])
-        .run_with(runner)?
+        .run_with(ctx)?
         .as_success();
 
         if res.is_ok() {

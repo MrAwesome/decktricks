@@ -2,6 +2,56 @@ use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
+pub struct ExecutionContext {
+    // TODO: can default to "none", reserve that as special, and use to
+    // still track all procs we have launched?
+    //pub trick_id: TrickID,
+    pub log_channel: LogChannel,
+    pub runner: RunnerRc,
+}
+
+impl ExecutionContext {
+    pub fn trick_id_or_placeholder(&self) -> TrickID {
+        match self.log_channel {
+            LogChannel::TrickID(ref trick_id) => trick_id.clone(),
+            LogChannel::All | LogChannel::IgnoreCompletelyAlways => {
+                "xXx_PLACEHOLDER_xXx12345".into()
+            }
+        }
+    }
+
+    pub fn general(runner: RunnerRc) -> Self {
+        Self {
+            log_channel: LogChannel::All,
+            runner,
+        }
+    }
+
+    pub fn specific(trick_id: TrickID, runner: RunnerRc) -> Self {
+        Self {
+            log_channel: LogChannel::TrickID(trick_id),
+            runner,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn test() -> Self {
+        Self {
+            log_channel: LogChannel::All,
+            runner: Arc::new(MockTestActualRunner::new()),
+        }
+    }
+
+    #[cfg(test)]
+    pub fn test_with(mock_runner: Arc<MockTestActualRunner>) -> Self {
+        Self {
+            log_channel: LogChannel::All,
+            runner: mock_runner,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum ExecutorMode {
     Continuous,
@@ -48,17 +98,20 @@ impl Executor {
         // If we're running in GUI mode, we're planning to reuse this executor
         //      multiple times with the same system context and so we always
         //      want to gather context.
-        let full_ctx = if matches!(mode, ExecutorMode::OnceOff) {
-            let do_not_gather = command
-                .action
-                .does_not_need_system_context(command.gather_context_on_specific_actions);
-            if do_not_gather {
-                FullSystemContext::default()
+        let full_ctx = {
+            let gather_execution_ctx = ExecutionContext::general(runner.clone());
+            if matches!(mode, ExecutorMode::OnceOff) {
+                let do_not_gather = command
+                    .action
+                    .does_not_need_system_context(command.gather_context_on_specific_actions);
+                if do_not_gather {
+                    FullSystemContext::default()
+                } else {
+                    FullSystemContext::gather_with(&gather_execution_ctx)?
+                }
             } else {
-                FullSystemContext::gather_with(&runner)?
+                FullSystemContext::gather_with(&gather_execution_ctx)?
             }
-        } else {
-            FullSystemContext::gather_with(&runner)?
         };
 
         Ok(Self::with(mode, loader, full_ctx, runner))
@@ -128,9 +181,10 @@ mod tests {
 
         let runner = Arc::new(mock);
 
-        let ctx = FullSystemContext::gather_with(&runner)?;
+        let ctx = ExecutionContext::test_with(runner.clone());
+        let full_ctx = FullSystemContext::gather_with(&ctx)?;
 
-        let executor = Executor::with(ExecutorMode::OnceOff, loader, ctx, runner);
+        let executor = Executor::with(ExecutorMode::OnceOff, loader, full_ctx, runner);
         Ok(executor)
     }
 

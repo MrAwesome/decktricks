@@ -115,10 +115,11 @@ impl SpecificAction {
 
     pub(crate) fn do_with(&self, executor: &Executor) -> DeckResult<ActionSuccess> {
         let (loader, full_ctx, runner) = executor.get_pieces();
+        let ctx: ExecutionContext = ExecutionContext::general(runner.clone());
 
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
-        let provider = DynProvider::try_from((trick, full_ctx, runner))?;
+        let provider = DynProvider::try_from((trick, &ctx, full_ctx))?;
 
         if provider.can(self) {
             match self {

@@ -19,21 +19,21 @@ fn get_emudeck_binary_path() -> String {
 #[derive(Debug)]
 pub struct EmuDeckInstallerProvider {
     trick_id: TrickID,
-    runner: RunnerRc,
-    ctx: EmuDeckSystemContext,
+    ctx: ExecutionContext,
+    emu_ctx: EmuDeckSystemContext,
 }
 
 impl EmuDeckInstallerProvider {
     #[must_use]
     pub(super) fn new(
         trick_id: TrickID,
-        runner: RunnerRc,
-        ctx: EmuDeckSystemContext,
+        ctx: ExecutionContext,
+        emu_ctx: EmuDeckSystemContext,
     ) -> Self {
         Self {
             trick_id,
-            runner,
             ctx,
+            emu_ctx,
         }
     }
 }
@@ -49,12 +49,12 @@ impl EmuDeckSystemContext {
     /// # Errors
     ///
     /// Returns errors relating to running pgrep and checking file existence/permissions.
-    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
         let (is_installed, running_main_pids, running_supplementary_pids) = 
             join_all!(
-                || exists_and_executable(runner, &get_emudeck_binary_path()),
-                || get_running_pids_exact(runner, EMUDECK_BINARY_NAME).unwrap_or_default(),
-                || get_running_pids_exact(runner, "emudeck").unwrap_or_default()
+                || exists_and_executable(ctx, &get_emudeck_binary_path()),
+                || get_running_pids_exact(ctx, EMUDECK_BINARY_NAME).unwrap_or_default(),
+                || get_running_pids_exact(ctx, "emudeck").unwrap_or_default()
                 );
 
         let running_pids = [running_main_pids, running_supplementary_pids].concat();
@@ -75,7 +75,7 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_installed(&self) -> bool {
-        self.ctx.is_installed
+        self.emu_ctx.is_installed
     }
 
     fn is_killable(&self) -> bool {
@@ -92,7 +92,7 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_running(&self) -> bool {
-        !self.ctx.running_pids.is_empty()
+        !self.emu_ctx.running_pids.is_empty()
     }
     fn is_addable_to_steam(&self) -> bool {
         true
@@ -112,7 +112,7 @@ impl ProviderActions for EmuDeckInstallerProvider {
 
     fn install(&self) -> DeckResult<ActionSuccess> {
         run_remote_script(
-            &self.runner,
+            &self.ctx,
             EMUDECK_DOWNLOAD_URL,
             EMUDECK_INSTALLER_TEMP_FILENAME,
         )?;
@@ -121,15 +121,15 @@ impl ProviderActions for EmuDeckInstallerProvider {
 
     fn run(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(get_emudeck_binary_path(), vec![])
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        kill_pids(&self.runner, &self.ctx.running_pids)
+        kill_pids(&self.ctx, &self.emu_ctx.running_pids)
     }
 
-    fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
+    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
         // TODO: check
         not_possible("EmuDeck is automatically added to Steam.")
     }

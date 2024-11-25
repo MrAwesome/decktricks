@@ -41,9 +41,9 @@ pub(crate) trait SysCommandRunner {
 
     fn env(&mut self, varname: &str, value: &str) -> &Self;
 
-    fn run_with(&self, runner: &RunnerRc) -> DeckResult<SysCommandResult> {
+    fn run_with(&self, ctx: &ExecutionContext) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
-        runner.run(sys_command)
+        ctx.runner.run(sys_command)
     }
 }
 

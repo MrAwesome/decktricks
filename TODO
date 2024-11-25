@@ -2,11 +2,10 @@ Logging overhaul:
     [] switch all providers to take trick id
     [] make logging system with categorization by LogChannel::TrickID(String) or LogChannel::All
 
-
 Prerequisites:
     [] flatpak
 
-
+[] implement general updates!
 [] make cargo test in base repo run tests in GUI as well (and vice-versa?)
 [] full-system-context-not-needed flag for certain commands?
 [] bind A to ui_accept

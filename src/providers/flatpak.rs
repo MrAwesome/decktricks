@@ -10,14 +10,24 @@ type FlatpakID = String;
 pub(crate) struct FlatpakProvider {
     trick_id: TrickID,
     id: FlatpakID,
-    ctx: FlatpakSystemContext,
-    runner: RunnerRc,
+    flatpak_ctx: FlatpakSystemContext,
+    ctx: ExecutionContext,
 }
 
 impl FlatpakProvider {
-    pub(crate) fn new(trick_id: TrickID, flatpak: &Flatpak, ctx: FlatpakSystemContext, runner: RunnerRc) -> Self {
+    pub(crate) fn new(
+        trick_id: TrickID,
+        flatpak: &Flatpak,
+        flatpak_ctx: FlatpakSystemContext,
+        ctx: ExecutionContext,
+    ) -> Self {
         let id = flatpak.id.clone();
-        Self { trick_id, id, ctx, runner }
+        Self {
+            trick_id,
+            id,
+            flatpak_ctx,
+            ctx,
+        }
     }
 }
 
@@ -29,9 +39,9 @@ pub struct FlatpakSystemContext {
 
 impl FlatpakSystemContext {
     // TODO: parallelize this
-    pub(crate) fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
-        let (running, installed) = join_all!(|| get_running_flatpak_applications(runner), || {
-            get_installed_flatpak_applications(runner)
+    pub(crate) fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+        let (running, installed) = join_all!(|| get_running_flatpak_applications(ctx), || {
+            get_installed_flatpak_applications(ctx)
         });
 
         Ok(Self {
@@ -45,11 +55,11 @@ impl TrickProvider for FlatpakProvider {}
 
 impl FlatpakProvider {
     fn is_pkg_installed(&self) -> bool {
-        self.ctx.installed.contains(&self.id)
+        self.flatpak_ctx.installed.contains(&self.id)
     }
 
     fn is_pkg_running(&self) -> bool {
-        self.ctx.running.contains(&self.id)
+        self.flatpak_ctx.running.contains(&self.id)
     }
 }
 
@@ -58,31 +68,31 @@ impl FlatpakProvider {
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["run", &self.id])
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["install", "-y", &self.id])
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["uninstall", "-y", &self.id])
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["kill", &self.id])
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", &self.id])
-            .run_with(&self.runner)?
+            .run_with(&self.ctx)?
             .as_success()
     }
 }
@@ -148,19 +158,19 @@ impl ProviderActions for FlatpakProvider {
         success!()
     }
 
-    fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
+    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
         not_implemented("Add to steam is not yet implemented for flatpak!")
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct FlatpakGeneralProvider {
-    runner: RunnerRc,
+    ctx: ExecutionContext,
 }
 
 impl FlatpakGeneralProvider {
-    pub(crate) fn new(runner: RunnerRc) -> Self {
-        Self { runner }
+    pub(crate) fn new(ctx: ExecutionContext) -> Self {
+        Self { ctx }
     }
 }
 
@@ -169,8 +179,8 @@ impl GeneralProvider for FlatpakGeneralProvider {
         // TODO: when running in parallel, collect errors for each portion
 
         // IMPORTANT: for global flatpak update -y, you MUST run it twice to remove unused runtimes.
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.runner)?;
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.runner)?;
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.ctx)?;
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.ctx)?;
 
         success!("Flatpak update run successfully!")
     }
@@ -181,7 +191,6 @@ mod tests {
     use super::*;
     use crate::run_system_command::MockTestActualRunner;
     use mockall::*;
-    use std::sync::Arc;
 
     impl Flatpak {
         pub(crate) fn new<S: Into<String>>(id: S) -> Self {
@@ -196,52 +205,57 @@ mod tests {
         }
     }
 
-    fn fpak_prov(id: &str, runner: RunnerRc) -> FlatpakProvider {
-        let ctx = get_system_context();
-        FlatpakProvider::new("fake_trick_id".into(), &Flatpak::new(id), ctx, runner)
+    fn fpak_prov(id: &str, ctx: ExecutionContext) -> FlatpakProvider {
+        let flatpak_ctx = get_system_context();
+        FlatpakProvider::new(
+            "fake_trick_id".into(),
+            &Flatpak::new(id),
+            flatpak_ctx,
+            ctx,
+        )
     }
 
     #[test]
     fn test_new_flatpak_provider() {
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("test_pkg", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("test_pkg", ctx);
         assert_eq!(provider.id, "test_pkg");
     }
 
     #[test]
     fn test_is_pkg_installed_true() {
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("installed_package", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("installed_package", ctx);
         assert!(provider.is_installed());
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("package_not_installed", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("package_not_installed", ctx);
         assert!(!provider.is_installed());
     }
 
     #[test]
     fn test_installable() {
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("RANDOM_NAME_FROM_NOWHERE", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("RANDOM_NAME_FROM_NOWHERE", ctx);
         assert!(provider.is_installable());
     }
 
     #[test]
     fn test_updateable() {
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("installed_package", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("installed_package", ctx);
         assert!(provider.is_updateable());
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("test_pkg_not_installed", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("test_pkg_not_installed", ctx);
         assert!(!provider.is_updateable());
     }
 
     #[test]
     fn test_is_pkg_running() {
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("running_package", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("running_package", ctx);
         assert!(provider.is_running());
-        let runner = Arc::new(MockTestActualRunner::new());
-        let provider = fpak_prov("not_running_package", runner);
+        let ctx = ExecutionContext::test();
+        let provider = fpak_prov("not_running_package", ctx);
         assert!(!provider.is_running());
     }
 
@@ -264,8 +278,8 @@ mod tests {
                 ))
             });
 
-        let runner = Arc::new(mock);
-        let provider = fpak_prov("RANDOM_PACKAGE", runner);
+        let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+        let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
             Ok(action_success) => assert_eq!(
                 action_success.get_message_or_blank(),
@@ -291,8 +305,9 @@ mod tests {
             )))
             .returning(move |_| Ok(failure.clone()));
 
-        let runner = Arc::new(mock);
-        let provider = fpak_prov("RANDOM_PACKAGE", runner);
+        let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+
+        let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
             Err(KnownError::SystemCommandFailed(output)) => assert_eq!(output, expected_failure),
             Err(e) => panic!("package installation in test failed in unexpected way: {e:?}"),

@@ -5,8 +5,6 @@ pub use crate::executor::*;
 pub use crate::logging::*;
 pub(crate) use crate::tricks_config::*;
 
-pub const LOG_CHANNEL: LogChannel = LogChannel::All;
-
 // TODO: bring in rayon::spawn here, and use it everywhere so you can
 // easily codemode to other spawn methods across crates
 
@@ -27,6 +25,7 @@ pub const DEFAULT_USER: &str = "deck";
 pub const PID_ENV_STRING: &str = "DECKTRICKS_TRICK_ID";
 
 pub type ProcessID = String;
+pub type TrickID = String;
 
 #[must_use]
 pub fn is_debug() -> bool {

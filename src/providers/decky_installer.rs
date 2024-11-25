@@ -10,14 +10,22 @@ const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 #[derive(Debug)]
 pub struct DeckyInstallerProvider {
     trick_id: TrickID,
-    runner: RunnerRc,
-    ctx: DeckySystemContext,
+    ctx: ExecutionContext,
+    decky_ctx: DeckySystemContext,
 }
 
 impl DeckyInstallerProvider {
     #[must_use]
-    pub(super) fn new(trick_id: TrickID, runner: RunnerRc, ctx: DeckySystemContext) -> Self {
-        Self { trick_id, runner, ctx }
+    pub(super) fn new(
+        trick_id: TrickID,
+        ctx: ExecutionContext,
+        decky_ctx: DeckySystemContext,
+    ) -> Self {
+        Self {
+            trick_id,
+            ctx,
+            decky_ctx,
+        }
     }
 }
 
@@ -28,10 +36,12 @@ pub struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    pub fn gather_with(runner: &RunnerRc) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
-            || SysCommand::new("/usr/bin/systemctl", vec!["is-enabled", "plugin_loader"]).run_with(runner),
-            || SysCommand::new("/usr/bin/systemctl", vec!["is-active", "plugin_loader"]).run_with(runner)
+            || SysCommand::new("/usr/bin/systemctl", vec!["is-enabled", "plugin_loader"])
+                .run_with(ctx),
+            || SysCommand::new("/usr/bin/systemctl", vec!["is-active", "plugin_loader"])
+                .run_with(ctx)
         );
 
         Ok(Self {
@@ -53,7 +63,7 @@ impl ProviderChecks for DeckyInstallerProvider {
     }
 
     fn is_installed(&self) -> bool {
-        self.ctx.is_installed
+        self.decky_ctx.is_installed
     }
 
     fn is_killable(&self) -> bool {
@@ -69,7 +79,7 @@ impl ProviderChecks for DeckyInstallerProvider {
     }
 
     fn is_running(&self) -> bool {
-        self.ctx.is_running
+        self.decky_ctx.is_running
     }
     fn is_addable_to_steam(&self) -> bool {
         false
@@ -88,7 +98,11 @@ impl ProviderActions for DeckyInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        run_remote_script(&self.runner, DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)?;
+        run_remote_script(
+            &self.ctx,
+            DECKY_DOWNLOAD_URL,
+            DECKY_INSTALLER_TEMP_FILENAME,
+        )?;
         success!("Decky installed successfully!")
     }
 
@@ -100,7 +114,7 @@ impl ProviderActions for DeckyInstallerProvider {
         not_possible("Decky is not killable!")
     }
 
-    fn add_to_steam(&self, _ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
+    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
         not_possible("Decky is automatically added to Steam.")
     }
 }
