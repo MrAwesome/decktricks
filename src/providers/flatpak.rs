@@ -3,19 +3,21 @@ use super::flatpak_helpers::{
 };
 use crate::prelude::*;
 
-type FlatpakID = String;
+const FLATPAK_SYSTEM_COMMAND: &str = "flatpak";
 
+type FlatpakID = String;
 #[derive(Debug)]
 pub(crate) struct FlatpakProvider {
+    trick_id: TrickID,
     id: FlatpakID,
     ctx: FlatpakSystemContext,
     runner: RunnerRc,
 }
 
 impl FlatpakProvider {
-    pub(crate) fn new(flatpak: &Flatpak, ctx: FlatpakSystemContext, runner: RunnerRc) -> Self {
+    pub(crate) fn new(trick_id: TrickID, flatpak: &Flatpak, ctx: FlatpakSystemContext, runner: RunnerRc) -> Self {
         let id = flatpak.id.clone();
-        Self { id, ctx, runner }
+        Self { trick_id, id, ctx, runner }
     }
 }
 
@@ -55,31 +57,31 @@ impl FlatpakProvider {
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new("flatpak", vec!["run", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["run", &self.id])
             .run_with(&self.runner)?
             .as_success()
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new("flatpak", vec!["install", "-y", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["install", "-y", &self.id])
             .run_with(&self.runner)?
             .as_success()
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new("flatpak", vec!["uninstall", "-y", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["uninstall", "-y", &self.id])
             .run_with(&self.runner)?
             .as_success()
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new("flatpak", vec!["kill", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["kill", &self.id])
             .run_with(&self.runner)?
             .as_success()
     }
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new("flatpak", vec!["update", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", &self.id])
             .run_with(&self.runner)?
             .as_success()
     }
@@ -167,8 +169,8 @@ impl GeneralProvider for FlatpakGeneralProvider {
         // TODO: when running in parallel, collect errors for each portion
 
         // IMPORTANT: for global flatpak update -y, you MUST run it twice to remove unused runtimes.
-        SysCommand::new("flatpak", vec!["update", "-y"]).run_with(&self.runner)?;
-        SysCommand::new("flatpak", vec!["update", "-y"]).run_with(&self.runner)?;
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.runner)?;
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.runner)?;
 
         success!("Flatpak update run successfully!")
     }
@@ -196,7 +198,7 @@ mod tests {
 
     fn fpak_prov(id: &str, runner: RunnerRc) -> FlatpakProvider {
         let ctx = get_system_context();
-        FlatpakProvider::new(&Flatpak::new(id), ctx, runner)
+        FlatpakProvider::new("fake_trick_id".into(), &Flatpak::new(id), ctx, runner)
     }
 
     #[test]
@@ -245,14 +247,22 @@ mod tests {
 
     #[test]
     fn test_can_install_pkg() {
-        let cmd = "flatpak";
+        let cmd = FLATPAK_SYSTEM_COMMAND;
         let args = vec!["install", "-y", "RANDOM_PACKAGE"];
         let returned_args = args.clone();
         let mut mock = MockTestActualRunner::new();
         mock.expect_run()
             .times(1)
             .with(predicate::eq(SysCommand::new(cmd, args)))
-            .returning(move |_| Ok(SysCommandResult::fake_for_test(cmd, returned_args.clone(), 0, "", "")));
+            .returning(move |_| {
+                Ok(SysCommandResult::fake_for_test(
+                    cmd,
+                    returned_args.clone(),
+                    0,
+                    "",
+                    "",
+                ))
+            });
 
         let runner = Arc::new(mock);
         let provider = fpak_prov("RANDOM_PACKAGE", runner);
@@ -267,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_failed_to_install_pkg() {
-        let cmd = "flatpak";
+        let cmd = FLATPAK_SYSTEM_COMMAND;
         let args = vec!["install", "-y", "RANDOM_PACKAGE"];
         let failure = SysCommandResult::fake_for_test(cmd, args, 1, "FAILED LOL", "");
         let expected_failure = failure.clone();
@@ -276,7 +286,7 @@ mod tests {
         mock.expect_run()
             .times(1)
             .with(predicate::eq(SysCommand::new(
-                "flatpak",
+                FLATPAK_SYSTEM_COMMAND,
                 vec!["install", "-y", "RANDOM_PACKAGE"],
             )))
             .returning(move |_| Ok(failure.clone()));

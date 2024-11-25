@@ -1,6 +1,6 @@
-use crate::providers::emudeck_installer::EmuDeckInstallerProvider;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerProvider;
+use crate::providers::emudeck_installer::EmuDeckInstallerProvider;
 use crate::providers::flatpak::FlatpakProvider;
 use crate::providers::simple_command::SimpleCommandProvider;
 use crate::providers::system_context::FullSystemContext;
@@ -35,29 +35,29 @@ impl<'a> TryFrom<(&Trick, &FullSystemContext, &RunnerRc)> for DynProvider<'a> {
             .cloned()
             .unwrap_or_default();
 
+        let trick_id = trick.id.clone();
+
         match &trick.provider_config {
             ProviderConfig::Flatpak(flatpak) => Ok(Box::new(FlatpakProvider::new(
+                trick_id,
                 flatpak,
                 full_ctx.flatpak_ctx.clone(),
                 runner.clone(),
             ))),
             ProviderConfig::SimpleCommand(simple_command) => {
                 Ok(Box::new(SimpleCommandProvider::new(
+                    trick_id,
                     simple_command.command.clone(),
                     simple_command.args.clone().unwrap_or_default(),
                     runner.clone(),
-                    trick.id.clone(),
                     running_instances,
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => Ok(Box::new(
-                DeckyInstallerProvider::new(runner.clone(), full_ctx.decky_ctx.clone()),
+                DeckyInstallerProvider::new(trick_id, runner.clone(), full_ctx.decky_ctx.clone()),
             )),
             ProviderConfig::EmuDeckInstaller(_emudeck_installer) => Ok(Box::new(
-                EmuDeckInstallerProvider::new(
-                    runner.clone(),
-                    full_ctx.emudeck_ctx.clone(),
-                ),
+                EmuDeckInstallerProvider::new(trick_id, runner.clone(), full_ctx.emudeck_ctx.clone()),
             )),
             ProviderConfig::Custom => provider_not_implemented(trick),
         }

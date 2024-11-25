@@ -9,11 +9,12 @@ pub mod prelude;
 pub mod providers;
 #[macro_use]
 pub mod macros;
+pub mod command;
+pub mod executor;
+pub mod gui;
+pub mod logging;
 pub mod run_system_command;
 pub mod tricks_config;
-pub mod executor;
-pub mod command;
-pub mod gui;
 pub mod utils;
 
 pub use rayon;

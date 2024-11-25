@@ -3,26 +3,26 @@ use crate::{prelude::*, utils::kill_pids};
 
 #[derive(Debug)]
 pub struct SimpleCommandProvider {
+    pub trick_id: TrickID,
     pub command: String,
     pub args: Vec<String>,
     pub runner: RunnerRc,
-    pub trick_id: TrickID,
     pub running_instances: Vec<ProcessID>,
 }
 
 impl SimpleCommandProvider {
     pub(crate) fn new<S: Into<String>>(
+        trick_id: TrickID,
         command: S,
         args: Vec<S>,
         runner: RunnerRc,
-        trick_id: TrickID,
         running_instances: Vec<ProcessID>,
     ) -> Self {
         Self {
+            trick_id,
             command: command.into(),
             args: args.into_iter().map(Into::into).collect(),
             runner,
-            trick_id,
             running_instances,
         }
     }
@@ -110,10 +110,10 @@ mod tests {
     fn basic_expectations() {
         let runner = Arc::new(MockTestActualRunner::new());
         let sc = SimpleCommandProvider::new(
+            "echo-lol".into(),
             "echo",
             vec!["lol"],
             runner,
-            "echo-lol".into(),
             Vec::default(),
         );
         assert!(!sc.is_installable());
@@ -139,7 +139,7 @@ mod tests {
         });
 
         let runner = Arc::new(mock);
-        let sc = SimpleCommandProvider::new(cmd, args, runner, "echo-lol".into(), Vec::default());
+        let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, runner, Vec::default());
         // TODO: generalize these to be default implementations?
 
         assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));

@@ -1,20 +1,23 @@
-pub(crate) use crate::actions::*;
 pub use crate::actions::SpecificActionID;
+pub(crate) use crate::actions::*;
 pub use crate::command::*;
 pub use crate::executor::*;
+pub use crate::logging::*;
 pub(crate) use crate::tricks_config::*;
 
-// TODO: bring in rayon::spawn here, and use it everywhere so you can 
+pub const LOG_CHANNEL: LogChannel = LogChannel::All;
+
+// TODO: bring in rayon::spawn here, and use it everywhere so you can
 // easily codemode to other spawn methods across crates
 
 pub(crate) use crate::run_system_command::*;
 
 pub(crate) use crate::dterr;
-pub(crate) use crate::success;
 pub(crate) use crate::join_all;
+pub(crate) use crate::success;
 
 #[allow(unused_imports)]
-pub use log::{info, error, warn, debug};
+pub use log::{debug, error, info, warn};
 
 pub use crate::errors::*;
 pub use crate::providers::*;
@@ -28,5 +31,8 @@ pub type ProcessID = String;
 #[must_use]
 pub fn is_debug() -> bool {
     // Leverage the global state of the logger, so we don't have to pass a context object around
-    matches!(log::max_level(), log::LevelFilter::Debug | log::LevelFilter::Trace)
+    matches!(
+        log::max_level(),
+        log::LevelFilter::Debug | log::LevelFilter::Trace
+    )
 }

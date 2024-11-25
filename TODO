@@ -1,3 +1,8 @@
+Logging overhaul:
+    [] switch all providers to take trick id
+    [] make logging system with categorization by LogChannel::TrickID(String) or LogChannel::All
+
+
 Prerequisites:
     [] flatpak
 
