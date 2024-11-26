@@ -15,7 +15,7 @@ fn main() -> DeckResult<()> {
         }
         Err(known_error) => {
             experienced_error = true;
-            error!("{}", known_error);
+            eprintln!("{}", known_error);
         }
     });
 

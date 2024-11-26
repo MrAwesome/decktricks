@@ -13,11 +13,11 @@ pub struct ExecutionContext {
 
 impl ExecutionContext {
     #[must_use]
-    pub fn trick_id_or_placeholder(&self) -> TrickID {
+    pub fn trick_id_or_placeholder(&self) -> String {
         match self.log_channel {
             LogChannel::TrickID(ref trick_id) => trick_id.clone(),
-            LogChannel::All | LogChannel::IgnoreCompletelyAlways => {
-                "xXx_PLACEHOLDER_xXx12345".into()
+            LogChannel::General | LogChannel::IgnoreCompletelyAlways => {
+                "IF_YOU_SEE_ME_PLEASE_FILE_A_REPORT".into()
             }
         }
     }
@@ -25,7 +25,7 @@ impl ExecutionContext {
     #[must_use]
     pub fn general(runner: RunnerRc) -> Self {
         Self {
-            log_channel: LogChannel::All,
+            log_channel: LogChannel::General,
             runner,
         }
     }
@@ -39,17 +39,17 @@ impl ExecutionContext {
     }
 
     #[cfg(test)]
-    pub fn test() -> Self {
+    pub(crate) fn test() -> Self {
         Self {
-            log_channel: LogChannel::All,
+            log_channel: LogChannel::General,
             runner: Arc::new(MockTestActualRunner::new()),
         }
     }
 
     #[cfg(test)]
-    pub fn test_with(mock_runner: Arc<MockTestActualRunner>) -> Self {
+    pub(crate) fn test_with(mock_runner: Arc<MockTestActualRunner>) -> Self {
         Self {
-            log_channel: LogChannel::All,
+            log_channel: LogChannel::General,
             runner: mock_runner,
         }
     }

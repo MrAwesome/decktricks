@@ -175,7 +175,7 @@ fn run_with_decktricks(
             }
         },
         Err(cmd_parse_err) => {
-            godot_print!(
+            godot_error!(
                 "Decktricks command {args:?} encountered a parse error: {cmd_parse_err:?}"
             );
             Err(())

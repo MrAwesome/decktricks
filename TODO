@@ -5,6 +5,7 @@ Logging overhaul:
 Prerequisites:
     [] flatpak
 
+[] can TrickID be &'static? it seems like they will always be? we have no need to ever construct a new one at runtime, they always come from outside, right?
 [] implement general updates!
 [] make cargo test in base repo run tests in GUI as well (and vice-versa?)
 [] full-system-context-not-needed flag for certain commands?

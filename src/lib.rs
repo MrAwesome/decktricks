@@ -2,6 +2,9 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::result_large_err)]
 
+#[cfg(test)]
+decktricks_logging_init!();
+
 pub mod actions;
 pub mod errors;
 //#[allow(refining_impl_trait)]
@@ -12,6 +15,7 @@ pub mod macros;
 pub mod command;
 pub mod executor;
 pub mod gui;
+#[macro_use]
 pub mod logging;
 pub mod run_system_command;
 pub mod tricks_config;
