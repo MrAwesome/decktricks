@@ -25,8 +25,24 @@ pub trait DecktricksLogger {
     fn actual_print_error<S: Pr>(&self, string: S);
     fn actual_print_info<S: Pr>(&self, string: S);
     fn actual_print_warn<S: Pr>(&self, string: S);
-    fn store_in_channel<S: Pr>(&self, channel: &LogChannel, string: S);
+    fn decktricks_print_inner<S: Pr>(
+        &self,
+        log_type: LogType,
+        _channel: &LogChannel,
+        text: S,
+    ) {
+        let to_print = text;
+        match log_type {
+            LogType::Print => self.actual_print(to_print),
+            LogType::Debug => self.actual_print_debug(to_print),
+            LogType::Error => self.actual_print_error(to_print),
+            LogType::Info => self.actual_print_info(to_print),
+            LogType::Warn => self.actual_print_warn(to_print),
+        };
+    }
+}
 
+pub trait DecktricksLoggerWithChannels: DecktricksLogger {
     fn decktricks_print_inner<S: Pr>(
         &self,
         log_type: LogType,
@@ -44,6 +60,8 @@ pub trait DecktricksLogger {
 
         self.store_in_channel(channel, text);
     }
+
+    fn store_in_channel<S: Pr>(&self, channel: &LogChannel, string: S);
 }
 
 pub struct DecktricksConsoleLogger {}
@@ -77,9 +95,6 @@ impl DecktricksLogger for DecktricksConsoleLogger {
     fn actual_print_warn<S: Pr>(&self, string: S) {
         eprintln!("{string}");
     }
-
-    // NOTE: console logging has no concept of channels, so we just print straight to stdout
-    fn store_in_channel<S: Pr>(&self, _channel: &LogChannel, _string: S) {}
 }
 
 #[allow(clippy::crate_in_macro_def)] // This is desired, each crate should define its own logger
