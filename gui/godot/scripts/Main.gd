@@ -214,6 +214,18 @@ func _ready():
 	var actions_text = get_actions_text_sync()
 	refresh_ui(actions_text)
 
+	print("Decktricks GUI initialization complete!")
+
+	var should_test = OS.get_environment("DECKTRICKS_GUI_TEST_COMMAND_ONLY")
+	if should_test:
+		var test_cmd_args: Array[String]
+		test_cmd_args.assign(should_test.split("xX_DELIM_Xx"))
+		dd.sync_run_with_decktricks(test_cmd_args)
+
+	var should_exit = OS.get_environment("DECKTRICKS_GUI_EXIT_IMMEDIATELY")
+	if should_test or should_exit:
+		get_tree().quit()
+
 func _input(event: InputEvent) -> void:
 	# If this window loses focus, do not accept any input (otherwise,
 	# we would process gamepad input while child programs are in focus

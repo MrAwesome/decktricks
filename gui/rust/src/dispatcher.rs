@@ -23,7 +23,6 @@ impl DecktricksDispatcher {
     // TODO: figure out how to send parsed tricksconfig?
     #[signal]
     fn actions(actions_json_string: GString);
-
     fn get_singleton() -> Gd<Object> {
         godot::classes::Engine::singleton()
             .get_singleton(StringName::from("DecktricksDispatcher"))
