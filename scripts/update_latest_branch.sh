@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-if [[ "${GITHUB_ACTIONS-}" != "" && "$ACT" != "true" ]]; then
+if [[ "${GITHUB_ACTIONS:-}" != "" && "${ACT:-}" != "true" ]]; then
     git branch -f latest
     git push origin latest --force
 else
