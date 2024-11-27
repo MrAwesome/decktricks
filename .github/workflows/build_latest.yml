@@ -1,14 +1,14 @@
-name: Build Latest
+name: Build Staging
 
 on:
   push:
-    branches: [ "latest" ]
+    branches: [ "staging" ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_latest:
+  build_staging:
     runs-on: ubuntu-latest
     container:
       image: gleesus/decktricks
