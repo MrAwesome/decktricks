@@ -5,20 +5,23 @@ use crate::providers::system_context::FullSystemContext;
 use crate::providers::flatpak::FlatpakGeneralProvider;
 use rayon::prelude::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum GeneralAction {
     Gui { gui: GuiType },
     List { installed: bool },
     Actions { id: Option<String>, json: bool },
     UpdateAll,
     GetConfig,
+
+    // Internal use:
     GetActionDisplayNameMapping,
     GatherContext,
+    RunSystemCommand { command: String, args: Option<Vec<String>> },
 }
 
 impl GeneralAction {
     pub(crate) fn do_with(
-        &self,
+        self,
         executor: &Executor,
     ) -> Vec<DeckResult<ActionSuccess>> {
         let (loader, full_ctx, runner) = executor.get_pieces();
@@ -54,7 +57,7 @@ impl GeneralAction {
                 // decktricks update -> decktricks update_all
 
                 let general_providers: Vec<Box<dyn GeneralProvider>> = vec![
-                    Box::new(FlatpakGeneralProvider::new(ctx.clone())),
+                    Box::new(FlatpakGeneralProvider::new(ctx)),
                     Box::new(DeckyInstallerGeneralProvider),
                 ];
                 let mut results: Vec<DeckResult<ActionSuccess>> = general_providers
@@ -73,7 +76,7 @@ impl GeneralAction {
             }
             Self::Actions { id, json } => {
                 vec![get_all_available_actions(
-                    loader, full_ctx, &ctx, id, *json,
+                    loader, full_ctx, &ctx, &id, json,
                 )]
             }
             Self::Gui { gui } => vec![gui.launch(executor)],
@@ -89,7 +92,10 @@ impl GeneralAction {
                     Ok(json_display_mapping) => vec![success!(json_display_mapping)],
                     Err(err) => vec![Err(err)],
                 }
-            }
+            },
+            Self::RunSystemCommand { command, args } => vec![
+                internal_test_run_system_command(&ctx, command, args)
+            ],
         }
     }
 }
@@ -192,4 +198,14 @@ fn get_all_available_actions(
         };
         success!(output)
     }
+}
+
+fn internal_test_run_system_command(
+    ctx: &ExecutionContext,
+    command: String,
+    maybe_args: Option<Vec<String>>)
+    -> DeckResult<ActionSuccess>
+{
+    let real_args = maybe_args.unwrap_or_default();
+    SysCommand::new(command, real_args).run_with(ctx)?.as_success()
 }

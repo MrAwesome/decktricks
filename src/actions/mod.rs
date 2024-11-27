@@ -6,8 +6,8 @@ mod general;
 mod specific;
 
 pub(crate) use general::*;
-pub(crate) use specific::*;
 pub use specific::SpecificActionID;
+pub(crate) use specific::*;
 
 pub(crate) enum TypedAction {
     Specific(SpecificAction),
@@ -32,14 +32,21 @@ impl From<&Action> for TypedAction {
             Action::Actions { id, json } => Self::General(GeneralAction::Actions { id, json }),
             Action::Gui { gui } => Self::General(GeneralAction::Gui { gui }),
             Action::GetConfig => Self::General(GeneralAction::GetConfig),
-            Action::GetActionDisplayNameMapping => Self::General(GeneralAction::GetActionDisplayNameMapping),
+
+            // Internal use:
+            Action::GetActionDisplayNameMapping => {
+                Self::General(GeneralAction::GetActionDisplayNameMapping)
+            }
             Action::GatherContext => Self::General(GeneralAction::GatherContext),
+            Action::RunSystemCommand { command, args } => {
+                Self::General(GeneralAction::RunSystemCommand { command, args })
+            }
         }
     }
 }
 
 impl TypedAction {
-    pub(crate) fn do_with(&self, executor: &Executor) -> Vec<DeckResult<ActionSuccess>> {
+    pub(crate) fn do_with(self, executor: &Executor) -> Vec<DeckResult<ActionSuccess>> {
         match self {
             Self::General(general_action) => general_action.do_with(executor),
             Self::Specific(specific_action) => {

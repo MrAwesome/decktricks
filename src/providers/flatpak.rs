@@ -64,31 +64,31 @@ impl FlatpakProvider {
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["run", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["run", &self.id])
             .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["install", "-y", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["install", "-y", &self.id])
             .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["uninstall", "-y", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["uninstall", "-y", &self.id])
             .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["kill", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["kill", &self.id])
             .run_with(&self.ctx)?
             .as_success()
     }
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", &self.id])
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["update", &self.id])
             .run_with(&self.ctx)?
             .as_success()
     }
@@ -176,8 +176,8 @@ impl GeneralProvider for FlatpakGeneralProvider {
         // TODO: when running in parallel, collect errors for each portion
 
         // IMPORTANT: for global flatpak update -y, you MUST run it twice to remove unused runtimes.
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.ctx)?;
-        SysCommand::new(FLATPAK_SYSTEM_COMMAND, vec!["update", "-y"]).run_with(&self.ctx)?;
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["update", "-y"]).run_with(&self.ctx)?;
+        SysCommand::new(FLATPAK_SYSTEM_COMMAND, ["update", "-y"]).run_with(&self.ctx)?;
 
         success!("Flatpak update run successfully!")
     }
@@ -297,7 +297,7 @@ mod tests {
             .times(1)
             .with(predicate::eq(SysCommand::new(
                 FLATPAK_SYSTEM_COMMAND,
-                vec!["install", "-y", "RANDOM_PACKAGE"],
+                ["install", "-y", "RANDOM_PACKAGE"],
             )))
             .returning(move |_| Ok(failure.clone()));
 

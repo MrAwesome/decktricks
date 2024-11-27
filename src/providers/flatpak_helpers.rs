@@ -34,10 +34,10 @@ pub(super) fn get_installed_flatpak_applications(ctx: &ExecutionContext) -> Deck
 
 fn flatpak_list(ctx: &ExecutionContext) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak list to cat.
-    SysCommand::new("flatpak", vec!["list", "--app", "--columns=application"]).run_with(ctx)?.as_success()
+    SysCommand::new("flatpak", ["list", "--app", "--columns=application"]).run_with(ctx)?.as_success()
 }
 
 fn flatpak_ps(ctx: &ExecutionContext) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak ps to cat.
-    SysCommand::new("flatpak", vec!["ps", "--columns=application"]).run_with(ctx)?.as_success()
+    SysCommand::new("flatpak", ["ps", "--columns=application"]).run_with(ctx)?.as_success()
 }

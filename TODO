@@ -8,6 +8,8 @@ Prerequisites:
 [] can TrickID be &'static? it seems like they will always be? we have no need to ever construct a new one at runtime, they always come from outside, right?
 [] implement general updates!
 [] make cargo test in base repo run tests in GUI as well (and vice-versa?)
+[] make cargo test --e2e run the tests in scripts/tests/
+[] make pre-commit hook or build.sh store in benchmarks?
 [] full-system-context-not-needed flag for certain commands?
 [] bind A to ui_accept
 [] hide commands that aren't present automatically? or just hide anything that doesn't have a single option besides info?

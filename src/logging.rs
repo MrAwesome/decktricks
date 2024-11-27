@@ -1,7 +1,5 @@
+use crate::prelude::StringType;
 use serde::Serialize;
-
-pub trait Pr: AsRef<str> + Clone + std::fmt::Display + std::fmt::Debug {}
-impl Pr for String {}
 
 #[derive(Debug, Clone, Hash)]
 pub enum LogChannel {
@@ -20,12 +18,12 @@ pub enum LogType {
 }
 
 pub trait DecktricksLogger {
-    fn actual_print<S: Pr>(&self, string: S);
-    fn actual_print_debug<S: Pr>(&self, string: S);
-    fn actual_print_error<S: Pr>(&self, string: S);
-    fn actual_print_info<S: Pr>(&self, string: S);
-    fn actual_print_warn<S: Pr>(&self, string: S);
-    fn decktricks_print_inner<S: Pr>(
+    fn actual_print<S: StringType>(&self, string: S);
+    fn actual_print_debug<S: StringType>(&self, string: S);
+    fn actual_print_error<S: StringType>(&self, string: S);
+    fn actual_print_info<S: StringType>(&self, string: S);
+    fn actual_print_warn<S: StringType>(&self, string: S);
+    fn decktricks_print_inner<S: StringType>(
         &self,
         log_type: LogType,
         _channel: &LogChannel,
@@ -43,7 +41,7 @@ pub trait DecktricksLogger {
 }
 
 pub trait DecktricksLoggerWithChannels: DecktricksLogger {
-    fn decktricks_print_inner<S: Pr>(
+    fn decktricks_print_inner<S: StringType>(
         &self,
         log_type: LogType,
         channel: &LogChannel,
@@ -61,7 +59,7 @@ pub trait DecktricksLoggerWithChannels: DecktricksLogger {
         self.store_in_channel(channel, text);
     }
 
-    fn store_in_channel<S: Pr>(&self, channel: &LogChannel, string: S);
+    fn store_in_channel<S: StringType>(&self, channel: &LogChannel, string: S);
 }
 
 pub struct DecktricksConsoleLogger {}
@@ -80,19 +78,19 @@ impl DecktricksConsoleLogger {
 }
 
 impl DecktricksLogger for DecktricksConsoleLogger {
-    fn actual_print<S: Pr>(&self, string: S) {
+    fn actual_print<S: StringType>(&self, string: S) {
         println!("{string}");
     }
-    fn actual_print_debug<S: Pr>(&self, string: S) {
+    fn actual_print_debug<S: StringType>(&self, string: S) {
         eprintln!("{string}");
     }
-    fn actual_print_error<S: Pr>(&self, string: S) {
+    fn actual_print_error<S: StringType>(&self, string: S) {
         eprintln!("{string}");
     }
-    fn actual_print_info<S: Pr>(&self, string: S) {
+    fn actual_print_info<S: StringType>(&self, string: S) {
         eprintln!("{string}");
     }
-    fn actual_print_warn<S: Pr>(&self, string: S) {
+    fn actual_print_warn<S: StringType>(&self, string: S) {
         eprintln!("{string}");
     }
 }

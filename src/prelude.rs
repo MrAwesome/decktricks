@@ -27,6 +27,12 @@ pub const PID_ENV_STRING: &str = "DECKTRICKS_TRICK_ID";
 pub type ProcessID = String;
 pub type TrickID = String;
 
+pub trait StringType: AsRef<str> + Clone + std::fmt::Display + std::fmt::Debug + ToString + Sized {}
+impl StringType for String {}
+impl StringType for &str {}
+impl StringType for &String {}
+impl StringType for &&str {}
+
 #[must_use]
 pub fn is_debug() -> bool {
     // Leverage the global state of the logger, so we don't have to pass a context object around

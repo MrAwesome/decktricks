@@ -74,7 +74,7 @@ impl ProviderActions for SimpleCommandProvider {
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.command, self.args.iter().collect())
+        SysCommand::new(&self.command, self.args.iter())
             .env(PID_ENV_STRING, &self.trick_id)
             .run_with(&self.ctx)?
             .as_success()

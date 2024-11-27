@@ -85,15 +85,13 @@ impl RunningProgramSystemContext {
     }
 }
 
-
 fn get_procs_with_env(ctx: &ExecutionContext) -> Option<String> {
     // XXX: NOTE: we do not run this inside of containers in CI, as ps eww errors there.
     if running_in_ci_container() {
-        return None
+        return None;
     }
 
-    let run_res = SysCommand::new("/bin/ps", vec!["eww"])
-            .run_with(ctx);
+    let run_res = SysCommand::new("/bin/ps", ["eww"]).run_with(ctx);
 
     match run_res {
         Ok(res) => match res.as_success() {
@@ -107,7 +105,6 @@ fn get_procs_with_env(ctx: &ExecutionContext) -> Option<String> {
             error!("Run error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
             None
         }
-        
     }
 }
 
@@ -115,7 +112,7 @@ fn get_procs_with_env(ctx: &ExecutionContext) -> Option<String> {
 fn gather_procs() -> DeckResult<()> {
     // NOTE!! This test does not run in CI, so local errors should be taken especially seriously.
     if running_in_ci_container() {
-        return Ok(())
+        return Ok(());
     }
 
     let mut mock = MockTestActualRunner::new();
@@ -127,7 +124,15 @@ fn gather_procs() -> DeckResult<()> {
         .returning(move |_| Ok(SysCommandResult::success_output(&pseww_output)));
     let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
     let proc_ctx = RunningProgramSystemContext::gather_with(&ctx)?;
-    assert_eq!(desired_pid, proc_ctx.tricks_to_running_pids.get("systemsettings").unwrap().first().unwrap());
+    assert_eq!(
+        desired_pid,
+        proc_ctx
+            .tricks_to_running_pids
+            .get("systemsettings")
+            .unwrap()
+            .first()
+            .unwrap()
+    );
 
     Ok(())
 }

@@ -27,12 +27,21 @@ pub struct SysCommand {
 }
 
 impl SysCommand {
-    pub fn new<S: Into<String>>(cmd: S, args: Vec<S>) -> Self {
+    pub fn new<S, SS, I>(cmd: S, args: I)
+        -> Self 
+        where I: IntoIterator<Item = SS>,
+              S: StringType,
+              SS: StringType,
+    {
         Self {
-            cmd: cmd.into(),
-            args: args.into_iter().map(Into::into).collect(),
+            cmd: cmd.to_string(),
+            args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
         }
+    }
+
+    pub fn new_no_args<S: StringType>(cmd: S) -> Self {
+        Self::new(cmd, Vec::<String>::new())
     }
 }
 
@@ -91,7 +100,7 @@ impl SysCommandResult {
         Self {
             sys_command: SysCommand::new(
                 "nothingburger".to_string(),
-                vec!["you should not care about this".into()],
+                ["you should not care about this"],
             ),
             raw_output: std::process::Output {
                 status: std::process::ExitStatus::from_raw(0),
@@ -110,7 +119,7 @@ impl SysCommandResult {
         Self {
             sys_command: SysCommand::new(
                 cmd.to_string(),
-                args.into_iter().map(String::from).collect(),
+                args,
             ),
 
             raw_output: std::process::Output {
@@ -127,7 +136,7 @@ impl SysCommandResult {
         Self {
             sys_command: SysCommand::new(
                 "nothingburger".to_string(),
-                vec!["you should not care about this".into()],
+                ["you should not care about this"],
             ),
             raw_output: std::process::Output {
                 status: std::process::ExitStatus::from_raw(0),

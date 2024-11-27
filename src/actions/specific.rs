@@ -88,8 +88,8 @@ impl TryFrom<&SpecificActionID> for String {
     }
 }
 
-impl From<SpecificAction> for SpecificActionID {
-    fn from(action: SpecificAction) -> Self {
+impl From<&SpecificAction> for SpecificActionID {
+    fn from(action: &SpecificAction) -> Self {
         match action {
             SpecificAction::Run { .. } => Self::Run,
             SpecificAction::Install { .. } => Self::Install,
@@ -115,7 +115,7 @@ impl SpecificAction {
         }
     }
 
-    pub(crate) fn do_with(&self, executor: &Executor) -> DeckResult<ActionSuccess> {
+    pub(crate) fn do_with(self, executor: &Executor) -> DeckResult<ActionSuccess> {
         let (loader, full_ctx, runner) = executor.get_pieces();
         let ctx: ExecutionContext = ExecutionContext::general(runner.clone());
 
@@ -123,13 +123,13 @@ impl SpecificAction {
         let trick = loader.get_trick(trick_id.as_ref())?;
         let provider = DynProvider::try_from((trick, &ctx, full_ctx))?;
 
-        if provider.can(self) {
+        if provider.can(&self) {
             match self {
                 Self::Install { .. } => provider.install(),
                 Self::Run { .. } => provider.run(),
                 Self::Uninstall { .. } => provider.uninstall(),
                 Self::AddToSteam { name, .. } => provider.add_to_steam(AddToSteamContext {
-                    _name: name.clone(),
+                    _name: name,
                 }),
                 Self::Kill { .. } => provider.kill(),
                 Self::Update { .. } => provider.update(),
@@ -147,7 +147,7 @@ impl SpecificAction {
             //       Actions within the GUI will only show up if they pass this function.
             Err(KnownError::ActionGated(format!(
                 "Action '{}' is not possible on trick '{}' right now. Is it installed/running? HINT: (Try 'actions')",
-                String::try_from(&SpecificActionID::from(self.clone()))?,
+                String::try_from(&SpecificActionID::from(&self))?,
                 trick.id
             )))
         }

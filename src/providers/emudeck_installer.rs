@@ -117,7 +117,7 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(get_emudeck_binary_path(), vec![])
+        SysCommand::new_no_args(get_emudeck_binary_path())
             .run_with(&self.ctx)?
             .as_success()
     }

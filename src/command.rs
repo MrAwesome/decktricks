@@ -97,10 +97,15 @@ pub enum Action {
         gui: GuiType,
     },
     GetConfig,
+
+
+    // Internal use:
     #[clap(hide = true)]
     GetActionDisplayNameMapping,
     #[clap(hide = true)]
     GatherContext,
+    #[clap(hide = true)]
+    RunSystemCommand { command: String, args: Option<Vec<String>> },
 }
 
 impl Action {
