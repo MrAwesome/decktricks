@@ -19,7 +19,7 @@ cargo build --release
 
 pushd gui/godot/
 rm build/*
-godot --headless --export-debug "Linux"
+godot --headless --export-release "Linux"
 cp build/* "$BUILDDIR"
 popd
 
