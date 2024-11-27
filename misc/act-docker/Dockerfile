@@ -1,5 +1,5 @@
-FROM archlinux:base-devel
-ENV CI true
+FROM archlinux:base-devel AS base
+ENV CI=true
 RUN pacman -Syu --noconfirm git flatpak fontconfig p7zip
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN ln -sf /root/.cargo/bin/cargo /usr/bin/cargo
@@ -33,7 +33,10 @@ WORKDIR /work
 # Otherwise, flatpak list will fail
 RUN flatpak list
 
+FROM base AS gitclone
 RUN git clone https://github.com/MrAwesome/decktricks.git
+
+FROM gitclone AS buildetc
 #RUN apt-get -y install gcc pkg-config libssl-dev
 WORKDIR /work/decktricks
 RUN cargo build
