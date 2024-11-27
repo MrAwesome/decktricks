@@ -39,7 +39,12 @@ jobs:
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh
 
+  update_latest_branch:
+    needs: gui_tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Update latest branch
         run: |
-          git branch -f latest
-          git push origin latest --force
+          ./scripts/update_latest_branch.sh
