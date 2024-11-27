@@ -1,8 +1,9 @@
 FROM archlinux:base-devel AS base
 ENV CI=true
-RUN pacman -Syu --noconfirm git flatpak fontconfig p7zip
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-RUN ln -sf /root/.cargo/bin/cargo /usr/bin/cargo
+RUN pacman -Syu --noconfirm git flatpak fontconfig p7zip rustup
+RUN rustup default stable
+#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+#RUN ln -sf /root/.cargo/bin/cargo /usr/bin/cargo
 
 # {{{
 # NOTE: these are copied in like this instead of downloaded from elsewhere
