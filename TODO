@@ -1,12 +1,14 @@
 Logging overhaul:
     [] switch all providers to take trick id
     [] make logging system with categorization by LogChannel::TrickID(String) or LogChannel::All
+    [] can TrickID be &'static? it seems like they will always be? we have no need to ever construct a new one at runtime, they always come from outside, right?
+    [] remove old loggers and use new system only
 
 Prerequisites:
     [] flatpak
+    [] systemctl
 
 [] cargo update
-[] can TrickID be &'static? it seems like they will always be? we have no need to ever construct a new one at runtime, they always come from outside, right?
 [] implement general updates!
 [] make cargo test in base repo run tests in GUI as well (and vice-versa?)
 [] make cargo test --e2e run the tests in scripts/tests/
