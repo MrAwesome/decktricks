@@ -1,17 +1,14 @@
-name: Debug
+name: Build Latest
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "latest" ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  gui_tests:
-
+  build_latest:
     runs-on: ubuntu-latest
     container:
       image: gleesus/decktricks
@@ -22,14 +19,8 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: whoami
-        run: whoami
-
-      - name: homedir
-        run: echo ~
-
-      - name: pwd
-        run: pwd
-
       - name: cargo
-        run: cargo version
+        run: cargo
+
+      - name: git show
+        run: git show

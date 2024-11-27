@@ -38,3 +38,8 @@ jobs:
 
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh
+
+      - name: Update latest branch
+        run: |
+          git branch -f latest
+          git push origin latest --force
