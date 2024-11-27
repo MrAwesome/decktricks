@@ -8,6 +8,7 @@ Prerequisites:
     [] flatpak
     [] systemctl
 
+[] curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --help
 [] cargo update
 [] implement general updates!
 [] make cargo test in base repo run tests in GUI as well (and vice-versa?)
