@@ -10,6 +10,7 @@ source "$(dirname "$0")"/lib.sh
 # in scripts/tests/test_gui_does_not_exit.sh
 export DECKTRICKS_GUI_EXIT_IMMEDIATELY=true
 timeout 4 "${DECKTRICKS_TEST_COMMAND[@]}" 2>&1
+RETCODE="$?"
 
 if [[ "$RETCODE" == "124" ]]; then
     exit 1

@@ -10,17 +10,15 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  cli_build_and_test:
 
     runs-on: ubuntu-latest
+    container:
+      image: gleesus/decktricks
 
     steps:
     - uses: actions/checkout@v4
-    - name: Install Flatpak
-      run: |
-        sudo apt update
-        sudo apt install -y flatpak
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Build CLI
+      run: cargo build
+    - name: Run Tests
+      run: cargo test
