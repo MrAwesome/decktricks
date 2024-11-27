@@ -1,4 +1,4 @@
-name: GUI Debug Build/Test
+name: Debug
 
 on:
   push:
@@ -17,13 +17,19 @@ jobs:
       image: gleesus/decktricks
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Preserve $HOME set in the container
+        run: echo HOME=/root >> "$GITHUB_ENV"
 
-    - name: whoami
-      run: whoami
+      - uses: actions/checkout@v4
 
-    - name: homedir
-      run: echo ~
+      - name: whoami
+        run: whoami
 
-    - name: pwd
-      run: pwd
+      - name: homedir
+        run: echo ~
+
+      - name: pwd
+        run: pwd
+
+      - name: cargo
+        run: cargo version
