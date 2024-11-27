@@ -17,21 +17,24 @@ jobs:
       image: gleesus/decktricks
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Preserve $HOME set in the container
+        run: echo HOME=/root >> "$GITHUB_ENV"
 
-    - name: Build GUI Rust
-      run: cargo build
-      working-directory: ./gui/rust
+      - uses: actions/checkout@v4
 
-    - name: Make build dir
-      run: mkdir -p ./gui/godot/build
+      - name: Build GUI Rust
+        run: cargo build
+        working-directory: ./gui/rust
 
-    - name: Copy Rust Lib to Godot
-      run: cp ./gui/rust/target/debug/libdecktricks_godot_gui.so ./gui/godot/build
+      - name: Make build dir
+        run: mkdir -p ./gui/godot/build
 
-    - name: Build GUI
-      run: godot --headless --export-debug Linux
-      working-directory: ./gui/godot
+      - name: Copy Rust Lib to Godot
+        run: cp ./gui/rust/target/debug/libdecktricks_godot_gui.so ./gui/godot/build
 
-    - name: Run GUI e2e scripts
-      run: ./scripts/run_all_gui_e2e_tests.sh
+      - name: Build GUI
+        run: godot --headless --export-debug Linux
+        working-directory: ./gui/godot
+
+      - name: Run GUI e2e scripts
+        run: ./scripts/run_all_gui_e2e_tests.sh

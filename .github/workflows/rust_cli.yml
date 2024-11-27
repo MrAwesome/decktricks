@@ -17,8 +17,10 @@ jobs:
       image: gleesus/decktricks
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build CLI
-      run: cargo build
-    - name: Run Tests
-      run: cargo test
+      - name: Preserve $HOME set in the container
+        run: echo HOME=/root >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: Build CLI
+        run: cargo build
+      - name: Run Tests
+        run: cargo test
