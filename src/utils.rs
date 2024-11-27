@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-const KNOWN_CI_ENV_VARS: &[&str] = &["GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
+const KNOWN_CI_ENV_VARS: &[&str] = &["CI", "GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
 
 #[must_use]
 pub fn running_in_ci_container() -> bool {
