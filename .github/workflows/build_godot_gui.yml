@@ -39,12 +39,13 @@ jobs:
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh
 
-  update_staging_branch:
+  update_latest_branch:
+    if: github.event_name == 'push'
     needs: gui_tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update staging branch
+      - name: Update latest branch
         run: |
-          ./scripts/update_staging_branch.sh
+          ./scripts/update_latest_branch.sh
