@@ -24,21 +24,19 @@ cp scripts/decktricks_install.sh "$TMPBUILD"
 # }}}
 
 # CLI {{{
-if [[ "$BTYPE" == "debug" ]]; then
-    cargo build
-else
-    cargo build --release
-fi
-cp target/"$BTYPE"/decktricks "$TMPBUILD"
+#if [[ "$BTYPE" == "debug" ]]; then
+#    cargo build
+#else
+#    cargo build --release
+#fi
+#cp target/"$BTYPE"/decktricks "$TMPBUILD"
 # }}}
 
 # GUI Rust libs {{{
 pushd gui/rust/
-if [[ "$BTYPE" == "debug" ]]; then
-    cargo build
-else
-    cargo build --release
-fi
+# Build both, because --import uses dev
+cargo build
+cargo build --release
 popd
 # }}}
 
@@ -47,11 +45,15 @@ pushd gui/godot/
 rm -rf build/
 
 mkdir -p build/
+
+ls
+
 cp "$REPOROOT"/gui/rust/target/"$BTYPE"/libdecktricks_godot_gui.so build/
+cp "$REPOROOT"/gui/rust/target/"$BTYPE"/libdecktricks_godot_gui.so .
 
 # This helps godot find the gdextension file correctly:
 rm -rf .godot/
-timeout 15 godot --headless --import
+timeout 30 godot --headless --import
 
 godot --headless "--export-${BTYPE}" "Linux" 2>&1 | tee /tmp/godot_output.txt
 if grep ERROR /tmp/godot_output.txt; then
