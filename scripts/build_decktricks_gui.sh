@@ -5,11 +5,6 @@ set -euxo pipefail
 # [] TODO: debug builds too?
 # [] TODO: warn on local uncommitted git changes
 
-BTYPE="release"
-if [[ "${1:-}" == "debug" ]]; then
-    BTYPE="debug"
-fi
-
 REPOROOT=$(realpath "$(dirname "$0")"/..)
 cd "$REPOROOT"
 
@@ -24,12 +19,8 @@ cp scripts/decktricks_install.sh "$TMPBUILD"
 # }}}
 
 # CLI {{{
-#if [[ "$BTYPE" == "debug" ]]; then
-#    cargo build
-#else
-#    cargo build --release
-#fi
-#cp target/"$BTYPE"/decktricks "$TMPBUILD"
+#cargo build --release
+#cp target/release/decktricks "$TMPBUILD"
 # }}}
 
 # GUI Rust libs {{{
@@ -48,13 +39,12 @@ mkdir -p build/
 
 ls
 
-cp "$REPOROOT"/gui/rust/target/"$BTYPE"/libdecktricks_godot_gui.so build/
+cp "$REPOROOT"/gui/rust/target/release/libdecktricks_godot_gui.so build/
 
 # This helps godot find the gdextension file correctly:
 rm -rf .godot/
-timeout 30 godot --headless --import
 
-godot --headless "--export-${BTYPE}" "Linux" 2>&1 | tee /tmp/godot_output.txt
+godot --headless --export-release "Linux" 2>&1 | tee /tmp/godot_output.txt
 if grep ERROR /tmp/godot_output.txt; then
     echo 'Errors detected during godot build! Will not continue.'
     exit 1
