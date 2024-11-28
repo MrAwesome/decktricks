@@ -4,5 +4,5 @@ compatibility_minimum = 4.1
 reloadable = true
 
 [libraries]
-linux.debug.x86_64 =     "res://ext/debug/libdecktricks_godot_gui.so"
+linux.debug.x86_64 =     "res://../rust/target/debug/libdecktricks_godot_gui.so"
 linux.release.x86_64 =   "res://ext/release/libdecktricks_godot_gui.so"
