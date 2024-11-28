@@ -3,7 +3,7 @@ set -euxo pipefail
 # If a binary name (of a built GUI) is given, use that.
 # Otherwise, build the rust libs and run dynamically.
 GIVEN_BINARY="${1:-}"
-COMMAND_LOCATION=$(realpath "$(dirname "$GIVEN_BINARY")")
+DECKTRICKS_COMMAND_LOCATION=$(realpath "$(dirname "$GIVEN_BINARY")")
 COMMAND_BASENAME=$(basename "$GIVEN_BINARY")
 
 # Go to repo root
@@ -20,11 +20,12 @@ if [[ "$GIVEN_BINARY" == "" ]]; then
     pushd gui/godot
 else
     DECKTRICKS_TEST_TYPE=built_binary
-    DECKTRICKS_TEST_COMMAND=("$COMMAND_LOCATION"/"$COMMAND_BASENAME" --headless)
+    DECKTRICKS_TEST_COMMAND=(./"$COMMAND_BASENAME" --headless)
 
-    pushd .
+    pushd "$DECKTRICKS_COMMAND_LOCATION"
 fi
 
+export DECKTRICKS_COMMAND_LOCATION
 export DECKTRICKS_TEST_COMMAND
 export DECKTRICKS_REPO_ROOT
 export DECKTRICKS_TEST_TYPE
