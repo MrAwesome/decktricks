@@ -8,6 +8,7 @@ Prerequisites:
     [] flatpak
     [] systemctl
 
+[] make "decktricks gui" default to godot, run "decktricks-gui"
 [] cargo clippy in CI
 [] make Dockerfile pull 'latest' instead of main
 [] curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --help

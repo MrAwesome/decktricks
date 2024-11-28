@@ -4,6 +4,8 @@ set -euxo pipefail
 
 cd "$(dirname "$0")"/..
 
+TARGET_BINARY="${1:-}"
+
 for script in scripts/tests/test_*.sh; do
     set +x
     echo
@@ -12,5 +14,9 @@ for script in scripts/tests/test_*.sh; do
     echo "=================================="
     echo
     set -x
-    ./"$script"
+    if [[ "$1" != "" ]]; then
+        ./"$script" "$TARGET_BINARY"
+    else
+        ./"$script"
+    fi
 done
