@@ -40,7 +40,6 @@ mkdir -p build/
 ls
 
 cp "$REPOROOT"/gui/rust/target/release/libdecktricks_godot_gui.so build/
-cp "$REPOROOT"/gui/rust/target/release/libdecktricks_godot_gui.so ext/release/
 
 # This helps godot find the gdextension file correctly:
 rm -rf .godot/
