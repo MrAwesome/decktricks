@@ -20,7 +20,7 @@ if [[ "$GIVEN_BINARY" == "" ]]; then
     pushd gui/godot
 else
     DECKTRICKS_TEST_TYPE=built_binary
-    DECKTRICKS_TEST_COMMAND=("$COMMAND_LOCATION"/"$COMMAND_BASENAME")
+    DECKTRICKS_TEST_COMMAND=("$COMMAND_LOCATION"/"$COMMAND_BASENAME" --headless)
 
     pushd .
 fi

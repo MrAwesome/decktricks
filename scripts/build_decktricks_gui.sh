@@ -49,7 +49,6 @@ mkdir -p build/
 ls
 
 cp "$REPOROOT"/gui/rust/target/"$BTYPE"/libdecktricks_godot_gui.so build/
-cp "$REPOROOT"/gui/rust/target/"$BTYPE"/libdecktricks_godot_gui.so .
 
 # This helps godot find the gdextension file correctly:
 rm -rf .godot/
@@ -60,7 +59,10 @@ if grep ERROR /tmp/godot_output.txt; then
     echo 'Errors detected during godot build! Will not continue.'
     exit 1
 fi
+
+# Put the dylib and the binary into our target build dir
 cp build/* "$TMPBUILD"
+
 popd
 # }}}
 
