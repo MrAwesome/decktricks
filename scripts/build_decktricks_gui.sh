@@ -45,13 +45,13 @@ popd
 # GUI Binary {{{
 pushd gui/godot/
 rm -rf build/
-mkdir -p build/
 
+mkdir -p build/
 cp "$REPOROOT"/gui/rust/target/"$BTYPE"/libdecktricks_godot_gui.so build/
 
 # This helps godot find the gdextension file correctly:
-timeout 10 godot --headless --editor || true
-timeout 10 godot --headless --editor || true
+rm -rf .godot/
+timeout 15 godot --headless --import
 
 godot --headless "--export-${BTYPE}" "Linux" 2>&1 | tee /tmp/godot_output.txt
 if grep ERROR /tmp/godot_output.txt; then
