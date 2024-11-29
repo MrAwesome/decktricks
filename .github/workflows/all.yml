@@ -99,8 +99,6 @@ jobs:
     steps:
       - run: mkdir /tmp/artifacts
       - uses: actions/download-artifact@v4
-        with:
-          path: /tmp/artifacts
 
       - name: Create latest release
         uses: softprops/action-gh-release@v2
@@ -112,5 +110,5 @@ jobs:
           tag_name: latest
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
-            /tmp/artifacts/decktricks.tar.gz
-            /tmp/artifacts/decktricks_install.desktop
+            verified-gui-tar/decktricks.tar.gz
+            verified-gui-installer/decktricks_install.desktop
