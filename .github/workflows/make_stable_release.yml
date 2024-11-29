@@ -14,13 +14,12 @@ jobs:
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks_install.desktop
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks.tar.gz
 
-
-      - name: Create latest release
+      - name: Update stable release
         uses: softprops/action-gh-release@v2
         #if: startsWith(github.ref, 'refs/tags/')
         with:
           fail_on_unmatched_files: true
-          prerelease: true
+          prerelease: false
           name: Decktricks Stable
           tag_name: stable
           files: |
