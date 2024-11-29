@@ -6,7 +6,8 @@ DTDIR="$HOME/.local/share/decktricks"
 mkdir -p "$DTDIR"
 cd "$DTDIR"
 curl -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.gz"
-tar xvf /tmpln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
+tar xvf /tmp/decktricks.tar.gz
+ln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
 
 # TODO: Add to steam here!
 
