@@ -13,7 +13,7 @@ TMPBUILD="$TMPDIR/build"
 
 mkdir -p "$TMPBUILD"
 
-# Install scripts {{{
+# Place our .desktop files and install script in the tar {{{
 cp build_assets/* "$TMPBUILD"
 # }}}
 
@@ -63,6 +63,6 @@ rm -rf "$REPOROOT"/build
 mkdir -p "$REPOROOT"/build
 cp "$TMPDIR"/decktricks.tar.gz "$REPOROOT"/build/
 # Installer is separate for ease of download
-cp "$REPOROOT"/scripts/decktricks_install.desktop "$REPOROOT"/build/
-cp "$REPOROOT"/scripts/decktricks_install.sh "$REPOROOT"/build/
+cp "$REPOROOT"/build_assets/decktricks_install.desktop "$REPOROOT"/build/
+cp "$REPOROOT"/build_assets/decktricks_install.sh "$REPOROOT"/build/
 # }}}
