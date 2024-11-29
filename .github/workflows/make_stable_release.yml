@@ -7,6 +7,14 @@ jobs:
   make_stable_release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Update stable branch
+        run: |
+          ./scripts/update_stable_branch.sh
+
+  make_stable_release:
+    runs-on: ubuntu-latest
+    steps:
       - run: mkdir /tmp/artifacts
 
       - name: Download artifacts
