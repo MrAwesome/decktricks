@@ -81,3 +81,21 @@ jobs:
       - name: Update latest branch
         run: |
           ./scripts/update_latest_branch.sh
+
+  update_latest_release:
+    if: github.event_name == 'push'
+    needs:
+      - gui_build_and_test
+      - cli_build_and_test
+    runs-on: ubuntu-latest
+      - name: Create latest release
+        uses: softprops/action-gh-release@v2
+        #if: startsWith(github.ref, 'refs/tags/')
+        with:
+          fail_on_unmatched_files: true
+          prerelease: true
+          name: Latest RC
+          tag_name: latest
+          files: |
+            ./build/decktricks.tar.gz
+            ./build/decktricks_install.desktop
