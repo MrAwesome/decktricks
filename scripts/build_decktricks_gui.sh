@@ -65,4 +65,5 @@ mkdir -p "$REPOROOT"/build
 cp "$TMPDIR"/decktricks.tar.gz "$REPOROOT"/build/
 # Installer is separate for ease of download
 cp "$REPOROOT"/scripts/decktricks_install.desktop "$REPOROOT"/build/
+cp "$REPOROOT"/scripts/decktricks_install.sh "$REPOROOT"/build/
 # }}}
