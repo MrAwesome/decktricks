@@ -64,15 +64,11 @@ jobs:
       - name: Upload tar
         uses: actions/upload-artifact@v4
         with:
-          name: verified-gui-tar
-          path: ./build/decktricks.tar.gz
-          if-no-files-found: error
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: verified-gui-installer
-          path: ./build/decktricks_install.desktop
+          name: verified-gui-files
+          path: |
+            ./build/decktricks.tar.gz
+            ./build/decktricks_install.desktop
+            this_should_fail
           if-no-files-found: error
 
   # TODO: ensure this is enough gating to prevent branch/main PRs from triggering latest tags
@@ -110,5 +106,5 @@ jobs:
           tag_name: latest
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
-            verified-gui-tar/decktricks.tar.gz
-            verified-gui-installer/decktricks_install.desktop
+            verified-gui-files/decktricks.tar.gz
+            verified-gui-files/decktricks_install.desktop
