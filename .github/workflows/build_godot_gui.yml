@@ -1,4 +1,4 @@
-name: GUI Debug Build/Test
+name: Test/Build
 
 # TODO: also run cargo clippy
 
