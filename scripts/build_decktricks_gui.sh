@@ -14,8 +14,7 @@ TMPBUILD="$TMPDIR/build"
 mkdir -p "$TMPBUILD"
 
 # Install scripts {{{
-cp scripts/decktricks_install.desktop "$TMPBUILD"
-cp scripts/decktricks_install.sh "$TMPBUILD"
+cp build_assets/* "$TMPBUILD"
 # }}}
 
 # For now, we don't package up the CLI for deployment, but we can if needed.
