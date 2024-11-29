@@ -58,14 +58,15 @@ jobs:
         with:
           name: verified-gui-tar
           path: ./build/decktricks.tar.gz
-          fail-on-missing: true
+          if-no-files-found: error
+
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-installer
           path: ./build/decktricks_install.desktop
-          fail-on-missing: true
+          if-no-files-found: error
 
   # TODO: ensure this is enough gating to prevent branch/main PRs from triggering latest tags
   update_latest_branch:

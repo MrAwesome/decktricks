@@ -18,9 +18,10 @@ cp scripts/decktricks_install.desktop "$TMPBUILD"
 cp scripts/decktricks_install.sh "$TMPBUILD"
 # }}}
 
+# For now, we don't package up the CLI for deployment, but we can if needed.
 # CLI {{{
-cargo build --release
-cp target/release/decktricks "$TMPBUILD"
+#cargo build --release
+#cp target/release/decktricks "$TMPBUILD"
 # }}}
 
 # GUI Rust libs {{{
