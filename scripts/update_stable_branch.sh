@@ -3,8 +3,7 @@
 set -euxo pipefail
 
 if [[ "${GITHUB_ACTIONS:-}" != "" && "${ACT:-}" != "true" ]]; then
-    git checkout latest
-    git branch -f stable
+    git branch -f stable latest
     git push origin stable --force
 else
     echo "Skipping staging push because not in GitHub Actions."
