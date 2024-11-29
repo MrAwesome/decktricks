@@ -1,5 +1,7 @@
 name: GUI Debug Build/Test
 
+# TODO: also run cargo clippy
+
 on:
   push:
     branches: [ "main" ]
@@ -10,7 +12,25 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  gui_tests:
+  # This tests the CLI and core lib functionality
+  cli_build_and_test:
+
+    runs-on: ubuntu-latest
+    container:
+      image: gleesus/decktricks
+
+    steps:
+      - name: Preserve $HOME set in the container
+        run: echo HOME=/root >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: Build CLI
+        run: cargo build
+      - name: Run Tests
+        run: cargo test
+        # TODO: package CLI into separate tar here
+
+  # This tests only some basic GUI functionality
+  gui_build_and_test:
 
     runs-on: ubuntu-latest
     container:
@@ -33,10 +53,26 @@ jobs:
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh /tmp/decktricks_work/decktricks-gui
 
+      - name: Upload tar
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-gui-tar
+          path: ./build/decktricks.tar.gz
+          fail-on-missing: true
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-gui-installer
+          path: ./build/decktricks_install.desktop
+          fail-on-missing: true
+
   # TODO: ensure this is enough gating to prevent branch/main PRs from triggering latest tags
   update_latest_branch:
     if: github.event_name == 'push'
-    needs: gui_tests
+    needs:
+      - gui_build_and_test
+      - cli_build_and_test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

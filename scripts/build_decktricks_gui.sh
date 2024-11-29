@@ -19,8 +19,8 @@ cp scripts/decktricks_install.sh "$TMPBUILD"
 # }}}
 
 # CLI {{{
-#cargo build --release
-#cp target/release/decktricks "$TMPBUILD"
+cargo build --release
+cp target/release/decktricks "$TMPBUILD"
 # }}}
 
 # GUI Rust libs {{{
