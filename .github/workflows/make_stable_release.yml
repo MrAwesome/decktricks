@@ -22,6 +22,7 @@ jobs:
       - name: Download artifacts
         run: |
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks_install.desktop
+          curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks_install.sh
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks.tar.gz
 
       - name: Update stable release
@@ -35,3 +36,4 @@ jobs:
           files: |
             /tmp/artifacts/decktricks.tar.gz
             /tmp/artifacts/decktricks_install.desktop
+            /tmp/artifacts/decktricks_install.sh

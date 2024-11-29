@@ -68,11 +68,18 @@ jobs:
           path: ./build/decktricks.tar.gz
           if-no-files-found: error
 
-      - name: Upload installer
+      - name: Upload installer desktop
         uses: actions/upload-artifact@v4
         with:
-          name: verified-gui-installer
+          name: verified-gui-installer-desktop
           path: ./build/decktricks_install.desktop
+          if-no-files-found: error
+
+      - name: Upload installer script
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-gui-installer-script
+          path: ./build/decktricks_install.sh
           if-no-files-found: error
 
   # TODO: ensure this is enough gating to prevent branch/main PRs from triggering latest tags
@@ -115,4 +122,5 @@ jobs:
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
             /tmp/artifacts/verified-gui-tar/decktricks.tar.gz
-            /tmp/artifacts/verified-gui-installer/decktricks_install.desktop
+            /tmp/artifacts/verified-gui-installer-desktop/decktricks_install.desktop
+            /tmp/artifacts/verified-gui-installer-script/decktricks_install.sh
