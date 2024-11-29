@@ -85,9 +85,10 @@ jobs:
   update_latest_release:
     if: github.event_name == 'push'
     needs:
-      - gui_build_and_test
-      - cli_build_and_test
+      - update_latest_branch
+
     runs-on: ubuntu-latest
+    steps:
       - name: Create latest release
         uses: softprops/action-gh-release@v2
         #if: startsWith(github.ref, 'refs/tags/')
@@ -96,6 +97,7 @@ jobs:
           prerelease: true
           name: Latest RC
           tag_name: latest
+          body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
             ./build/decktricks.tar.gz
             ./build/decktricks_install.desktop
