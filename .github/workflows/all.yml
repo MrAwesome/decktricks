@@ -99,7 +99,8 @@ jobs:
     steps:
       - run: mkdir /tmp/artifacts
       - uses: actions/download-artifact@v4
-        path: /tmp/artifacts
+        with:
+          path: /tmp/artifacts
 
       - name: Create latest release
         uses: softprops/action-gh-release@v2
