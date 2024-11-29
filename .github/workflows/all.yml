@@ -61,13 +61,15 @@ jobs:
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh /tmp/decktricks_work/decktricks-gui
 
+      - run: cd ./build/
+
       - name: Upload tar
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-files
           path: |
-            ./build/decktricks.tar.gz
-            ./build/decktricks_install.desktop
+            ./decktricks.tar.gz
+            ./decktricks_install.desktop
             this_should_fail
           if-no-files-found: error
 
