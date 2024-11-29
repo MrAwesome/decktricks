@@ -26,8 +26,6 @@ cp scripts/decktricks_install.sh "$TMPBUILD"
 
 # GUI Rust libs {{{
 pushd gui/rust/
-# Build both, because --import uses dev
-cargo build
 cargo build --release
 popd
 # }}}
