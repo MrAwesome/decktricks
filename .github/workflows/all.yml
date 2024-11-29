@@ -61,16 +61,18 @@ jobs:
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh /tmp/decktricks_work/decktricks-gui
 
-      - run: cd ./build/
-
       - name: Upload tar
         uses: actions/upload-artifact@v4
         with:
-          name: verified-gui-files
-          path: |
-            ./decktricks.tar.gz
-            ./decktricks_install.desktop
-            this_should_fail
+          name: verified-gui-tar
+          path: ./build/decktricks.tar.gz
+          if-no-files-found: error
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-gui-installer
+          path: ./build/decktricks_install.desktop
           if-no-files-found: error
 
   # TODO: ensure this is enough gating to prevent branch/main PRs from triggering latest tags
@@ -98,7 +100,6 @@ jobs:
       - run: mkdir /tmp/artifacts
       - uses: actions/download-artifact@v4
         with:
-          name: verified-gui-files
           path: /tmp/artifacts
 
       - run: find /tmp/artifacts
@@ -113,5 +114,5 @@ jobs:
           tag_name: latest
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
-            /tmp/artifacts/verified-gui-files/decktricks.tar.gz
-            /tmp/artifacts/verified-gui-files/decktricks_install.desktop
+            /tmp/artifacts/verified-gui-tar/decktricks.tar.gz
+            /tmp/artifacts/verified-gui-installer/decktricks_install.desktop
