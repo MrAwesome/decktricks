@@ -1,7 +1,7 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
-Name=Install Decktricks
-Exec=bash -xc '$HOME/.local/share/decktricks-gui'
+Name=Decktricks
+Exec=bash -xc '$HOME/.local/share/decktricks/decktricks-gui'
 Icon=steamdeck-gaming-return
 Type=Application
 StartupNotify=false
