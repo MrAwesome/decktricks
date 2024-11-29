@@ -60,7 +60,6 @@ jobs:
           path: ./build/decktricks.tar.gz
           if-no-files-found: error
 
-
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
@@ -89,6 +88,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      - name: Get artifacts
+        - uses: actions/download-artifact@v4
+
       - name: Create latest release
         uses: softprops/action-gh-release@v2
         #if: startsWith(github.ref, 'refs/tags/')
@@ -99,5 +101,5 @@ jobs:
           tag_name: latest
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
-            ./build/decktricks.tar.gz
-            ./build/decktricks_install.desktop
+            decktricks.tar.gz
+            decktricks_install.desktop
