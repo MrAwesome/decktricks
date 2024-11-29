@@ -13,8 +13,7 @@ env:
 
 jobs:
   # This tests the CLI and core lib functionality
-  cli_build_and_test:
-
+  cli_test:
     runs-on: ubuntu-latest
     container:
       image: gleesus/decktricks
@@ -23,15 +22,24 @@ jobs:
       - name: Preserve $HOME set in the container
         run: echo HOME=/root >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
-      - name: Build CLI
-        run: cargo build
-      - name: Run Tests
+      - name: Run CLI Tests
         run: cargo test
         # TODO: package CLI into separate tar here
 
+  cli_test_release:
+    runs-on: ubuntu-latest
+    container:
+      image: gleesus/decktricks
+
+    steps:
+      - name: Preserve $HOME set in the container
+        run: echo HOME=/root >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - name: Run CLI Tests (Release)
+        run: cargo test --release
+
   # This tests only some basic GUI functionality
   gui_build_and_test:
-
     runs-on: ubuntu-latest
     container:
       image: gleesus/decktricks
@@ -72,7 +80,8 @@ jobs:
     if: github.event_name == 'push'
     needs:
       - gui_build_and_test
-      - cli_build_and_test
+      - cli_test
+      - cli_test_release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +97,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      - run: mkdir /tmp/artifacts
       - uses: actions/download-artifact@v4
+        path: /tmp/artifacts
 
       - name: Create latest release
         uses: softprops/action-gh-release@v2
