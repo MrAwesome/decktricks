@@ -8,6 +8,7 @@ Prerequisites:
     [] flatpak
     [] systemctl
 
+[] make decktricks stable installer point to discord or reddit, and beta point to github?
 [] make "decktricks gui" default to godot, run "decktricks-gui"
 [] cargo clippy in CI
 [] make Dockerfile pull 'latest' instead of main
@@ -218,6 +219,9 @@ ps
 Notes from running in container:
 cp in /usr/lib/libcrypto.so.3 and /usr/lib/libssl.so.3
 systemctl is not accessible, and most relevant binaries probably won't be
+
+Potentially popular "support me and" features:
+[] "launch in nested desktop"
 
 Tips:
 * Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click
