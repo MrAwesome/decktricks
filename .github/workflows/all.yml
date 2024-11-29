@@ -112,5 +112,5 @@ jobs:
           tag_name: latest
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
-            decktricks.tar.gz
-            decktricks_install.desktop
+            /tmp/artifacts/decktricks.tar.gz
+            /tmp/artifacts/decktricks_install.desktop
