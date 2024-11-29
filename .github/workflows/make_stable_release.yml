@@ -4,24 +4,25 @@ name: Make Stable Release
 on: workflow_dispatch
 
 jobs:
-  runs-on: ubuntu-latest
-  steps:
-    - run: mkdir /tmp/artifacts
+  make_stable_release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: mkdir /tmp/artifacts
 
-    - name: Download artifacts
-      run: |
-        curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks_install.desktop
-        curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks.tar.gz
+      - name: Download artifacts
+        run: |
+          curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks_install.desktop
+          curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks.tar.gz
 
 
-    - name: Create latest release
-      uses: softprops/action-gh-release@v2
-      #if: startsWith(github.ref, 'refs/tags/')
-      with:
-        fail_on_unmatched_files: true
-        prerelease: true
-        name: Decktricks Stable
-        tag_name: stable
-        files: |
-          /tmp/artifacts/decktricks.tar.gz
-          /tmp/artifacts/decktricks_install.desktop
+      - name: Create latest release
+        uses: softprops/action-gh-release@v2
+        #if: startsWith(github.ref, 'refs/tags/')
+        with:
+          fail_on_unmatched_files: true
+          prerelease: true
+          name: Decktricks Stable
+          tag_name: stable
+          files: |
+            /tmp/artifacts/decktricks.tar.gz
+            /tmp/artifacts/decktricks_install.desktop
