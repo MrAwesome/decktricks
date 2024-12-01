@@ -8,6 +8,9 @@ Prerequisites:
     [] flatpak
     [] systemctl
 
+Add to steam:
+    [] make gui take a DECKTRICKS_INITIALIZATION that just boots up in headless mode, adds to steam, and quits (or package up the CLI)
+
 [] make decktricks stable installer point to discord or reddit, and beta point to github?
 [] make "decktricks gui" default to godot, run "decktricks-gui"
 [] cargo clippy in CI

@@ -50,22 +50,29 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Run GUI build script
-        run: ./scripts/build_decktricks_gui.sh release
+      - run: ./ci_scripts/init.sh
+
+      # NOTE: the following steps could be parallelized, if it helps
+      - run: ./ci_scripts/place_build_assets.sh
+      - run: ./ci_scripts/cli.sh
+      - run: ./ci_scripts/gui.sh
+
+      - run: ./ci_scripts/compress.sh
 
       - name: Get binary from tar
         run: |
           mkdir /tmp/decktricks_work
-          tar xvf ./build/decktricks.tar.gz -C /tmp/decktricks_work
+          tar xvf ./build/decktricks.tar.xz -C /tmp/decktricks_work
 
       - name: Run GUI e2e scripts
         run: ./scripts/run_all_gui_e2e_tests.sh /tmp/decktricks_work/decktricks-gui
 
+      # These are separate so that if-no-files-found actually errors if just one is missing {{{
       - name: Upload tar
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-tar
-          path: ./build/decktricks.tar.gz
+          path: ./build/decktricks.tar.xz
           if-no-files-found: error
 
       - name: Upload installer desktop
@@ -81,6 +88,7 @@ jobs:
           name: verified-gui-installer-script
           path: ./build/decktricks_install.sh
           if-no-files-found: error
+      # }}}
 
   # TODO: ensure this is enough gating to prevent branch/main PRs from triggering latest tags
   update_latest_branch:
@@ -121,6 +129,6 @@ jobs:
           tag_name: latest
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
-            /tmp/artifacts/verified-gui-tar/decktricks.tar.gz
+            /tmp/artifacts/verified-gui-tar/decktricks.tar.xz
             /tmp/artifacts/verified-gui-installer-desktop/decktricks_install.desktop
             /tmp/artifacts/verified-gui-installer-script/decktricks_install.sh
