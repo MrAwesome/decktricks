@@ -29,19 +29,26 @@ pub(crate) fn run_remote_script(
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
+    use std::io::Write;
+    use ureq;
     use std::fs::File;
-    use std::io::copy;
     use std::os::unix::fs::PermissionsExt;
 
     // TODO: make this and the operations below test-safe
-    let response = reqwest::blocking::get(url).map_err(KnownError::from)?;
+    let data = ureq::get(url)
+        .call()
+        .map_err(KnownError::from)?
+        .into_string()?;
+    // let response = reqwest::blocking::get(url).map_err(KnownError::from)?;
+    // let data = response.bytes()?.as_ref();
 
     // These are in blocks to ensure that files are closed out
     // before attempting to do further changes
     {
         let mut dest = File::create(local_filename)?;
-        copy(&mut response.bytes()?.as_ref(), &mut dest)?;
-    }
+        write!(&mut dest, "{data}")?;
+        //copy(&mut response.into_reader().take(10_000_000).?, &mut dest)?;
+    };
 
     {
         std::fs::set_permissions(local_filename, std::fs::Permissions::from_mode(0o755))?;

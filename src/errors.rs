@@ -21,7 +21,7 @@ pub enum KnownError {
     NoAvailableActions(TrickID),
     ProviderNotImplemented(String),
     SeriousError(SeriousError),
-    ReqwestFailure(reqwest::Error),
+    UreqError(ureq::Error),
     RawSystemFailureDONOTUSE(std::io::Error),
     SystemCommandFailed(Box<SysCommandResult>),
     SystemCommandParse(DynamicError),
@@ -50,8 +50,8 @@ impl Display for KnownError {
             Self::LoggerInitializationFail(logger_err) => {
                 write!(f, "Logger initialization failure: {logger_err:#?}")
             }
-            Self::ReqwestFailure(reqwest_failure) => {
-                write!(f, "Error fetching with reqwest: {reqwest_failure:#?}")
+            Self::UreqError(ureq_failure) => {
+                write!(f, "Error fetching with ureq: {ureq_failure:#?}")
             }
             Self::SeriousError(serious_err) => write!(f, "{serious_err}"),
             Self::SystemCommandParse(sys_parse_err) => {
@@ -94,9 +94,9 @@ impl From<clap::error::Error> for KnownError {
     }
 }
 
-impl From<reqwest::Error> for KnownError {
-    fn from(e: reqwest::Error) -> Self {
-        Self::ReqwestFailure(e)
+impl From<ureq::Error> for KnownError {
+    fn from(e: ureq::Error) -> Self {
+        Self::UreqError(e)
     }
 }
 
