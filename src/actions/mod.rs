@@ -42,6 +42,7 @@ impl From<&Action> for TypedAction {
             Action::DebugSteamShortcuts { filename } => {
                 Self::General(GeneralAction::DebugSteamShortcuts { filename })
             }
+            Action::AddDecktricksToSteam => Self::General(GeneralAction::AddDecktricksToSteam),
         }
     }
 }

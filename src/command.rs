@@ -108,6 +108,8 @@ pub enum Action {
     DebugSteamShortcuts {
         filename: Option<String>,
     },
+    #[clap(hide = true)]
+    AddDecktricksToSteam,
 }
 
 impl Action {

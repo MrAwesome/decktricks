@@ -2,15 +2,22 @@
 
 set -euxo pipefail
 
+curl -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz"
+
 DTDIR="$HOME/.local/share/decktricks" 
 mkdir -p "$DTDIR"
 cd "$DTDIR"
-curl -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz"
+
 tar xvf /tmp/decktricks.tar.xz
 ln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
+./decktricks add-decktricks-to-steam
 
-# TODO: Add to steam here!
-# something like:
-#   ./"$DTDIR"/decktricks add-gui-to-steam
-
-echo "Successfully installed Decktricks!"
+echo
+echo
+echo
+echo "====================="
+echo 
+echo "Successfully installed Decktricks! You can return to Game Mode now by double-clicking the \"Return to Gaming Mode\" icon on the desktop."
+echo
+echo "====================="
+echo

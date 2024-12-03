@@ -31,6 +31,7 @@ pub(crate) enum GeneralAction {
     DebugSteamShortcuts {
         filename: Option<String>,
     },
+    AddDecktricksToSteam,
 }
 
 impl GeneralAction {
@@ -116,6 +117,7 @@ impl GeneralAction {
                 )]
             }
             Self::DebugSteamShortcuts { filename } => vec![debug_steam_shortcuts(filename)],
+            Self::AddDecktricksToSteam => vec![add_to_steam(&AddToSteamTarget::Decktricks)],
         }
     }
 }
