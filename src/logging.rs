@@ -137,12 +137,8 @@ macro_rules! decktricks_logging_init {
         decktricks_logging_init!($crate::logging::DecktricksConsoleLogger);
     };
     ($logger:ty) => {
-        static CRATE_DECKTRICKS_LOGGER: std::sync::LazyLock<std::sync::Arc<$logger>> = 
-            std::sync::LazyLock::new(|| {
-                std::sync::Arc::new(
-                    <$logger>::new()
-                )
-            });
+        static CRATE_DECKTRICKS_LOGGER: std::sync::LazyLock<std::sync::Arc<$logger>> =
+            std::sync::LazyLock::new(|| std::sync::Arc::new(<$logger>::new()));
     };
 }
 
