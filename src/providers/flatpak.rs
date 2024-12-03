@@ -10,14 +10,14 @@ type FlatpakID = String;
 pub(crate) struct FlatpakProvider {
     id: FlatpakID,
     flatpak_ctx: FlatpakSystemContext,
-    ctx: ExecutionContext,
+    ctx: SpecificExecutionContext,
 }
 
 impl FlatpakProvider {
     pub(crate) fn new(
         flatpak: &Flatpak,
         flatpak_ctx: FlatpakSystemContext,
-        ctx: ExecutionContext,
+        ctx: SpecificExecutionContext,
     ) -> Self {
         let id = flatpak.id.clone();
         Self {
@@ -36,7 +36,7 @@ pub struct FlatpakSystemContext {
 
 impl FlatpakSystemContext {
     // TODO: parallelize this
-    pub(crate) fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+    pub(crate) fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
         let (running, installed) = join_all!(|| get_running_flatpak_applications(ctx), || {
             get_installed_flatpak_applications(ctx)
         });
@@ -155,18 +155,20 @@ impl ProviderActions for FlatpakProvider {
         success!()
     }
 
-    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
-        not_implemented("Add to steam is not yet implemented for flatpak!")
+    fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
+        add_to_steam(&AddToSteamTarget::Specific(AddToSteamContext::try_from(
+            &self.ctx.trick,
+        )?))
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct FlatpakGeneralProvider {
-    ctx: ExecutionContext,
+    ctx: GeneralExecutionContext,
 }
 
 impl FlatpakGeneralProvider {
-    pub(crate) fn new(ctx: ExecutionContext) -> Self {
+    pub(crate) fn new(ctx: GeneralExecutionContext) -> Self {
         Self { ctx }
     }
 }
@@ -202,55 +204,55 @@ mod tests {
         }
     }
 
-    fn fpak_prov(id: &str, ctx: ExecutionContext) -> FlatpakProvider {
+    fn get_execution_context() -> SpecificExecutionContext {
+        SpecificExecutionContext::test(Trick::test())
+    }
+
+    fn fpak_prov(id: &str, ctx: SpecificExecutionContext) -> FlatpakProvider {
         let flatpak_ctx = get_system_context();
-        FlatpakProvider::new(
-            &Flatpak::new(id),
-            flatpak_ctx,
-            ctx,
-        )
+        FlatpakProvider::new(&Flatpak::new(id), flatpak_ctx, ctx)
     }
 
     #[test]
     fn test_new_flatpak_provider() {
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("test_pkg", ctx);
         assert_eq!(provider.id, "test_pkg");
     }
 
     #[test]
     fn test_is_pkg_installed_true() {
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("installed_package", ctx);
         assert!(provider.is_installed());
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("package_not_installed", ctx);
         assert!(!provider.is_installed());
     }
 
     #[test]
     fn test_installable() {
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("RANDOM_NAME_FROM_NOWHERE", ctx);
         assert!(provider.is_installable());
     }
 
     #[test]
     fn test_updateable() {
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("installed_package", ctx);
         assert!(provider.is_updateable());
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("test_pkg_not_installed", ctx);
         assert!(!provider.is_updateable());
     }
 
     #[test]
     fn test_is_pkg_running() {
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("running_package", ctx);
         assert!(provider.is_running());
-        let ctx = ExecutionContext::test();
+        let ctx = get_execution_context();
         let provider = fpak_prov("not_running_package", ctx);
         assert!(!provider.is_running());
     }
@@ -274,7 +276,7 @@ mod tests {
                 ))
             });
 
-        let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+        let ctx = SpecificExecutionContext::new(Trick::test(), std::sync::Arc::new(mock));
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
             Ok(action_success) => assert_eq!(
@@ -301,11 +303,13 @@ mod tests {
             )))
             .returning(move |_| Ok(failure.clone()));
 
-        let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+        let ctx = SpecificExecutionContext::new(Trick::test(), std::sync::Arc::new(mock));
 
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
-            Err(KnownError::SystemCommandFailed(output)) => assert_eq!(output, Box::new(expected_failure)),
+            Err(KnownError::SystemCommandFailed(output)) => {
+                assert_eq!(output, Box::new(expected_failure))
+            }
             Err(e) => panic!("package installation in test failed in unexpected way: {e:?}"),
             Ok(action_success) => panic!(
                 "package installation in test succeeded but should not have: {action_success:?}"

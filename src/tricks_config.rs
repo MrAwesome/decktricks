@@ -104,10 +104,29 @@ pub struct Trick {
     pub display_name: String,
     pub description: String,
     pub always_present_on_steamdeck: Option<bool>,
+    pub icon: Option<String>,
     //download: Option<String>,
     //command_before: Option<String>,
     //command_after: Option<String>,
     //depends: Vec<TrickID>,
+}
+
+#[cfg(test)]
+impl Trick {
+    pub(crate) fn test() -> Self {
+        Self {
+            id: Default::default(),
+            provider_config: ProviderConfig::SimpleCommand(SimpleCommand {
+                command: Default::default(),
+                args: Default::default(),
+                execution_dir: Default::default(),
+            }),
+            display_name: Default::default(),
+            description: Default::default(),
+            always_present_on_steamdeck: Default::default(),
+            icon: Default::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -119,7 +138,6 @@ pub enum ProviderConfig {
     EmuDeckInstaller(EmuDeckInstaller),
     SimpleCommand(SimpleCommand),
     //SystemPackage(SystemPackage)
-    Custom,
 }
 
 impl std::fmt::Display for ProviderConfig {
@@ -129,7 +147,6 @@ impl std::fmt::Display for ProviderConfig {
             ProviderConfig::DeckyInstaller(_) => write!(f, "DeckyInstaller"),
             ProviderConfig::EmuDeckInstaller(_) => write!(f, "EmuDeckInstaller"),
             ProviderConfig::SimpleCommand(_) => write!(f, "SimpleCommand"),
-            ProviderConfig::Custom => write!(f, "Custom"),
         }
     }
 }
@@ -148,6 +165,7 @@ pub struct Flatpak {
 pub struct SimpleCommand {
     pub command: String,
     pub args: Option<Vec<String>>,
+    pub execution_dir: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -172,6 +190,7 @@ fn reconvert_providerconfig() -> DeckResult<()> {
         description: "lol".into(),
         display_name: "ProtonUp-Qt".into(),
         always_present_on_steamdeck: None,
+        icon: None,
     };
 
     let after_first_serialization =

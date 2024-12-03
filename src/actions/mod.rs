@@ -21,9 +21,7 @@ impl From<&Action> for TypedAction {
             Action::Kill { id } => Self::Specific(SpecificAction::Kill { id }),
             Action::Info { id } => Self::Specific(SpecificAction::Info { id }),
             Action::Install { id } => Self::Specific(SpecificAction::Install { id }),
-            Action::AddToSteam { name, id } => {
-                Self::Specific(SpecificAction::AddToSteam { name, id })
-            }
+            Action::AddToSteam { id } => Self::Specific(SpecificAction::AddToSteam { id }),
             Action::Uninstall { id } => Self::Specific(SpecificAction::Uninstall { id }),
             Action::Update { id: Some(id) } => Self::Specific(SpecificAction::Update { id }),
 
@@ -40,6 +38,9 @@ impl From<&Action> for TypedAction {
             Action::GatherContext => Self::General(GeneralAction::GatherContext),
             Action::RunSystemCommand { command, args } => {
                 Self::General(GeneralAction::RunSystemCommand { command, args })
+            }
+            Action::DebugSteamShortcuts { filename } => {
+                Self::General(GeneralAction::DebugSteamShortcuts { filename })
             }
         }
     }
@@ -85,10 +86,4 @@ impl ActionSuccess {
             message: msg.map(|s| s.as_ref().into()),
         }
     }
-}
-
-// TODO: or just launch steamtinkerlaunch GUI manually?
-#[derive(Debug, Default)]
-pub(crate) struct AddToSteamContext {
-    _name: Option<String>,
 }

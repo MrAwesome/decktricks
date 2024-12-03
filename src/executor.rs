@@ -3,7 +3,17 @@ use crate::providers::system_context::FullSystemContext;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct ExecutionContext {
+pub struct SpecificExecutionContext {
+    // TODO: can default to "none", reserve that as special, and use to
+    // still track all procs we have launched?
+    //pub trick_id: TrickID,
+    pub log_channel: LogChannel,
+    pub runner: RunnerRc,
+    pub trick: Trick,
+}
+
+#[derive(Debug, Clone)]
+pub struct GeneralExecutionContext {
     // TODO: can default to "none", reserve that as special, and use to
     // still track all procs we have launched?
     //pub trick_id: TrickID,
@@ -11,29 +21,56 @@ pub struct ExecutionContext {
     pub runner: RunnerRc,
 }
 
-impl ExecutionContext {
+pub trait ExecutionContextTrait: Send + Sync + Sized {
+    fn get_runner(&self) -> &RunnerRc;
+    fn get_log_channel(&self) -> &LogChannel;
+}
+
+impl ExecutionContextTrait for GeneralExecutionContext {
+    fn get_runner(&self) -> &RunnerRc {
+        &self.runner
+    }
+
+    fn get_log_channel(&self) -> &LogChannel {
+        &self.log_channel
+    }
+}
+
+impl ExecutionContextTrait for SpecificExecutionContext {
+    fn get_runner(&self) -> &RunnerRc {
+        &self.runner
+    }
+
+    fn get_log_channel(&self) -> &LogChannel {
+        &self.log_channel
+    }
+}
+
+impl SpecificExecutionContext {
     #[must_use]
-    pub fn trick_id_or_placeholder(&self) -> String {
-        match self.log_channel {
-            LogChannel::TrickID(ref trick_id) => trick_id.clone(),
-            LogChannel::General | LogChannel::IgnoreCompletelyAlways => {
-                "IF_YOU_SEE_ME_PLEASE_FILE_A_REPORT".into()
-            }
+    pub fn new(trick: Trick, runner: RunnerRc) -> Self {
+        Self {
+            log_channel: LogChannel::TrickID(trick.id.clone()),
+            runner,
+            trick,
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn test(trick: Trick) -> Self {
+        Self {
+            log_channel: LogChannel::TrickID(trick.id.clone()),
+            runner: Arc::new(MockTestActualRunner::new()),
+            trick,
+        }
+    }
+}
+
+impl GeneralExecutionContext {
     #[must_use]
-    pub fn general(runner: RunnerRc) -> Self {
+    pub fn new(runner: RunnerRc) -> Self {
         Self {
             log_channel: LogChannel::General,
-            runner,
-        }
-    }
-
-    #[must_use]
-    pub fn specific(trick_id: TrickID, runner: RunnerRc) -> Self {
-        Self {
-            log_channel: LogChannel::TrickID(trick_id),
             runner,
         }
     }
@@ -43,14 +80,6 @@ impl ExecutionContext {
         Self {
             log_channel: LogChannel::General,
             runner: Arc::new(MockTestActualRunner::new()),
-        }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn test_with(mock_runner: Arc<MockTestActualRunner>) -> Self {
-        Self {
-            log_channel: LogChannel::General,
-            runner: mock_runner,
         }
     }
 }
@@ -102,7 +131,7 @@ impl Executor {
         //      multiple times with the same system context and so we always
         //      want to gather context.
         let full_ctx = {
-            let gather_execution_ctx = ExecutionContext::general(runner.clone());
+            let gather_execution_ctx = GeneralExecutionContext::new(runner.clone());
             if matches!(mode, ExecutorMode::OnceOff) {
                 let do_not_gather = command
                     .action
@@ -184,7 +213,7 @@ mod tests {
 
         let runner = Arc::new(mock);
 
-        let ctx = ExecutionContext::test_with(runner.clone());
+        let ctx = GeneralExecutionContext::new(runner.clone());
         let full_ctx = FullSystemContext::gather_with(&ctx)?;
 
         let executor = Executor::with(ExecutorMode::OnceOff, loader, full_ctx, runner);

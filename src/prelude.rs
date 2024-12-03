@@ -1,5 +1,6 @@
 pub use crate::actions::SpecificActionID;
 pub(crate) use crate::actions::*;
+pub use crate::add_to_steam::*;
 pub use crate::command::*;
 pub use crate::executor::*;
 pub use crate::logging::*;

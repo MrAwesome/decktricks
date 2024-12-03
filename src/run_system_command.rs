@@ -27,6 +27,7 @@ pub struct SysCommand {
 }
 
 impl SysCommand {
+    #[allow(clippy::needless_pass_by_value)]
     pub fn new<S, SS, I>(cmd: S, args: I)
         -> Self 
         where I: IntoIterator<Item = SS>,
@@ -50,9 +51,9 @@ pub(crate) trait SysCommandRunner {
 
     fn env(&mut self, varname: &str, value: &str) -> &Self;
 
-    fn run_with(&self, ctx: &ExecutionContext) -> DeckResult<SysCommandResult> {
+    fn run_with(&self, ctx: &impl ExecutionContextTrait) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
-        ctx.runner.run(sys_command)
+        ctx.get_runner().run(sys_command)
     }
 }
 

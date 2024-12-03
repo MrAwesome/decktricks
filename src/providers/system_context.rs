@@ -18,7 +18,7 @@ impl FullSystemContext {
     /// # Errors
     ///
     /// Can return system errors from trying to gather system information
-    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
         let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx) = join_all!(
             || DeckySystemContext::gather_with(ctx),
             || FlatpakSystemContext::gather_with(ctx),
@@ -44,7 +44,7 @@ impl RunningProgramSystemContext {
     /// # Errors
     ///
     /// Returns errors relating to finding, reading, and parsing files in /proc
-    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
         // This can be stored in an "initial system context" if needed
 
         let desired_string = format!("{PID_ENV_STRING}=");
@@ -85,7 +85,7 @@ impl RunningProgramSystemContext {
     }
 }
 
-fn get_procs_with_env(ctx: &ExecutionContext) -> Option<String> {
+fn get_procs_with_env(ctx: &impl ExecutionContextTrait) -> Option<String> {
     // XXX: NOTE: we do not run this inside of containers in CI, as ps eww errors there.
     if running_in_ci_container() {
         return None;
@@ -122,7 +122,7 @@ fn gather_procs() -> DeckResult<()> {
 
     mock.expect_run()
         .returning(move |_| Ok(SysCommandResult::success_output(&pseww_output)));
-    let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+    let ctx = GeneralExecutionContext::new(std::sync::Arc::new(mock));
     let proc_ctx = RunningProgramSystemContext::gather_with(&ctx)?;
     assert_eq!(
         desired_pid,

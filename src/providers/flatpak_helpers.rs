@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-pub(super) fn get_running_flatpak_applications(ctx: &ExecutionContext) -> DeckResult<Vec<String>> {
+pub(super) fn get_running_flatpak_applications(ctx: &impl ExecutionContextTrait) -> DeckResult<Vec<String>> {
     // TODO: error handling
     let ps_output = flatpak_ps(ctx);
 
@@ -16,7 +16,7 @@ pub(super) fn get_running_flatpak_applications(ctx: &ExecutionContext) -> DeckRe
     }
 }
 
-pub(super) fn get_installed_flatpak_applications(ctx: &ExecutionContext) -> DeckResult<Vec<String>> {
+pub(super) fn get_installed_flatpak_applications(ctx: &impl ExecutionContextTrait) -> DeckResult<Vec<String>> {
     // TODO: error handling
     let list_output = flatpak_list(ctx);
 
@@ -32,12 +32,12 @@ pub(super) fn get_installed_flatpak_applications(ctx: &ExecutionContext) -> Deck
     }
 }
 
-fn flatpak_list(ctx: &ExecutionContext) -> DeckResult<ActionSuccess> {
+fn flatpak_list(ctx: &impl ExecutionContextTrait) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak list to cat.
     SysCommand::new("flatpak", ["list", "--app", "--columns=application"]).run_with(ctx)?.as_success()
 }
 
-fn flatpak_ps(ctx: &ExecutionContext) -> DeckResult<ActionSuccess> {
+fn flatpak_ps(ctx: &impl ExecutionContextTrait) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak ps to cat.
     SysCommand::new("flatpak", ["ps", "--columns=application"]).run_with(ctx)?.as_success()
 }

@@ -11,6 +11,7 @@ pub enum KnownError {
     ActionGated(String),
     ActionNotImplementedYet(&'static str),
     ActionNotPossible(&'static str),
+    AddToSteamError(String),
     CommandLineParseError(clap::error::Error),
     ConfigParsing(serde_json::Error),
     ConfigRead(std::io::Error),
@@ -21,7 +22,7 @@ pub enum KnownError {
     NoAvailableActions(TrickID),
     ProviderNotImplemented(String),
     SeriousError(SeriousError),
-    UreqError(ureq::Error),
+    UreqError(Box<ureq::Error>),
     RawSystemFailureDONOTUSE(std::io::Error),
     SystemCommandFailed(Box<SysCommandResult>),
     SystemCommandParse(DynamicError),
@@ -33,6 +34,9 @@ pub enum KnownError {
 impl Display for KnownError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::AddToSteamError(msg) => {
+                write!(f, "Error adding to Steam: {msg}")
+            }
             Self::ConfigParsing(serde_json_err) => {
                 write!(f, "Error parsing config: {serde_json_err:?}")
             }
@@ -96,7 +100,7 @@ impl From<clap::error::Error> for KnownError {
 
 impl From<ureq::Error> for KnownError {
     fn from(e: ureq::Error) -> Self {
-        Self::UreqError(e)
+        Self::UreqError(Box::new(e))
     }
 }
 

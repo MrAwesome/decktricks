@@ -6,7 +6,7 @@ pub struct SimpleCommandProvider {
     pub trick_id: TrickID,
     pub command: String,
     pub args: Vec<String>,
-    pub ctx: ExecutionContext,
+    pub ctx: SpecificExecutionContext,
     pub running_instances: Vec<ProcessID>,
 }
 
@@ -15,7 +15,7 @@ impl SimpleCommandProvider {
         trick_id: TrickID,
         command: S,
         args: Vec<S>,
-        ctx: ExecutionContext,
+        ctx: SpecificExecutionContext,
         running_instances: Vec<ProcessID>,
     ) -> Self {
         Self {
@@ -41,7 +41,7 @@ impl ProviderChecks for SimpleCommandProvider {
     }
 
     fn is_installed(&self) -> bool {
-        false
+        true
     }
     fn is_runnable(&self) -> bool {
         true
@@ -58,8 +58,7 @@ impl ProviderChecks for SimpleCommandProvider {
     }
 
     fn is_addable_to_steam(&self) -> bool {
-        // For now, we'll assume these aren't commands people will want to run through Steam
-        false
+        self.is_installed()
     }
 }
 
@@ -88,8 +87,10 @@ impl ProviderActions for SimpleCommandProvider {
         not_possible("Simple commands cannot be installed!")
     }
 
-    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
-        not_implemented("Simple commands cannot be added to Steam yet.")
+    fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
+        add_to_steam(&AddToSteamTarget::Specific(AddToSteamContext::try_from(
+            &self.ctx.trick,
+        )?))
     }
 }
 
@@ -107,7 +108,7 @@ mod tests {
 
     #[test]
     fn basic_expectations() {
-        let ctx = ExecutionContext::test();
+        let ctx = SpecificExecutionContext::test(Trick::test());
 
         let sc = SimpleCommandProvider::new(
             "echo-lol".into(),
@@ -117,10 +118,10 @@ mod tests {
             Vec::default(),
         );
         assert!(!sc.is_installable());
-        assert!(!sc.is_installed());
+        assert!(sc.is_installed());
         assert!(sc.is_runnable());
         assert!(!sc.is_running());
-        assert!(!sc.is_addable_to_steam());
+        assert!(sc.is_addable_to_steam());
     }
 
     #[test]
@@ -138,7 +139,8 @@ mod tests {
             ))
         });
 
-        let ctx = ExecutionContext::test_with(std::sync::Arc::new(mock));
+        let trick = Trick::test();
+        let ctx = SpecificExecutionContext::new(trick, std::sync::Arc::new(mock));
         let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, ctx, Vec::default());
         // TODO: generalize these to be default implementations?
 
@@ -153,9 +155,9 @@ mod tests {
         ));
         assert!(sc.kill().is_ok());
         assert!(matches!(sc.update(), Err(KnownError::ActionNotPossible(_))));
-        assert!(matches!(
-            sc.add_to_steam(AddToSteamContext::default()),
-            Err(KnownError::ActionNotImplementedYet(_))
-        ));
+        assert_eq!(
+            sc.add_to_steam().unwrap().get_message().unwrap(),
+            "Ran in test..."
+        );
     }
 }

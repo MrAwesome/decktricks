@@ -12,20 +12,20 @@ const EMUDECK_INSTALLER_TEMP_FILENAME: &str = "/tmp/emudeck_installer.sh";
 
 const EMUDECK_BINARY_NAME: &str = "EmuDeck.AppImage";
 
-fn get_emudeck_binary_path() -> String {
+pub(crate) fn get_emudeck_binary_path() -> String {
     format!("{}/Applications/{}", get_homedir(), EMUDECK_BINARY_NAME)
 }
 
 #[derive(Debug)]
 pub struct EmuDeckInstallerProvider {
-    ctx: ExecutionContext,
+    ctx: SpecificExecutionContext,
     emu_ctx: EmuDeckSystemContext,
 }
 
 impl EmuDeckInstallerProvider {
     #[must_use]
     pub(super) fn new(
-        ctx: ExecutionContext,
+        ctx: SpecificExecutionContext,
         emu_ctx: EmuDeckSystemContext,
     ) -> Self {
         Self {
@@ -46,7 +46,7 @@ impl EmuDeckSystemContext {
     /// # Errors
     ///
     /// Returns errors relating to running pgrep and checking file existence/permissions.
-    pub fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
         let (is_installed, running_main_pids, running_supplementary_pids) = 
             join_all!(
                 || exists_and_executable(ctx, &get_emudeck_binary_path()),
@@ -126,9 +126,10 @@ impl ProviderActions for EmuDeckInstallerProvider {
         kill_pids(&self.ctx, &self.emu_ctx.running_pids)
     }
 
-    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
-        // TODO: check
-        not_possible("EmuDeck is automatically added to Steam.")
+    fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
+        add_to_steam(&AddToSteamTarget::Specific(AddToSteamContext::try_from(
+            &self.ctx.trick,
+        )?))
     }
 }
 

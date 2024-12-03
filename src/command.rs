@@ -70,7 +70,6 @@ pub enum Action {
     },
     AddToSteam {
         #[clap(long)]
-        name: Option<String>,
         id: String,
     },
     Info {
@@ -106,6 +105,10 @@ pub enum Action {
     GatherContext,
     #[clap(hide = true)]
     RunSystemCommand { command: String, args: Option<Vec<String>> },
+    #[clap(hide = true)]
+    DebugSteamShortcuts {
+        filename: Option<String>,
+    },
 }
 
 impl Action {

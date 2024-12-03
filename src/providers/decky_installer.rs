@@ -9,14 +9,14 @@ const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 
 #[derive(Debug)]
 pub struct DeckyInstallerProvider {
-    ctx: ExecutionContext,
+    ctx: SpecificExecutionContext,
     decky_ctx: DeckySystemContext,
 }
 
 impl DeckyInstallerProvider {
     #[must_use]
     pub(super) fn new(
-        ctx: ExecutionContext,
+        ctx: SpecificExecutionContext,
         decky_ctx: DeckySystemContext,
     ) -> Self {
         Self {
@@ -33,7 +33,7 @@ pub struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    pub(crate) fn gather_with(ctx: &ExecutionContext) -> DeckResult<Self> {
+    pub(crate) fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
             || SysCommand::new("/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
                 .run_with(ctx),
@@ -111,7 +111,7 @@ impl ProviderActions for DeckyInstallerProvider {
         not_possible("Decky is not killable!")
     }
 
-    fn add_to_steam(&self, _steam_ctx: AddToSteamContext) -> DeckResult<ActionSuccess> {
+    fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
         not_possible("Decky is automatically added to Steam.")
     }
 }

@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use std::fmt::Display;
 
 const KNOWN_CI_ENV_VARS: &[&str] = &["CI", "GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
 
@@ -15,7 +16,7 @@ pub fn running_in_ci_container() -> bool {
 #[allow(clippy::unnecessary_wraps)]
 #[cfg(test)]
 pub(crate) fn run_remote_script(
-    _ctx: &ExecutionContext,
+    _ctx: &impl ExecutionContextTrait,
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
@@ -25,14 +26,14 @@ pub(crate) fn run_remote_script(
 
 #[cfg(not(test))]
 pub(crate) fn run_remote_script(
-    ctx: &ExecutionContext,
+    ctx: &impl ExecutionContextTrait,
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
-    use std::io::Write;
-    use ureq;
     use std::fs::File;
+    use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
+    use ureq;
 
     // TODO: make this and the operations below test-safe
     let data = ureq::get(url)
@@ -63,7 +64,7 @@ pub(crate) fn get_homedir() -> String {
     std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
 }
 
-pub(crate) fn exists_and_executable(ctx: &ExecutionContext, path: &str) -> bool {
+pub(crate) fn exists_and_executable(ctx: &impl ExecutionContextTrait, path: &str) -> bool {
     // Using this instead of rust-native code to piggyback on the test-friendliness of SysCommand
     let res = SysCommand::new("/bin/test", ["-x", path]).run_with(ctx);
 
@@ -74,7 +75,7 @@ pub(crate) fn exists_and_executable(ctx: &ExecutionContext, path: &str) -> bool 
 }
 
 pub(crate) fn get_running_pids_exact(
-    ctx: &ExecutionContext,
+    ctx: &impl ExecutionContextTrait,
     binary_name: &str,
 ) -> DeckResult<Vec<String>> {
     Ok(SysCommand::new("ps", ["-C", binary_name, "-o", "pid="])
@@ -86,7 +87,10 @@ pub(crate) fn get_running_pids_exact(
         .collect())
 }
 
-pub(crate) fn kill_pids(ctx: &ExecutionContext, pids: &[ProcessID]) -> DeckResult<ActionSuccess> {
+pub(crate) fn kill_pids(
+    ctx: &impl ExecutionContextTrait,
+    pids: &[ProcessID],
+) -> DeckResult<ActionSuccess> {
     let mut outputs = vec![];
     let string_pids: Vec<String> = pids.iter().map(ToString::to_string).collect();
     for pid in string_pids {
@@ -100,4 +104,21 @@ pub(crate) fn kill_pids(ctx: &ExecutionContext, pids: &[ProcessID]) -> DeckResul
     }
     let output = outputs.join("\n");
     success!(output)
+}
+
+#[cfg(test)]
+pub fn which<T: AsRef<std::ffi::OsStr> + Display>(binary_name: T) -> DeckResult<String> {
+    Ok(format!("/FAKE/PATH/IN/TEST/{binary_name}"))
+}
+
+#[cfg(not(test))]
+pub fn which<T: AsRef<std::ffi::OsStr> + Display>(binary_name: T) -> DeckResult<String> {
+    Ok(which::which(&binary_name)
+        .map_err(|e| {
+            KnownError::AddToSteamError(format!(
+                "Failed to find a binary matching {binary_name} in $PATH! Error: {e}"
+            ))
+        })?
+        .to_string_lossy()
+        .to_string())
 }

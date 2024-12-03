@@ -4,12 +4,12 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 #[derive(Debug, Clone)]
-pub(crate) enum SpecificAction {
+pub enum SpecificAction {
     Run { id: String },
     Install { id: String },
     Kill { id: String },
     Uninstall { id: String },
-    AddToSteam { name: Option<String>, id: String },
+    AddToSteam { id: String },
     // TODO: move Info to General, since it doesn't actually require a provider. Or should it?
     Info { id: String },
     Update { id: String },
@@ -117,20 +117,18 @@ impl SpecificAction {
 
     pub(crate) fn do_with(self, executor: &Executor) -> DeckResult<ActionSuccess> {
         let (loader, full_ctx, runner) = executor.get_pieces();
-        let ctx: ExecutionContext = ExecutionContext::general(runner.clone());
 
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
-        let provider = DynProvider::try_from((trick, &ctx, full_ctx))?;
+        let ctx = SpecificExecutionContext::new(trick.clone(), runner.clone());
+        let provider = DynTrickProvider::new(&ctx, full_ctx);
 
         if provider.can(&self) {
             match self {
                 Self::Install { .. } => provider.install(),
                 Self::Run { .. } => provider.run(),
                 Self::Uninstall { .. } => provider.uninstall(),
-                Self::AddToSteam { name, .. } => provider.add_to_steam(AddToSteamContext {
-                    _name: name,
-                }),
+                Self::AddToSteam { .. } => provider.add_to_steam(),
                 Self::Kill { .. } => provider.kill(),
                 Self::Update { .. } => provider.update(),
 
