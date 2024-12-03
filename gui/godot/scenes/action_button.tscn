@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://c562jfnhhmdwt"]
+[gd_scene load_steps=2 format=3 uid="uid://c562jfnhhmdwt"]
+
+[ext_resource type="Script" path="res://scripts/action_button.gd" id="1_js6u8"]
 
 [node name="ActionButton" type="Button"]
 offset_left = -100.0
@@ -6,3 +8,4 @@ offset_top = -100.0
 offset_right = -40.0
 offset_bottom = -86.0
 alignment = 0
+script = ExtResource("1_js6u8")
