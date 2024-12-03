@@ -181,10 +181,10 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
 
 #[cfg(test)]
 fn shortcut_eq(input: &Shortcut, expected: &Shortcut) {
-
     assert_eq!(input.order, expected.order);
-    // This is flaky, and doesn't matter much to us
-    //assert_eq!(input.app_id, expected.app_id);
+    // NOTE: this will fail to match in GitHub Actions
+    //       if the command paths in the config json do not match
+    assert_eq!(input.app_id, expected.app_id);
     assert_eq!(input.app_name, expected.app_name);
     assert_eq!(input.exe, expected.exe);
     assert_eq!(input.start_dir, expected.start_dir);

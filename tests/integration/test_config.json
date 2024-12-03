@@ -4,7 +4,7 @@
             "id": "print-HARBLGARBL",
             "provider_config": {
                 "type": "simple-command",
-                "command": "echo",
+                "command": "/usr/bin/echo",
                 "args": ["HARBLGARBL"]
             },
             "icon": "XXX",
