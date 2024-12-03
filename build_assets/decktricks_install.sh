@@ -12,6 +12,7 @@ tar xvf /tmp/decktricks.tar.xz
 ln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
 ./decktricks add-decktricks-to-steam
 
+set +x
 echo
 echo
 echo
@@ -21,3 +22,4 @@ echo "Successfully installed Decktricks! You can return to Game Mode now by doub
 echo
 echo "====================="
 echo
+set -x
