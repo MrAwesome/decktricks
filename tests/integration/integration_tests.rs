@@ -143,7 +143,7 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
     )?;
 
     let single_shortcut_file_content = std::fs::read(filename)?;
-    let expected_single_shortcut_file_content = std::fs::read("tests/integration/single_shortcut.vdf")?;
+    let expected_single_shortcut_file_content = std::fs::read("tests/integration/shortcut_single.vdf")?;
 
     let single_shortcuts = steam_shortcuts_util::parse_shortcuts(&single_shortcut_file_content)?;
     let expected_single_shortcuts = steam_shortcuts_util::parse_shortcuts(&expected_single_shortcut_file_content)?;
@@ -164,7 +164,7 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
     )?;
 
     let double_shortcut_file_content = std::fs::read(filename)?;
-    let expected_double_shortcut_file_content = std::fs::read("tests/integration/double_shortcut.vdf")?;
+    let expected_double_shortcut_file_content = std::fs::read("tests/integration/shortcut_double.vdf")?;
 
     let double_shortcuts = steam_shortcuts_util::parse_shortcuts(&double_shortcut_file_content)?;
     let expected_double_shortcuts = steam_shortcuts_util::parse_shortcuts(&expected_double_shortcut_file_content)?;

@@ -78,7 +78,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
 
             ProviderConfig::EmuDeckInstaller(_emudeck) => {
                 let exe = format!("\"{}\"", get_emudeck_binary_path());
-                let start_dir = get_homedir();
+                let start_dir = "/usr/bin".into();
                 let launch_options = String::default();
                 AddToSteamContext {
                     app_name,
@@ -95,7 +95,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
 
                 let exe = format!("\"{exe_unwrapped}\"");
 
-                let start_dir = cmd.execution_dir.unwrap_or_else(get_homedir);
+                let start_dir = cmd.execution_dir.unwrap_or_else(|| "/usr/bin".into());
 
                 let launch_options = match cmd.args {
                     Some(args) => args.join(" "),
