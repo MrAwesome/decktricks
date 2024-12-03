@@ -76,7 +76,7 @@ impl GeneralExecutionContext {
     }
 
     #[cfg(test)]
-    pub(crate) fn test() -> Self {
+    pub(crate) fn _test() -> Self {
         Self {
             log_channel: LogChannel::General,
             runner: Arc::new(MockTestActualRunner::new()),
