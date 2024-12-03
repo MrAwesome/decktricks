@@ -1,10 +1,13 @@
+use steam_shortcuts_util::Shortcut;
+use crate::decktricks_cli;
+use crate::integration::utils::run_cli_with_args;
 use crate::integration::utils::BINARY_NAME;
 use decktricks::prelude::DynamicError;
+use std::collections::HashMap;
 use std::{
     process::Command,
     time::{Duration, Instant},
 };
-use crate::decktricks_cli;
 
 // TODO:
 // [] install/uninstall flatpak (optional, with network)
@@ -80,22 +83,14 @@ fn test_config_exclusivity() -> Result<(), DynamicError> {
 
 #[test]
 fn broken_config_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks_cli![
-        "-c",
-        "tests/integration/broken_config.json",
-        "actions"
-    ];
+    let res = decktricks_cli!["-c", "tests/integration/broken_config.json", "actions"];
     assert!(res.is_err());
     Ok(())
 }
 
 #[test]
 fn missing_config_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks_cli![
-        "-c",
-        "tests/integration/jkfldjsaifdosaj.json",
-        "actions"
-    ];
+    let res = decktricks_cli!["-c", "tests/integration/jkfldjsaifdosaj.json", "actions"];
     assert!(res.is_err());
     Ok(())
 }
@@ -119,7 +114,6 @@ fn help_shown() -> Result<(), DynamicError> {
     Ok(())
 }
 
-
 #[test]
 fn bad_arg() -> Result<(), DynamicError> {
     let badarg_res = decktricks_cli!["--hosidahfodiash"];
@@ -127,4 +121,73 @@ fn bad_arg() -> Result<(), DynamicError> {
     let badarg_text = badarg_res.err().unwrap().to_string();
     assert!(badarg_text.contains("unexpected argument"));
     Ok(())
+}
+
+#[test]
+fn can_add_to_steam() -> Result<(), DynamicError> {
+    let file = tempfile::NamedTempFile::new()?;
+    let filename = file.path().to_str().unwrap();
+
+    let envs = HashMap::from([(
+        "DECKTRICKS_OVERRIDE_STEAM_SHORTCUTS_FILE".into(),
+        filename.into(),
+    )]);
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-to-steam",
+            "print-HARBLGARBL",
+        ],
+        Some(envs.clone()),
+    )?;
+
+    let single_shortcut_file_content = std::fs::read(filename)?;
+    let expected_single_shortcut_file_content = std::fs::read("tests/integration/single_shortcut.vdf")?;
+
+    let single_shortcuts = steam_shortcuts_util::parse_shortcuts(&single_shortcut_file_content)?;
+    let expected_single_shortcuts = steam_shortcuts_util::parse_shortcuts(&expected_single_shortcut_file_content)?;
+
+    assert_eq!(single_shortcuts.len(), 1);
+    assert_eq!(expected_single_shortcuts.len(), 1);
+
+    shortcut_eq(&single_shortcuts[0], &expected_single_shortcuts[0]);
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-to-steam",
+            "test-package",
+        ],
+        Some(envs),
+    )?;
+
+    let double_shortcut_file_content = std::fs::read(filename)?;
+    let expected_double_shortcut_file_content = std::fs::read("tests/integration/double_shortcut.vdf")?;
+
+    let double_shortcuts = steam_shortcuts_util::parse_shortcuts(&double_shortcut_file_content)?;
+    let expected_double_shortcuts = steam_shortcuts_util::parse_shortcuts(&expected_double_shortcut_file_content)?;
+
+    assert_eq!(double_shortcuts.len(), 2);
+    assert_eq!(expected_double_shortcuts.len(), 2);
+
+    shortcut_eq(&double_shortcuts[0], &expected_double_shortcuts[0]);
+
+    file.close()?;
+
+    Ok(())
+}
+
+#[cfg(test)]
+fn shortcut_eq(input: &Shortcut, expected: &Shortcut) {
+
+    assert_eq!(input.order, expected.order);
+    assert_eq!(input.app_id, expected.app_id);
+    assert_eq!(input.app_name, expected.app_name);
+    assert_eq!(input.exe, expected.exe);
+    assert_eq!(input.start_dir, expected.start_dir);
+    assert_eq!(input.icon, expected.icon);
+    assert_eq!(input.launch_options, expected.launch_options);
+    assert_eq!(input.shortcut_path, expected.shortcut_path);
 }

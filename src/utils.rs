@@ -38,21 +38,36 @@ pub(crate) fn run_remote_script(
     // TODO: make this and the operations below test-safe
     let data = ureq::get(url)
         .call()
-        .map_err(KnownError::from)?
-        .into_string()?;
+        .map_err(|e| {
+            KnownError::RemoteScriptError(format!("Failed downloading local script file: {e:#?}"))
+        })?
+        .into_string()
+        .map_err(|e| {
+            KnownError::RemoteScriptError(format!("Failed stringifying local script file: {e:#?}"))
+        })?;
     // let response = reqwest::blocking::get(url).map_err(KnownError::from)?;
     // let data = response.bytes()?.as_ref();
 
     // These are in blocks to ensure that files are closed out
     // before attempting to do further changes
     {
-        let mut dest = File::create(local_filename)?;
-        write!(&mut dest, "{data}")?;
+        let mut dest = File::create(local_filename).map_err(|e| {
+            KnownError::RemoteScriptError(format!("Failed to create local script file: {e:#?}"))
+        })?;
+        write!(&mut dest, "{data}").map_err(|e| {
+            KnownError::RemoteScriptError(format!("Failed to write local script file: {e:#?}"))
+        })?;
         //copy(&mut response.into_reader().take(10_000_000).?, &mut dest)?;
     };
 
     {
-        std::fs::set_permissions(local_filename, std::fs::Permissions::from_mode(0o755))?;
+        std::fs::set_permissions(local_filename, std::fs::Permissions::from_mode(0o755)).map_err(
+            |e| {
+                KnownError::RemoteScriptError(format!(
+                    "Failed to set permissions for local script file: {e:#?}"
+                ))
+            },
+        )?;
     }
 
     SysCommand::new_no_args(local_filename)

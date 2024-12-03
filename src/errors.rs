@@ -21,9 +21,9 @@ pub enum KnownError {
     LoggerInitializationFail(log::SetLoggerError),
     NoAvailableActions(TrickID),
     ProviderNotImplemented(String),
+    //RawSystemFailure(std::io::Error),
+    RemoteScriptError(String),
     SeriousError(SeriousError),
-    UreqError(Box<ureq::Error>),
-    RawSystemFailureDONOTUSE(std::io::Error),
     SystemCommandFailed(Box<SysCommandResult>),
     SystemCommandParse(DynamicError),
     SystemCommandRunFailure(Box<SysCommandRunError>),
@@ -54,9 +54,6 @@ impl Display for KnownError {
             Self::LoggerInitializationFail(logger_err) => {
                 write!(f, "Logger initialization failure: {logger_err:#?}")
             }
-            Self::UreqError(ureq_failure) => {
-                write!(f, "Error fetching with ureq: {ureq_failure:#?}")
-            }
             Self::SeriousError(serious_err) => write!(f, "{serious_err}"),
             Self::SystemCommandParse(sys_parse_err) => {
                 write!(f, "Error parsing system command: {sys_parse_err:#?}")
@@ -67,8 +64,11 @@ impl Display for KnownError {
             Self::SystemCommandFailed(output) => {
                 write!(f, "System command failed: {output:?}")
             }
-            Self::RawSystemFailureDONOTUSE(output) => {
-                write!(f, "System command error: {output:?}")
+            //            Self::RawSystemFailure(output) => {
+            //                write!(f, "System command error: {output:?}")
+            //            }
+            Self::RemoteScriptError(output) => {
+                write!(f, "Error while fetching remote script: {output}")
             }
             Self::UnknownTrickID(trick_id) => write!(f, "Unknown trick ID: {trick_id}"),
             Self::NoAvailableActions(trick_id) => write!(
@@ -98,17 +98,11 @@ impl From<clap::error::Error> for KnownError {
     }
 }
 
-impl From<ureq::Error> for KnownError {
-    fn from(e: ureq::Error) -> Self {
-        Self::UreqError(Box::new(e))
-    }
-}
-
-impl From<std::io::Error> for KnownError {
-    fn from(e: std::io::Error) -> Self {
-        Self::RawSystemFailureDONOTUSE(e)
-    }
-}
+//impl From<std::io::Error> for KnownError {
+//    fn from(e: std::io::Error) -> Self {
+//        Self::RawSystemFailure(e)
+//    }
+//}
 
 #[derive(Debug)]
 pub struct DecktricksError {

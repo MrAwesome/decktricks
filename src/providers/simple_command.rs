@@ -35,11 +35,11 @@ impl ProviderChecks for SimpleCommandProvider {
         // These are meant to be simple system commands which are always known to be installed
         false
     }
-
     fn is_uninstallable(&self) -> bool {
         false
     }
-
+    // Can use which in gather system context for each known simplecommandprovider,
+    // but it's probably better to rely on always_present_on_steamdeck in most cases instead
     fn is_installed(&self) -> bool {
         true
     }
@@ -52,11 +52,9 @@ impl ProviderChecks for SimpleCommandProvider {
     fn is_killable(&self) -> bool {
         self.is_running()
     }
-
     fn is_updateable(&self) -> bool {
         false
     }
-
     fn is_addable_to_steam(&self) -> bool {
         self.is_installed()
     }
@@ -110,13 +108,8 @@ mod tests {
     fn basic_expectations() {
         let ctx = SpecificExecutionContext::test(Trick::test());
 
-        let sc = SimpleCommandProvider::new(
-            "echo-lol".into(),
-            "echo",
-            vec!["lol"],
-            ctx,
-            Vec::default(),
-        );
+        let sc =
+            SimpleCommandProvider::new("echo-lol".into(), "echo", vec!["lol"], ctx, Vec::default());
         assert!(!sc.is_installable());
         assert!(sc.is_installed());
         assert!(sc.is_runnable());

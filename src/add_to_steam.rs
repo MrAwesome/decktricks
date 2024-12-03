@@ -1,13 +1,12 @@
-use std::collections::HashMap;
 use crate::prelude::*;
 use crate::providers::emudeck_installer::get_emudeck_binary_path;
 use crate::utils::{get_homedir, which};
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 use steam_shortcuts_util::parse_shortcuts;
 use steam_shortcuts_util::shortcut::{Shortcut, ShortcutOwned};
 use steam_shortcuts_util::shortcuts_to_bytes;
-
 
 // TODO: gate in tests
 
@@ -19,7 +18,9 @@ pub enum AddToSteamTarget {
 
 impl Display for AddToSteamTarget {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}",
+        write!(
+            f,
+            "{}",
             match self {
                 Self::Decktricks => "Decktricks",
                 Self::Specific(ctx) => ctx.app_name.as_ref(),
@@ -94,7 +95,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
 
                 let exe = format!("\"{exe_unwrapped}\"");
 
-                let start_dir = cmd.execution_dir.unwrap_or_default();
+                let start_dir = cmd.execution_dir.unwrap_or_else(get_homedir);
 
                 let launch_options = match cmd.args {
                     Some(args) => args.join(" "),
@@ -152,14 +153,27 @@ fn get_steam_userids(userdata_path: &str) -> DeckResult<Vec<String>> {
     }
 }
 
-fn get_current_shortcuts(filename: &str) -> DeckResult<Vec<ShortcutOwned>> {
-    let content = std::fs::read(filename)?;
-    let shortcuts = parse_shortcuts(content.as_slice())
-        .map_err(KnownError::AddToSteamError)?
-        .iter()
-        .map(Shortcut::to_owned)
-        .collect();
-    Ok(shortcuts)
+fn get_current_shortcuts(filename: &str, fail_if_not_found: bool) -> DeckResult<Vec<ShortcutOwned>> {
+    let content = match std::fs::read(filename) {
+        Ok(content) => content,
+        Err(err) => {
+            if fail_if_not_found {
+                Err(err)
+                    .map_err(|e| KnownError::AddToSteamError(format!("Failed to read shortcuts from {filename}: {e:#?}")))?
+            } else {
+                return Ok(Vec::<ShortcutOwned>::default())
+            }
+        },
+    };
+    if content.is_empty() {
+        Ok(Vec::<ShortcutOwned>::default())
+    } else {
+        Ok(parse_shortcuts(content.as_slice())
+            .map_err(|e| KnownError::AddToSteamError(format!("Error parsing shortcuts from {filename}: {e:#?}")))?
+            .iter()
+            .map(Shortcut::to_owned)
+            .collect())
+    }
 }
 
 fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
@@ -191,6 +205,39 @@ fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
     new_shortcut.to_owned()
 }
 
+fn create_specific_shortcut(desired_order_num: &str, sctx: &AddToSteamContext) -> ShortcutOwned {
+    let app_name = &sctx.app_name;
+    let exe = &sctx.exe;
+    let start_dir = &sctx.start_dir;
+    let icon = &sctx.icon;
+    // Is there any advantage to setting this?
+    let shortcut_path = &sctx.shortcut_path;
+    let launch_options = &sctx.launch_options;
+
+    let mut new_shortcut = Shortcut::new(
+        desired_order_num,
+        app_name,
+        exe,
+        start_dir,
+        icon,
+        shortcut_path,
+        launch_options,
+    );
+
+    // Set the last play time to now, so that Decktricks (or any program?) shows up
+    // first/early in the launcher
+    new_shortcut.last_play_time = get_unix_time();
+
+    new_shortcut.to_owned()
+}
+
+fn create_shortcut(target: &AddToSteamTarget, desired_order_num: &str) -> ShortcutOwned {
+    match target {
+        AddToSteamTarget::Decktricks => create_decktricks_shortcut(desired_order_num),
+        AddToSteamTarget::Specific(sctx) => create_specific_shortcut(desired_order_num, sctx),
+    }
+}
+
 // Return the highest order num in the file, plus one
 fn get_desired_order_num(shortcuts: &[ShortcutOwned]) -> String {
     match shortcuts
@@ -205,27 +252,35 @@ fn get_desired_order_num(shortcuts: &[ShortcutOwned]) -> String {
     {
         Some(max) => max + 1,
         None => 0,
-    }.to_string()
+    }
+    .to_string()
 }
 
 fn write_shortcuts_to_disk(path: &str, shortcuts: &[ShortcutOwned]) -> DeckResult<()> {
     let shortcut_bytes_vec = shortcuts_to_bytes(&shortcuts.iter().map(|s| s.borrow()).collect());
-    std::fs::write(path, &shortcut_bytes_vec)?;
+    std::fs::write(path, &shortcut_bytes_vec)
+        .map_err(|e| KnownError::AddToSteamError(format!("Failed to write shortcuts to disk: {e:#?}")))?;
     Ok(())
 }
 
-pub(crate) fn get_shortcuts(filename: Option<String>) -> DeckResult<HashMap<String, Vec<ShortcutOwned>>> {
+pub(crate) fn get_shortcuts(
+    mut filename: Option<String>,
+    fail_if_not_found: bool,
+) -> DeckResult<HashMap<String, Vec<ShortcutOwned>>> {
+    let override_filename = std::env::var("DECKTRICKS_OVERRIDE_STEAM_SHORTCUTS_FILE");
+    if let Ok(fname) = override_filename {
+        filename = Some(fname);
+    }
+
     if let Some(filename) = filename {
-        let shortcuts = get_current_shortcuts(&filename)?;
-        Ok(HashMap::from(
-            [(filename, shortcuts)]
-        ))
+        let shortcuts = get_current_shortcuts(&filename, fail_if_not_found)?;
+        Ok(HashMap::from([(filename, shortcuts)]))
     } else {
         let userdata_path = &get_userdata_path();
         let mut map = HashMap::new();
         for ref steam_userid in get_steam_userids(userdata_path)? {
             let filename = format!("{userdata_path}/{steam_userid}/config/shortcuts.vdf");
-            let shortcuts = get_current_shortcuts(&filename)?;
+            let shortcuts = get_current_shortcuts(&filename, fail_if_not_found)?;
             map.insert(filename, shortcuts);
         }
         Ok(map)
@@ -246,16 +301,15 @@ pub fn add_to_steam(_target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
 }
 
 pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
-    for (filename, mut shortcuts) in get_shortcuts(None)? {
+    for (filename, mut shortcuts) in get_shortcuts(None, false)? {
         let desired_order_num = get_desired_order_num(&shortcuts);
-        let new_shortcut = create_decktricks_shortcut(desired_order_num.as_ref());
+        let new_shortcut = create_shortcut(target, desired_order_num.as_ref());
         shortcuts.push(new_shortcut);
         write_shortcuts_to_disk(&filename, &shortcuts)?;
     }
     success!("Successfully added \"{}\" to Steam.", target)
 }
 
-
 pub(crate) fn debug_steam_shortcuts(filename: Option<String>) -> DeckResult<ActionSuccess> {
-    success!(format!("{:#?}", get_shortcuts(filename)))
+    success!(format!("{:#?}", get_shortcuts(filename, true)?))
 }

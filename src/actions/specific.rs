@@ -109,7 +109,7 @@ impl SpecificAction {
             | Self::Kill { id }
             | Self::Info { id }
             | Self::Install { id }
-            | Self::AddToSteam { id, .. }
+            | Self::AddToSteam { id }
             | Self::Update { id }
             | Self::Uninstall { id } => id,
         }

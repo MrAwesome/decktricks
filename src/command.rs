@@ -69,7 +69,6 @@ pub enum Action {
         id: String,
     },
     AddToSteam {
-        #[clap(long)]
         id: String,
     },
     Info {
