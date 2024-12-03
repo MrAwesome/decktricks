@@ -158,7 +158,7 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
             "-c",
             "tests/integration/test_config.json",
             "add-to-steam",
-            "test-package",
+            "print-HARBLGARBL2",
         ],
         Some(envs),
     )?;

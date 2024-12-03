@@ -13,6 +13,18 @@
             "description": "HARBLWHARBLGARBLLLLL"
         },
         {
+            "id": "print-HARBLGARBL2",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "/usr/bin/echo",
+                "args": ["HARBLGARBL2"]
+            },
+            "icon": "XXX",
+            "tags": ["harblgarbl2"],
+            "display_name": "HARBLGARBLWHARBLGARBL2",
+            "description": "HARBLWHARBLGARBLLLLL2"
+        },
+        {
             "id": "test-package",
             "provider_config": {
                 "type": "flatpak",
