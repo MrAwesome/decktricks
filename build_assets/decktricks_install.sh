@@ -31,7 +31,7 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
 
     set +x
     for ((i=0; i<30; i++)); do
-        if ! pgrep steam > /dev/null; then
+        if ! pgrep steam.sh > /dev/null; then
             break
         fi
         echo "($i/30) Waiting for Steam to shut down..."

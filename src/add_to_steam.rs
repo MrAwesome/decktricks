@@ -10,6 +10,11 @@ use steam_shortcuts_util::shortcuts_to_bytes;
 
 const DECKTRICKS_FULL_APPID_FILENAME: &str = "/tmp/decktricks_newest_full_steam_appid";
 
+// TODO: Try to use tags (both for decktricks, and for trick-id, to remove/avoid duplicates)
+fn is_decktricks_shortcut(shortcut: &ShortcutOwned) -> bool {
+    shortcut.app_name == "Decktricks"
+}
+
 fn get_full_appid(appid_short: u32) -> u64 {
     let appid_long: u64 = (u64::from(appid_short) << 32) | 0x02_000_000;
     appid_long
@@ -321,8 +326,13 @@ pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess>
     for (filename, mut shortcuts) in get_shortcuts(None, false)? {
         let desired_order_num = get_desired_order_num(&shortcuts);
         let new_shortcut = create_shortcut(target, desired_order_num.as_ref());
-        newest_shortcut = Some(new_shortcut.clone());
-        shortcuts.push(new_shortcut);
+        if let AddToSteamTarget::Decktricks = target {
+            shortcuts.retain(|s| !is_decktricks_shortcut(s));
+
+            // Used for getting the full app_id below
+            newest_shortcut = Some(new_shortcut.clone());
+            shortcuts.push(new_shortcut);
+        }
         write_shortcuts_to_disk(&filename, &shortcuts)?;
     }
 
