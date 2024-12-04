@@ -132,6 +132,17 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
         "DECKTRICKS_OVERRIDE_STEAM_SHORTCUTS_FILE".into(),
         filename.into(),
     )]);
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-to-steam",
+            "print-HARBLGARBL",
+        ],
+        Some(envs.clone()),
+    )?;
+
     run_cli_with_args(
         vec![
             "-c",
@@ -160,6 +171,26 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
             "add-to-steam",
             "print-HARBLGARBL2",
         ],
+        Some(envs.clone()),
+    )?;
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-to-steam",
+            "print-HARBLGARBL2",
+        ],
+        Some(envs.clone()),
+    )?;
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-to-steam",
+            "print-HARBLGARBL2",
+        ],
         Some(envs),
     )?;
 
@@ -173,6 +204,73 @@ fn can_add_to_steam() -> Result<(), DynamicError> {
     assert_eq!(expected_double_shortcuts.len(), 2);
 
     shortcut_eq(&double_shortcuts[0], &expected_double_shortcuts[0]);
+
+    file.close()?;
+
+    Ok(())
+}
+
+#[test]
+fn add_decktricks_to_steam() -> Result<(), DynamicError> {
+    let file = tempfile::NamedTempFile::new()?;
+    let filename = file.path().to_str().unwrap();
+
+    let envs = HashMap::from([(
+        "DECKTRICKS_OVERRIDE_STEAM_SHORTCUTS_FILE".into(),
+        filename.into(),
+    )]);
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-to-steam",
+            "print-HARBLGARBL",
+        ],
+        Some(envs.clone()),
+    )?;
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-decktricks-to-steam",
+        ],
+        Some(envs.clone()),
+    )?;
+
+    let decktricks_and_echo_content = std::fs::read(filename)?;
+    let dae_shortcuts = steam_shortcuts_util::parse_shortcuts(&decktricks_and_echo_content)?;
+
+    assert_eq!(dae_shortcuts.len(), 2);
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-decktricks-to-steam",
+        ],
+        Some(envs.clone()),
+    )?;
+
+    run_cli_with_args(
+        vec![
+            "-c",
+            "tests/integration/test_config.json",
+            "add-decktricks-to-steam",
+        ],
+        Some(envs),
+    )?;
+
+    let multi_decktricks_and_echo_content = std::fs::read(filename)?;
+    let multi_dae_shortcuts = steam_shortcuts_util::parse_shortcuts(&multi_decktricks_and_echo_content)?;
+    assert_eq!(multi_dae_shortcuts.len(), 2);
+
+    let dt = &multi_dae_shortcuts[1];
+
+    assert_eq!(dt.app_name, "Decktricks");
+    assert!(dt.exe.ends_with(".local/share/decktricks/decktricks-gui.sh"));
+    assert!(dt.start_dir.ends_with(".local/share/decktricks"));
+    assert!(dt.tags.contains(&"decktricks"));
 
     file.close()?;
 

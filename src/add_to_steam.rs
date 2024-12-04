@@ -10,9 +10,15 @@ use steam_shortcuts_util::shortcuts_to_bytes;
 
 const DECKTRICKS_FULL_APPID_FILENAME: &str = "/tmp/decktricks_newest_full_steam_appid";
 
-// TODO: Try to use tags (both for decktricks, and for trick-id, to remove/avoid duplicates)
+static DECKTRICKS_NAME_STRING: std::sync::LazyLock<String> =
+    std::sync::LazyLock::new(|| "decktricks".to_string());
+
 fn is_decktricks_shortcut(shortcut: &ShortcutOwned) -> bool {
-    shortcut.app_name == "Decktricks"
+    shortcut.tags.contains(&DECKTRICKS_NAME_STRING)
+}
+
+fn is_existing_trick_shortcut(trick_tag: &String, shortcut: &ShortcutOwned) -> bool {
+    shortcut.tags.contains(trick_tag)
 }
 
 fn get_full_appid(appid_short: u32) -> u64 {
@@ -41,6 +47,7 @@ impl Display for AddToSteamTarget {
 
 #[derive(Debug, Default)]
 pub struct AddToSteamContext {
+    pub trick_id: String,
     pub app_name: String,
     pub exe: String,
     pub start_dir: String,
@@ -52,6 +59,7 @@ pub struct AddToSteamContext {
 impl TryFrom<&Trick> for AddToSteamContext {
     type Error = KnownError;
     fn try_from(trick: &Trick) -> Result<Self, Self::Error> {
+        let trick_id = trick.id.clone();
         // NOTE: `exe` can be in double quotes if you are worried about commands with spaces etc
         let app_name = trick.display_name.clone();
         let prov = trick.provider_config.clone();
@@ -73,6 +81,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                 let start_dir = "/usr/bin".into();
 
                 AddToSteamContext {
+                    trick_id,
                     app_name,
                     exe,
                     start_dir,
@@ -91,6 +100,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                 let start_dir = "/usr/bin".into();
                 let launch_options = String::default();
                 AddToSteamContext {
+                    trick_id,
                     app_name,
                     exe,
                     start_dir,
@@ -113,6 +123,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                 };
 
                 AddToSteamContext {
+                    trick_id,
                     app_name,
                     exe,
                     start_dir,
@@ -208,7 +219,7 @@ fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
     let shortcut_path = "";
     let launch_options = "";
 
-    let mut new_shortcut = Shortcut::new(
+    let mut decktricks_shortcut = Shortcut::new(
         desired_order_num,
         app_name,
         exe.as_ref(),
@@ -220,11 +231,13 @@ fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
 
     // Set the last play time to now, so that Decktricks (or any program?) shows up
     // first/early in the launcher
-    new_shortcut.last_play_time = get_unix_time();
+    // NOTE: This does not seem to work, hence the complicated steam restarts
+    //       in the installer
+    decktricks_shortcut.last_play_time = get_unix_time();
 
-    new_shortcut.tags = vec!["decktricks"];
+    decktricks_shortcut.tags = vec!["decktricks"];
 
-    new_shortcut.to_owned()
+    decktricks_shortcut.to_owned()
 }
 
 fn create_specific_shortcut(desired_order_num: &str, sctx: &AddToSteamContext) -> ShortcutOwned {
@@ -236,7 +249,7 @@ fn create_specific_shortcut(desired_order_num: &str, sctx: &AddToSteamContext) -
     let shortcut_path = &sctx.shortcut_path;
     let launch_options = &sctx.launch_options;
 
-    let mut new_shortcut = Shortcut::new(
+    let mut specific_shortcut = Shortcut::new(
         desired_order_num,
         app_name,
         exe,
@@ -248,9 +261,14 @@ fn create_specific_shortcut(desired_order_num: &str, sctx: &AddToSteamContext) -
 
     // Set the last play time to now, so that Decktricks (or any program?) shows up
     // first/early in the launcher
-    new_shortcut.last_play_time = get_unix_time();
+    // NOTE: This does not seem to work, hence the complicated steam restarts
+    //       in the installer
+    specific_shortcut.last_play_time = get_unix_time();
 
-    new_shortcut.to_owned()
+    let tag = format!("decktricks-{}", sctx.trick_id);
+    specific_shortcut.tags = vec![tag.as_ref()];
+
+    specific_shortcut.to_owned()
 }
 
 fn create_shortcut(target: &AddToSteamTarget, desired_order_num: &str) -> ShortcutOwned {
@@ -325,10 +343,19 @@ pub fn add_to_steam(_target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
 
 pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
     let mut newest_shortcut = None;
+    // In all likelihood, this will only ever run once. But since we don't know the
+    // steam userid of the current user, we hedge our bets and add the shortcut to
+    // all steam users present on the system.
     for (filename, mut shortcuts) in get_shortcuts(None, false)? {
         // Trim out existing Decktricks shortcuts
-        if let AddToSteamTarget::Decktricks = target {
-            shortcuts.retain(|s| !is_decktricks_shortcut(s));
+        match target {
+            AddToSteamTarget::Decktricks => {
+                shortcuts.retain(|s| !is_decktricks_shortcut(s));
+            } 
+            AddToSteamTarget::Specific(sctx) => {
+                let trick_tag = format!("decktricks-{}", sctx.trick_id);
+                shortcuts.retain(|s| !is_existing_trick_shortcut(&trick_tag, s));
+            }
         }
 
         let desired_order_num = get_desired_order_num(&shortcuts);
@@ -336,6 +363,7 @@ pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess>
 
         // Used for getting the full app_id below
         newest_shortcut = Some(new_shortcut.clone());
+
         shortcuts.push(new_shortcut);
         write_shortcuts_to_disk(&filename, &shortcuts)?;
     }

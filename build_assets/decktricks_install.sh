@@ -1,8 +1,9 @@
 #!/bin/bash
 
 set -euxo pipefail
-
 ERROR=0
+
+xdotool getwindowfocus windowstate --add ABOVE || true
 
 curl -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz"
 
@@ -30,12 +31,12 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
     steam -shutdown &> /dev/null || true
 
     set +x
-    for ((i=0; i<30; i++)); do
-        if ! pgrep steam.sh > /dev/null; then
+    for ((i=0; i<45; i++)); do
+        echo "($i/45) Waiting for Steam to shut down..."
+        sleep 1
+        if ! pgrep -x steam > /dev/null; then
             break
         fi
-        echo "($i/30) Waiting for Steam to shut down..."
-        sleep 1
     done
     set -x
 
@@ -43,7 +44,6 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
 
     nohup steam "steam://rungameid/$DECKTRICKS_FULL_APPID" &> /dev/null &
 
-    # TODO: wait for steam to launch, wait for decktricks to launch, then restart
     rm -f /tmp/decktricks_only_init
     touch /tmp/decktricks_only_init
 

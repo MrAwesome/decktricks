@@ -1,7 +1,7 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
-Name=Install Decktricks
-Exec=bash -xc '(curl -f -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks_install.sh" && bash -x /tmp/decktricks_install.sh) || ( set +x; echo "======="; echo; echo "[ERROR] Failed to install decktricks! Are you connected to the Internet? If this looks like a bug, please report it at: https://github.com/MrAwesome/decktricks/issues"); read'
+Name=Install Decktrick
+Exec=bash -xo pipefail -c '(curl -f -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks_install.sh" && bash -x /tmp/decktricks_install.sh) || ( set +x; echo "======="; echo; echo "[ERROR] Failed to install decktricks! Are you connected to the Internet? If this looks like a bug, please report it at: https://github.com/MrAwesome/decktricks/issues"); read'
 Icon=steamdeck-gaming-return
 Terminal=true
 Type=Application
