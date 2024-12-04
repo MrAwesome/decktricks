@@ -127,6 +127,7 @@ jobs:
           prerelease: true
           name: Latest RC
           tag_name: latest
+          make_latest: false
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
             /tmp/artifacts/verified-gui-tar/decktricks.tar.xz

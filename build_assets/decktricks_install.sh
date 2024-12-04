@@ -32,8 +32,11 @@ EOF
 cat << EOF
 =====================
 
-Successfully installed Decktricks! You can return to Game Mode now by
+Decktricks is installed! You can return to Game Mode now by
 double-clicking the "Return to Gaming Mode" icon on the desktop.
+
+You can also run Decktricks now by double-clicking the
+"Decktricks" icon on the desktop.
 
 Decktricks will be available in Steam after you return to Game Mode,
 restart Steam, or restart your Deck.
@@ -43,7 +46,5 @@ until you see it. Enjoy!
 
 =====================
 EOF
-
-# TODO: restart steam and run the non-steam game by hand here to make it show up first in game mode?
 
 set -x

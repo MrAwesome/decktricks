@@ -31,7 +31,7 @@ jobs:
         with:
           fail_on_unmatched_files: true
           prerelease: false
-          make_latest: true
+          make_latest: false
           name: Decktricks Stable
           tag_name: stable
           files: |
