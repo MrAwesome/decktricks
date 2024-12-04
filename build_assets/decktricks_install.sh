@@ -12,8 +12,10 @@ tar xvf /tmp/decktricks.tar.xz
 ln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
 
 set +x 
+ADDED_TO_STEAM=1
 echo "+ ./decktricks add-decktricks-to-steam"
 ./decktricks add-decktricks-to-steam || {
+    ADDED_TO_STEAM=0
     cat <<EOF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Failed to add Decktricks to Steam! This is most likely because
@@ -67,15 +69,18 @@ until you see it. Enjoy!
 =====================
 EOF
 
-echo
-echo "Will restart to Game Mode in 10 seconds unless you close this window..."
-sleep 10
-# Try to use the desktop file, and run a (possibly old) return to game mode command if it's not present
-if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
-    CMD=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
-    $CMD
-else
-    qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+if [[ "$ERROR" != "1" ]]; then
+    echo
+    echo "Will restart to Game Mode in 10 seconds unless you close this window..."
+    sleep 10
+    # Try to use the desktop file, and run a (possibly old) return to game mode command if it's not present
+    set +x
+    if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
+        CMD=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
+        $CMD
+    else
+        qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+    fi
 fi
 
 set -x
