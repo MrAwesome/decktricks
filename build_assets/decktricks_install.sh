@@ -30,25 +30,40 @@ In SteamOS (Steam Deck), you can add Decktricks to Steam easily:
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 EOF
 }
+set -x
 
-# TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam`
+# TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam` and use those here
 if [[ "$ADDED_TO_STEAM" == "1" ]]; then
     echo
     echo
     echo "Shutting down Steam, please wait..."
     steam -shutdown &> /dev/null || true
 
-    for ((i=0; i<15; i++)); do
+    for ((i=0; i<30; i++)); do
         if ! pgrep steam > /dev/null; then
             break
         fi
-        echo "($i/15) Waiting for Steam to shut down..."
+        echo "($i/30) Waiting for Steam to shut down..."
         sleep 1
     done
 
     DECKTRICKS_FULL_APPID=$(cat /tmp/decktricks_newest_full_steam_appid)
 
-    steam "steam://rungameid/$DECKTRICKS_FULL_APPID"
+    nohup steam "steam://rungameid/$DECKTRICKS_FULL_APPID" &> /dev/null &
+
+    # TODO: wait for steam to launch, wait for decktricks to launch, then restart
+    rm -f /tmp/decktricks_only_init
+    touch /tmp/decktricks_only_init
+
+    for ((i=0; i<30; i++)); do
+        if [[ ! -f /tmp/decktricks_only_init ]]; then
+            break
+        fi
+        # We're not actually installing anymore, just waiting on Decktricks to be
+        # placed first in the most recent games list
+        echo "($i/30) Waiting for Steam to finish installing Decktricks..."
+        sleep 1
+    done
 fi
 
 cat << EOF
