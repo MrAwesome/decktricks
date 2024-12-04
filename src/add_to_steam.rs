@@ -8,7 +8,10 @@ use steam_shortcuts_util::parse_shortcuts;
 use steam_shortcuts_util::shortcut::{Shortcut, ShortcutOwned};
 use steam_shortcuts_util::shortcuts_to_bytes;
 
-// TODO: gate in tests
+fn get_full_appid(appid_short: u32) -> u64 {
+    let appid_long: u64 = (u64::from(appid_short) << 32) | 0x02_000_000;
+    appid_long
+}
 
 #[derive(Debug)]
 pub enum AddToSteamTarget {
@@ -311,5 +314,13 @@ pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess>
 }
 
 pub(crate) fn debug_steam_shortcuts(filename: Option<String>) -> DeckResult<ActionSuccess> {
-    success!(format!("{:#?}", get_shortcuts(filename, true)?))
+    let mut outputs = Vec::<String>::default();
+    for (filename, shortcuts) in get_shortcuts(filename, true)? {
+        outputs.push(format!("{filename}: "));
+        for shortcut in shortcuts {
+            outputs.push(format!("{shortcut:#?}"));
+            outputs.push(format!("full_appid: {}\n\n", get_full_appid(shortcut.app_id)));
+        }
+    }
+    success!(outputs.join("\n"))
 }
