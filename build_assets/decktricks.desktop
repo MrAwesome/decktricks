@@ -1,7 +1,10 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
 Name=Decktricks
-Exec=bash -xc '$HOME/.local/share/decktricks/decktricks-gui'
+Exec=bash -xc '$HOME/.local/share/decktricks/decktricks-gui.sh'
 Icon=steamdeck-gaming-return
 Type=Application
-StartupNotify=false
+Terminal=false
+Type=Application
+Categories=Game
+Actions=Fullscreen;Standalone;
