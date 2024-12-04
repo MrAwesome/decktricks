@@ -29,6 +29,26 @@ In SteamOS (Steam Deck), you can add Decktricks to Steam easily:
 EOF
 }
 
+# TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam`
+if [[ "$ADDED_TO_STEAM" == "1" ]]; then
+    echo
+    echo
+    echo "Shutting down Steam, please wait..."
+    steam -shutdown &> /dev/null || true
+
+    for ((i=0; i<15; i++)); do
+        if ! pgrep steam > /dev/null; then
+            break
+        fi
+        echo "($i/15) Waiting for Steam to shut down..."
+        sleep 1
+    done
+
+    DECKTRICKS_FULL_APPID=$(cat /tmp/decktricks_newest_full_steam_appid)
+
+    steam "steam://rungameid/$DECKTRICKS_FULL_APPID"
+fi
+
 cat << EOF
 =====================
 
@@ -46,5 +66,16 @@ until you see it. Enjoy!
 
 =====================
 EOF
+
+echo
+echo "Will restart to Game Mode in 10 seconds unless you close this window..."
+sleep 10
+# Try to use the desktop file, and run a (possibly old) return to game mode command if it's not present
+if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
+    CMD=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
+    $CMD
+else
+    qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+fi
 
 set -x

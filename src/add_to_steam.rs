@@ -8,6 +8,8 @@ use steam_shortcuts_util::parse_shortcuts;
 use steam_shortcuts_util::shortcut::{Shortcut, ShortcutOwned};
 use steam_shortcuts_util::shortcuts_to_bytes;
 
+const DECKTRICKS_FULL_APPID_FILENAME: &str = "/tmp/decktricks_newest_full_steam_appid";
+
 fn get_full_appid(appid_short: u32) -> u64 {
     let appid_long: u64 = (u64::from(appid_short) << 32) | 0x02_000_000;
     appid_long
@@ -156,23 +158,33 @@ fn get_steam_userids(userdata_path: &str) -> DeckResult<Vec<String>> {
     }
 }
 
-fn get_current_shortcuts(filename: &str, fail_if_not_found: bool) -> DeckResult<Vec<ShortcutOwned>> {
+fn get_current_shortcuts(
+    filename: &str,
+    fail_if_not_found: bool,
+) -> DeckResult<Vec<ShortcutOwned>> {
     let content = match std::fs::read(filename) {
         Ok(content) => content,
         Err(err) => {
             if fail_if_not_found {
-                Err(err)
-                    .map_err(|e| KnownError::AddToSteamError(format!("Failed to read shortcuts from {filename}: {e:#?}")))?
+                Err(err).map_err(|e| {
+                    KnownError::AddToSteamError(format!(
+                        "Failed to read shortcuts from {filename}: {e:#?}"
+                    ))
+                })?
             } else {
-                return Ok(Vec::<ShortcutOwned>::default())
+                return Ok(Vec::<ShortcutOwned>::default());
             }
-        },
+        }
     };
     if content.is_empty() {
         Ok(Vec::<ShortcutOwned>::default())
     } else {
         Ok(parse_shortcuts(content.as_slice())
-            .map_err(|e| KnownError::AddToSteamError(format!("Error parsing shortcuts from {filename}: {e:#?}")))?
+            .map_err(|e| {
+                KnownError::AddToSteamError(format!(
+                    "Error parsing shortcuts from {filename}: {e:#?}"
+                ))
+            })?
             .iter()
             .map(Shortcut::to_owned)
             .collect())
@@ -261,8 +273,9 @@ fn get_desired_order_num(shortcuts: &[ShortcutOwned]) -> String {
 
 fn write_shortcuts_to_disk(path: &str, shortcuts: &[ShortcutOwned]) -> DeckResult<()> {
     let shortcut_bytes_vec = shortcuts_to_bytes(&shortcuts.iter().map(|s| s.borrow()).collect());
-    std::fs::write(path, &shortcut_bytes_vec)
-        .map_err(|e| KnownError::AddToSteamError(format!("Failed to write shortcuts to disk: {e:#?}")))?;
+    std::fs::write(path, &shortcut_bytes_vec).map_err(|e| {
+        KnownError::AddToSteamError(format!("Failed to write shortcuts to disk: {e:#?}"))
+    })?;
     Ok(())
 }
 
@@ -304,12 +317,34 @@ pub fn add_to_steam(_target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
 }
 
 pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
+    let mut newest_shortcut = None;
     for (filename, mut shortcuts) in get_shortcuts(None, false)? {
         let desired_order_num = get_desired_order_num(&shortcuts);
         let new_shortcut = create_shortcut(target, desired_order_num.as_ref());
+        newest_shortcut = Some(new_shortcut.clone());
         shortcuts.push(new_shortcut);
         write_shortcuts_to_disk(&filename, &shortcuts)?;
     }
+
+    if let AddToSteamTarget::Decktricks = target {
+        match newest_shortcut {
+            Some(shortcut) => {
+                std::fs::write(
+                    DECKTRICKS_FULL_APPID_FILENAME,
+                    format!("{}", get_full_appid(shortcut.app_id)),
+                )
+                .map_err(|e| {
+                    KnownError::AddToSteamError(format!(
+                        "Failed to write full appid to disk: {e:#?}"
+                    ))
+                })?;
+            }
+            None => Err(KnownError::AddToSteamError(
+                "Did not add Decktricks to Steam, so cannot write to file!".into(),
+            ))?,
+        };
+    };
+
     success!("Successfully added \"{}\" to Steam.", target)
 }
 
@@ -319,7 +354,10 @@ pub(crate) fn debug_steam_shortcuts(filename: Option<String>) -> DeckResult<Acti
         outputs.push(format!("{filename}: "));
         for shortcut in shortcuts {
             outputs.push(format!("{shortcut:#?}"));
-            outputs.push(format!("full_appid: {}\n\n", get_full_appid(shortcut.app_id)));
+            outputs.push(format!(
+                "full_appid: {}\n\n",
+                get_full_appid(shortcut.app_id)
+            ));
         }
     }
     success!(outputs.join("\n"))
