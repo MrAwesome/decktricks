@@ -222,6 +222,8 @@ fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
     // first/early in the launcher
     new_shortcut.last_play_time = get_unix_time();
 
+    new_shortcut.tags = vec!["decktricks"];
+
     new_shortcut.to_owned()
 }
 
@@ -324,15 +326,17 @@ pub fn add_to_steam(_target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
 pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess> {
     let mut newest_shortcut = None;
     for (filename, mut shortcuts) in get_shortcuts(None, false)? {
-        let desired_order_num = get_desired_order_num(&shortcuts);
-        let new_shortcut = create_shortcut(target, desired_order_num.as_ref());
+        // Trim out existing Decktricks shortcuts
         if let AddToSteamTarget::Decktricks = target {
             shortcuts.retain(|s| !is_decktricks_shortcut(s));
-
-            // Used for getting the full app_id below
-            newest_shortcut = Some(new_shortcut.clone());
-            shortcuts.push(new_shortcut);
         }
+
+        let desired_order_num = get_desired_order_num(&shortcuts);
+        let new_shortcut = create_shortcut(target, desired_order_num.as_ref());
+
+        // Used for getting the full app_id below
+        newest_shortcut = Some(new_shortcut.clone());
+        shortcuts.push(new_shortcut);
         write_shortcuts_to_disk(&filename, &shortcuts)?;
     }
 
