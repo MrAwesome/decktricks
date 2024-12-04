@@ -3,6 +3,7 @@
 set -euxo pipefail
 cd "$(dirname "$0")"
 
+LOGS_DIR="$HOME/.local/share/decktricks/logs/"
 TMP_INIT_FILE=/tmp/decktricks_only_init
 
 # When first running via Steam through the installer, we don't actually want to launch Decktricks,
@@ -14,4 +15,4 @@ fi
 
 # NOTE: any "critical background updates" code can be spawned off here using the cli, if desired
 
-./decktricks-gui "$@"
+./decktricks-gui "$@" 2>&1 > >(tee "$LOGS_DIR/stdout.log") 2> >(tee "$LOGS_DIR/stderr.log")
