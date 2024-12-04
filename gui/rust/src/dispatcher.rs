@@ -25,23 +25,23 @@ impl DecktricksDispatcher {
     fn actions(actions_json_string: GString);
     fn get_singleton() -> Gd<Object> {
         godot::classes::Engine::singleton()
-            .get_singleton(StringName::from("DecktricksDispatcher"))
+            .get_singleton(&StringName::from("DecktricksDispatcher"))
             .expect("Could not get DecktricksDispatcher singleton!")
     }
 
     #[func]
     fn sync_executor_refresh() {
-        Self::spawn_executor_refresh_inner(true, false)
+        Self::spawn_executor_refresh_inner(true, false);
     }
 
     #[func]
     fn async_executor_refresh() {
-        Self::spawn_executor_refresh_inner(false, false)
+        Self::spawn_executor_refresh_inner(false, false);
     }
 
     #[func]
     fn initialize_executor_with_lock() {
-        Self::spawn_executor_refresh_inner(false, true)
+        Self::spawn_executor_refresh_inner(false, true);
     }
 
     #[func]
@@ -54,10 +54,10 @@ impl DecktricksDispatcher {
     fn spawn_executor_refresh_inner(sync_run: bool, hold_write_lock: bool) {
         let lock = EXECUTOR_GUARD.clone();
         let task = move || {
-            let new_inner_arc: Arc<Option<Executor>> = if !hold_write_lock {
-                Arc::new(gather_new_executor())
-            } else {
+            let new_inner_arc: Arc<Option<Executor>> = if hold_write_lock {
                 Arc::new(None)
+            } else {
+                Arc::new(gather_new_executor())
             };
 
             match lock.write() {
@@ -139,7 +139,7 @@ impl DecktricksDispatcher {
 
                 if let Ok(actions_json_string) = maybe_actions {
                     let mut singleton = Self::get_singleton();
-                    singleton.emit_signal("actions".into(), &[Variant::from(actions_json_string)]);
+                    singleton.emit_signal(&StringName::from("actions"), &[Variant::from(actions_json_string)]);
                 }
             });
         }

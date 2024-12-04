@@ -23,12 +23,12 @@ impl IButton for ActionButton {
         let sender = self.sender.clone();
 
         let mut base = self.base_mut();
-        base.set_text(contents.into());
-        base.set_name(action.clone().into());
+        base.set_text(&GString::from(contents));
+        base.set_name(&GString::from(action.clone()));
 
         base.connect(
-            "focus_entered".into(),
-            Callable::from_fn("remember_focused_node", move |_| {
+            &StringName::from("focus_entered"),
+            &Callable::from_fn("remember_focused_node", move |_| {
                 if let Some(_sender) = sender.clone() {
                     //sender.send((action.clone(), trick_id.clone()));
                 }
@@ -60,9 +60,9 @@ impl ActionButton {
 }
 
 fn perform_button_action(action: &str, trick_id: &str) {
-    godot_print!("Taking action: {action} {trick_id}")
+    godot_print!("Taking action: {action} {trick_id}");
 }
 
-fn _store_focused_node(action: String, trick_id: String) {
-    godot_print!("STORING FOCUSED NODE: {action} {trick_id}")
+fn _store_focused_node(action: &str, trick_id: &str) {
+    godot_print!("STORING FOCUSED NODE: {action} {trick_id}");
 }

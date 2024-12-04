@@ -1,8 +1,6 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
-#![allow(clippy::result_large_err)]
 #![allow(clippy::missing_errors_doc)]
-#![allow(clippy::default_trait_access)]
 
 #[cfg(test)]
 decktricks_logging_init!();

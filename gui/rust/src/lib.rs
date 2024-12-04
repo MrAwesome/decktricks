@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
 use crate::dispatcher::DecktricksDispatcher;
 use godot::classes::Engine;
 use godot::prelude::*;
@@ -14,8 +16,8 @@ unsafe impl ExtensionLibrary for DecktricksGui {
             // The StringName identifies your singleton and can be
             // used later to access it.
             Engine::singleton().register_singleton(
-                StringName::from("DecktricksDispatcher"),
-                DecktricksDispatcher::new_alloc().upcast::<DecktricksDispatcher>(),
+                &StringName::from("DecktricksDispatcher"),
+                &DecktricksDispatcher::new_alloc().upcast::<DecktricksDispatcher>(),
             );
         }
     }
@@ -30,12 +32,12 @@ unsafe impl ExtensionLibrary for DecktricksGui {
             // as it has to be freed manually - unregistering singleton
             // doesn't do it automatically.
             let singleton = engine
-                .get_singleton(singleton_name.clone())
+                .get_singleton(&singleton_name)
                 .expect("cannot retrieve the singleton");
 
             // Unregistering singleton and freeing the object itself is needed
             // to avoid memory leaks and warnings, especially for hot reloading.
-            engine.unregister_singleton(singleton_name);
+            engine.unregister_singleton(&singleton_name);
             singleton.free();
         }
     }
