@@ -37,8 +37,8 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
     steam -shutdown &> /dev/null || true
 
     set +x
-    for ((i=0; i<45; i++)); do
-        echo "($i/45) Waiting for Steam to shut down..."
+    for ((i=0; i<60; i++)); do
+        echo "($i/60) Waiting for Steam to shut down..."
         sleep 1
         if ! pgrep -x steam > /dev/null; then
             break
@@ -54,13 +54,13 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
     touch /tmp/decktricks_only_init
 
     set +x
-    for ((i=0; i<45; i++)); do
+    for ((i=0; i<60; i++)); do
         if [[ ! -f /tmp/decktricks_only_init ]]; then
             break
         fi
         # We're not actually installing anymore, just waiting on Decktricks to be
         # placed first in the most recent games list
-        echo "($i/45) Waiting for Steam to finish installing Decktricks..."
+        echo "($i/60) Waiting for Steam to finish installing Decktricks..."
         sleep 1
     done
 fi
