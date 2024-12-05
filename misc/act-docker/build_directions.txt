@@ -1,0 +1,8 @@
+Release build of godot code: 
+scons platform=linux target=template_release tools=no optimize=size arch=x86_64 
+
+(?)
+scons module_webrtc_enabled=no module_websocket_enabled=no arch=x86_64 module_multiplayer_enabled=no
+
+Docker build:
+docker buildx build -t decktricks-act .
