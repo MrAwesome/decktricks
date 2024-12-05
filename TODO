@@ -1,3 +1,8 @@
+Documentation:
+    [] how to install on deck (with screenshots)
+    [] how to build using docker/act
+    [] prerequisites
+
 Logging overhaul:
     [] switch all providers to take trick id
     [] make logging system with categorization by LogChannel::TrickID(String) or LogChannel::All
@@ -34,7 +39,6 @@ Add to steam:
     [] xdpyinfo -display :1 
     [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
 [] test inputs in nested desktop mode
-[] fix --export-release
 [] design about page, settings page
 
 Settings:

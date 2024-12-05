@@ -80,6 +80,23 @@
             "description": "Stream games and other applications from another PC running Sunshine or GeForce Experience."
         },
         {
+            "id": "chiaki4deck",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "io.github.streetpea.Chiaki4deck"
+            },
+            "icon": "XXX",
+            "tags": [
+                "chiaki",
+                "ps5",
+                "ps4",
+                "playstation",
+                "streaming"
+            ],
+            "display_name": "Chiaki4Deck",
+            "description": "Playstation Remote Play client for Steam Deck"
+        },
+        {
             "id": "protonup-qt",
             "provider_config": {
                 "type": "flatpak",
