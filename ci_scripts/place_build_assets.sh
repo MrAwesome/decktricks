@@ -10,6 +10,6 @@ cd "$DECKTRICKS_REPO_ROOT"
 cp build_assets/* "$REPOBUILD"/inside_tar
 
 # Installer is separate for ease of download
-cp build_assets/decktricks_install.desktop "$REPOBUILD"
-cp build_assets/decktricks_install.sh "$REPOBUILD"
+cp build_assets/decktricks-install.desktop "$REPOBUILD"
+cp build_assets/decktricks-install.sh "$REPOBUILD"
 # }}}

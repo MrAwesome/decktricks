@@ -79,14 +79,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-installer-desktop
-          path: ./build/decktricks_install.desktop
+          path: ./build/decktricks-install.desktop
           if-no-files-found: error
 
       - name: Upload installer script
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-installer-script
-          path: ./build/decktricks_install.sh
+          path: ./build/decktricks-install.sh
           if-no-files-found: error
       # }}}
 
@@ -131,5 +131,5 @@ jobs:
           body: A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
           files: |
             /tmp/artifacts/verified-gui-tar/decktricks.tar.xz
-            /tmp/artifacts/verified-gui-installer-desktop/decktricks_install.desktop
-            /tmp/artifacts/verified-gui-installer-script/decktricks_install.sh
+            /tmp/artifacts/verified-gui-installer-desktop/decktricks-install.desktop
+            /tmp/artifacts/verified-gui-installer-script/decktricks-install.sh

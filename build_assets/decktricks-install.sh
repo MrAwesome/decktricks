@@ -3,6 +3,10 @@
 set -euxo pipefail
 ERROR=0
 
+restart_to_game_mode_manual() {
+    qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+}
+
 xdotool getwindowfocus windowstate --add ABOVE || true
 
 curl -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz"
@@ -25,9 +29,11 @@ set -x
 
 # TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam` and use those here
 if [[ "$ADDED_TO_STEAM" == "1" ]]; then
+    set +x
     echo
     echo
     echo "Shutting down Steam, please wait..."
+    set -x
     steam -shutdown &> /dev/null || true
 
     set +x
@@ -48,34 +54,16 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
     touch /tmp/decktricks_only_init
 
     set +x
-    for ((i=0; i<30; i++)); do
+    for ((i=0; i<45; i++)); do
         if [[ ! -f /tmp/decktricks_only_init ]]; then
             break
         fi
         # We're not actually installing anymore, just waiting on Decktricks to be
         # placed first in the most recent games list
-        echo "($i/30) Waiting for Steam to finish installing Decktricks..."
+        echo "($i/45) Waiting for Steam to finish installing Decktricks..."
         sleep 1
     done
 fi
-
-cat << EOF
-=====================
-
-Decktricks is installed! You can return to Game Mode now by
-double-clicking the "Return to Gaming Mode" icon on the desktop.
-
-You can also run Decktricks now by double-clicking the
-"Decktricks" icon on the desktop.
-
-Decktricks will be available in Steam after you return to Game Mode,
-restart Steam, or restart your Deck.
-
-Look for "Non-Steam Games" in your Library, press R1/right-bumper
-until you see it. Enjoy!
-
-=====================
-EOF
 
 if [[ "$ERROR" == "1" ]]; then
     if [[ "$ADDED_TO_STEAM" != "1" ]]; then
@@ -94,16 +82,29 @@ In SteamOS (Steam Deck), you can add Decktricks to Steam easily:
 EOF
     fi
 else
-    echo
-    echo "Will restart to Game Mode in 10 seconds unless you close this window..."
+
+cat << EOF
+=====================
+
+Decktricks is installed!
+
+Will restart to Game Mode in 10 seconds unless you close this window.
+
+To return to Game Mode yourself, just double-click
+the "Return to Gaming Mode" icon on the desktop.
+
+=====================
+EOF
+
     sleep 10
     # Try to use the desktop file, and run a (possibly old) return to game mode command if it's not present
+    # TODO: run the qdbus command also if CMD fails
     set -x
     if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
         CMD=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
-        $CMD
+        $CMD || restart_to_game_mode_manual
     else
-        qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+        restart_to_game_mode_manual
     fi
 fi
 
