@@ -29,22 +29,26 @@ set -x
 
 # TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam` and use those here
 if [[ "$ADDED_TO_STEAM" == "1" ]]; then
-    set +x
-    echo
-    echo
-    echo "Shutting down Steam, please wait..."
-    set -x
-    steam -shutdown &> /dev/null || true
+    if pgrep -x steam > /dev/null; then
+        set +x
+        echo
+        echo
+        echo "Shutting down Steam, please wait..."
+        echo
+        set -x
 
-    set +x
-    for ((i=0; i<60; i++)); do
-        echo "($i/60) Waiting for Steam to shut down..."
-        sleep 1
-        if ! pgrep -x steam > /dev/null; then
-            break
-        fi
-    done
-    set -x
+        steam -shutdown &> /dev/null || true
+
+        set +x
+        for ((i=0; i<60; i++)); do
+            echo "($i/60) Waiting for Steam to shut down..."
+            sleep 1
+            if ! pgrep -x steam > /dev/null; then
+                break
+            fi
+        done
+        set -x
+    fi
 
     DECKTRICKS_FULL_APPID=$(cat /tmp/decktricks_newest_full_steam_appid)
 
