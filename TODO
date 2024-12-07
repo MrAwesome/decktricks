@@ -232,6 +232,10 @@ systemctl is not accessible, and most relevant binaries probably won't be
 Potentially popular "support me and" features:
 [] "launch in nested desktop"
 
+Snippets:
+* Find XAUTHORITY over ssh: find /run/user/1000 -maxdepth 1 | xargs file | grep 'X11 Xauthority data' | sed 's/:.*//' | xargs ls -t | head -n 1
+* Launching in nested plasma: DISPLAY=:2 XAUTHORITY=/run/user/1000/nested_plasma/xauth_<.....>
+
 Tips:
 * Use STEAM+Rstick to move mouse, STEAM+R2/R1/L2/L1 to click
 

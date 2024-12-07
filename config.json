@@ -203,7 +203,7 @@
                 "commandline"
             ],
             "icon": "XXX",
-            "display_name": "Terminal",
+            "display_name": "Terminal (Konsole)",
             "description": "Terminal for typing system commands.",
             "always_present_on_steamdeck": true
         },
