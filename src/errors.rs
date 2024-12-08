@@ -6,6 +6,7 @@ use urlencoding::encode;
 pub type DeckResult<T> = Result<T, KnownError>;
 pub type DynamicError = Box<dyn std::error::Error + Send + Sync>;
 
+// TODO: make a constructor macro for these that snags file and line number where they originated?
 #[derive(Debug)]
 pub enum KnownError {
     ActionGated(String),
@@ -18,14 +19,13 @@ pub enum KnownError {
     DeckyInstall(DynamicError),
     EmuDeckInstall(DynamicError),
     ErrorDuringRun(&'static str),
-    LoggerInitializationFail(log::SetLoggerError),
     NoAvailableActions(TrickID),
     ProviderNotImplemented(String),
     //RawSystemFailure(std::io::Error),
     RemoteScriptError(String),
     SeriousError(SeriousError),
     SystemCommandFailed(Box<SysCommandResult>),
-    SystemCommandParse(DynamicError),
+    SystemCommandParse(String),
     SystemCommandRunFailure(Box<SysCommandRunError>),
     TestError(String),
     UnknownTrickID(TrickID),
@@ -50,9 +50,6 @@ impl Display for KnownError {
             }
             Self::EmuDeckInstall(emudeck_install_err) => {
                 write!(f, "Error installing EmuDeck: {emudeck_install_err:#?}")
-            }
-            Self::LoggerInitializationFail(logger_err) => {
-                write!(f, "Logger initialization failure: {logger_err:#?}")
             }
             Self::SeriousError(serious_err) => write!(f, "{serious_err}"),
             Self::SystemCommandParse(sys_parse_err) => {

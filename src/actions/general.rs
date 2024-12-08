@@ -206,12 +206,12 @@ fn get_all_available_actions(
 }
 
 fn internal_test_run_system_command(
-    ctx: &impl ExecutionContextTrait,
+    ctx: &impl ExecCtx,
     command: String,
     maybe_args: Option<Vec<String>>,
 ) -> DeckResult<ActionSuccess> {
     let real_args = maybe_args.unwrap_or_default();
-    SysCommand::new(command, real_args)
-        .run_with(ctx)?
+    SysCommand::new(ctx, command, real_args)
+        .run()?
         .as_success()
 }

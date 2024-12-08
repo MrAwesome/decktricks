@@ -2,6 +2,91 @@ use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
 use std::sync::Arc;
 
+pub trait ExecCtx: Clone + Send + Sync + Sized + Into<ExecutionContext> {
+    fn get_runner(&self) -> &RunnerRc;
+    fn get_log_channel(&self) -> &LogChannel;
+}
+
+#[derive(Debug, Clone)]
+pub enum ExecutionContext {
+    General(GeneralExecutionContext),
+    Specific(SpecificExecutionContext),
+}
+
+impl From<&ExecutionContext> for ExecutionContext {
+    fn from(val: &ExecutionContext) -> Self {
+        val.clone()
+    }
+}
+
+impl ExecCtx for ExecutionContext {
+    fn get_runner(&self) -> &RunnerRc {
+        match self {
+            Self::General(x) => x.get_runner(),
+            Self::Specific(x) => x.get_runner(),
+        }
+    }
+
+    fn get_log_channel(&self) -> &LogChannel {
+        match self {
+            Self::General(x) => x.get_log_channel(),
+            Self::Specific(x) => x.get_log_channel(),
+        }
+    }
+}
+
+impl ExecCtx for &ExecutionContext {
+    fn get_runner(&self) -> &RunnerRc {
+        match self {
+            ExecutionContext::General(x) => x.get_runner(),
+            ExecutionContext::Specific(x) => x.get_runner(),
+        }
+    }
+
+    fn get_log_channel(&self) -> &LogChannel {
+        match self {
+            ExecutionContext::General(x) => x.get_log_channel(),
+            ExecutionContext::Specific(x) => x.get_log_channel(),
+        }
+    }
+}
+
+// Export for unit tests in Godot
+#[cfg(test)]
+impl ExecutionContext {
+    pub(crate) fn general_for_test_with(runner: RunnerRc) -> Self {
+        Self::General(GeneralExecutionContext::new(runner))
+    }
+
+    pub(crate) fn general_for_test() -> Self {
+        Self::General(GeneralExecutionContext::test())
+    }
+}
+
+impl From<SpecificExecutionContext> for ExecutionContext {
+    fn from(val: SpecificExecutionContext) -> Self {
+        Self::Specific(val)
+    }
+}
+
+impl From<&SpecificExecutionContext> for ExecutionContext {
+    fn from(val: &SpecificExecutionContext) -> Self {
+        Self::Specific(val.clone())
+    }
+}
+
+impl From<GeneralExecutionContext> for ExecutionContext {
+    fn from(val: GeneralExecutionContext) -> Self {
+        Self::General(val)
+    }
+}
+
+impl From<&GeneralExecutionContext> for ExecutionContext {
+    fn from(val: &GeneralExecutionContext) -> Self {
+        Self::General(val.clone())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SpecificExecutionContext {
     // TODO: can default to "none", reserve that as special, and use to
@@ -21,12 +106,7 @@ pub struct GeneralExecutionContext {
     pub runner: RunnerRc,
 }
 
-pub trait ExecutionContextTrait: Send + Sync + Sized {
-    fn get_runner(&self) -> &RunnerRc;
-    fn get_log_channel(&self) -> &LogChannel;
-}
-
-impl ExecutionContextTrait for GeneralExecutionContext {
+impl ExecCtx for GeneralExecutionContext {
     fn get_runner(&self) -> &RunnerRc {
         &self.runner
     }
@@ -36,7 +116,7 @@ impl ExecutionContextTrait for GeneralExecutionContext {
     }
 }
 
-impl ExecutionContextTrait for SpecificExecutionContext {
+impl ExecCtx for SpecificExecutionContext {
     fn get_runner(&self) -> &RunnerRc {
         &self.runner
     }
@@ -75,8 +155,10 @@ impl GeneralExecutionContext {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn _test() -> Self {
+    // Export for unit tests in Godot
+    #[cfg(any(test, feature = "test"))]
+    #[must_use]
+    pub fn test() -> Self {
         Self {
             log_channel: LogChannel::General,
             runner: Arc::new(MockTestActualRunner::new()),
@@ -213,7 +295,7 @@ mod tests {
 
         let runner = Arc::new(mock);
 
-        let ctx = GeneralExecutionContext::new(runner.clone());
+        let ctx = ExecutionContext::general_for_test_with(runner.clone());
         let full_ctx = FullSystemContext::gather_with(&ctx)?;
 
         let executor = Executor::with(ExecutorMode::OnceOff, loader, full_ctx, runner);
@@ -285,7 +367,7 @@ mod tests {
         let cmd = "flatpak";
         let args = vec!["list", "--app", "--columns=application"];
         let returned_args = args.clone();
-        let arg = SysCommand::new(cmd, args);
+        let arg = SysCommand::new(&ExecutionContext::general_for_test(), cmd, args);
         mock.expect_run()
             .with(predicate::eq(arg))
             .returning(move |_| {

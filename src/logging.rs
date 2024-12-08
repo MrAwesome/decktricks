@@ -1,7 +1,19 @@
 use crate::prelude::StringType;
+use crate::prelude::*;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Hash)]
+#[macro_export(local_inner_macros)]
+macro_rules! decktricks_logging_init {
+    () => {
+        decktricks_logging_init!($crate::logging::DecktricksConsoleLogger);
+    };
+    ($logger:ty) => {
+        static CRATE_DECKTRICKS_LOGGER: std::sync::LazyLock<std::sync::Arc<$logger>> =
+            std::sync::LazyLock::new(|| std::sync::Arc::new(<$logger>::new()));
+    };
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum LogChannel {
     General,
     TrickID(String),
@@ -18,33 +30,17 @@ pub enum LogType {
 }
 
 pub trait DecktricksLogger {
-    fn actual_print<S: StringType>(&self, string: S);
-    fn actual_print_debug<S: StringType>(&self, string: S);
-    fn actual_print_error<S: StringType>(&self, string: S);
-    fn actual_print_info<S: StringType>(&self, string: S);
-    fn actual_print_warn<S: StringType>(&self, string: S);
-    fn decktricks_print_inner<S: StringType>(
-        &self,
-        log_type: LogType,
-        _channel: &LogChannel,
-        text: S,
-    ) {
-        let to_print = text;
-        match log_type {
-            LogType::Print => self.actual_print(to_print),
-            LogType::Debug => self.actual_print_debug(to_print),
-            LogType::Error => self.actual_print_error(to_print),
-            LogType::Info => self.actual_print_info(to_print),
-            LogType::Warn => self.actual_print_warn(to_print),
-        };
-    }
-}
+    fn actual_print<S: StringType>(&self, text: S);
+    fn actual_print_debug<S: StringType>(&self, text: S);
+    fn actual_print_error<S: StringType>(&self, text: S);
+    fn actual_print_info<S: StringType>(&self, text: S);
+    fn actual_print_warn<S: StringType>(&self, text: S);
+    fn store<S: StringType>(&self, ctx: &impl ExecCtx, text: S);
 
-pub trait DecktricksLoggerWithChannels: DecktricksLogger {
     fn decktricks_print_inner<S: StringType>(
         &self,
         log_type: LogType,
-        channel: &LogChannel,
+        ctx: &impl ExecCtx,
         text: S,
     ) {
         let to_print = text.clone();
@@ -56,10 +52,8 @@ pub trait DecktricksLoggerWithChannels: DecktricksLogger {
             LogType::Warn => self.actual_print_warn(to_print),
         };
 
-        self.store_in_channel(channel, text);
+        self.store(ctx, text);
     }
-
-    fn store_in_channel<S: StringType>(&self, channel: &LogChannel, string: S);
 }
 
 pub struct DecktricksConsoleLogger {}
@@ -78,53 +72,65 @@ impl DecktricksConsoleLogger {
 }
 
 impl DecktricksLogger for DecktricksConsoleLogger {
-    fn actual_print<S: StringType>(&self, string: S) {
-        println!("{string}");
+    fn actual_print<S: StringType>(&self, text: S) {
+        println!("{text}");
     }
-    fn actual_print_debug<S: StringType>(&self, string: S) {
-        eprintln!("{string}");
+
+    fn actual_print_debug<S: StringType>(&self, text: S) {
+        eprintln!("{text}");
     }
-    fn actual_print_error<S: StringType>(&self, string: S) {
-        eprintln!("{string}");
+
+    fn actual_print_error<S: StringType>(&self, text: S) {
+        eprintln!("{text}");
     }
-    fn actual_print_info<S: StringType>(&self, string: S) {
-        eprintln!("{string}");
+
+    fn actual_print_info<S: StringType>(&self, text: S) {
+        eprintln!("{text}");
     }
-    fn actual_print_warn<S: StringType>(&self, string: S) {
-        eprintln!("{string}");
+
+    fn actual_print_warn<S: StringType>(&self, text: S) {
+        eprintln!("{text}");
     }
+
+    fn store<S: StringType>(&self, _ctx: &impl ExecCtx, _text: S) {}
 }
 
 #[allow(clippy::crate_in_macro_def)] // This is desired, each crate should define its own logger
 #[macro_export(local_inner_macros)]
 macro_rules! inner_print {
-    ($logtype:expr, $channel:expr, $fmt:literal, $($arg:expr),*) => {
+    ($logtype:expr, $channel:expr, $fmt:literal $(, $args:expr )*) => {
+        let full_filename = ::std::file!();
+        let filename = full_filename.split_once("decktricks")
+            .map(|(_, s)| s.split_once("/")
+                .map(|(_, ss)| ss)
+                .unwrap_or(full_filename))
+            .unwrap_or(full_filename);
         crate::CRATE_DECKTRICKS_LOGGER.decktricks_print_inner(
-            $logtype,
+            $logtype.clone(),
             $channel,
             ::std::format!(
-                "[INFO] {}: {}:{} {}",
-                ::std::file!(),
+                "{}: {}:{} {}",
+                filename,
                 ::std::line!(),
                 ::std::column!(),
-                ::std::format!($fmt, $($arg)*)
+                ::std::format!($fmt, $($args)*)
             )
         )
     }
 }
 
 #[macro_export(local_inner_macros)]
-macro_rules! dt_info {
-    ($channel:expr, $fmt:literal, $($arg:expr),*) => {
+macro_rules! outer_print {
+    ($logtype:expr, $channel:expr, $fmt:literal $(, $args:expr )*) => {
         inner_print!(
-            $crate::logging::LogType::Info,
+            $logtype,
             $channel,
-            $fmt,
-            $($arg)*)
+            $fmt
+            $(, $args)*)
     };
-    ($channel:expr, $msg:expr) => {
+    ($logtype:expr, $channel:expr, $msg:expr) => {
         inner_print!(
-            $crate::logging::LogType::Info,
+            $logtype,
             $channel,
             "{}",
             $msg)
@@ -132,17 +138,52 @@ macro_rules! dt_info {
 }
 
 #[macro_export(local_inner_macros)]
-macro_rules! decktricks_logging_init {
-    () => {
-        decktricks_logging_init!($crate::logging::DecktricksConsoleLogger);
-    };
-    ($logger:ty) => {
-        static CRATE_DECKTRICKS_LOGGER: std::sync::LazyLock<std::sync::Arc<$logger>> =
-            std::sync::LazyLock::new(|| std::sync::Arc::new(<$logger>::new()));
+macro_rules! info {
+    ( $( $args:tt )* ) => {
+        outer_print!(
+            $crate::logging::LogType::Info,
+            $($args)*)
     };
 }
 
+#[macro_export(local_inner_macros)]
+macro_rules! debug {
+    ( $( $args:tt )* ) => {
+        outer_print!(
+            $crate::logging::LogType::Debug,
+            $($args)*)
+    };
+}
+
+#[macro_export(local_inner_macros)]
+macro_rules! warn {
+    ( $( $args:tt )* ) => {
+        outer_print!(
+            $crate::logging::LogType::Warn,
+            $($args)*)
+    };
+}
+
+#[macro_export(local_inner_macros)]
+macro_rules! error {
+    ( $( $args:tt )* ) => {
+        outer_print!(
+            $crate::logging::LogType::Error,
+            $($args)*)
+    };
+}
+
+#[macro_export(local_inner_macros)]
+macro_rules! dt_print {
+    ( $( $args:tt )* ) => {
+        outer_print!(
+            $crate::logging::LogType::Error,
+            $($args)*)
+    };
+}
+
+
 #[test]
 fn test_print_macros() {
-    dt_info!(&LogChannel::General, "{}", "lol");
+    info!(&ExecutionContext::general_for_test(), "{}", "lol");
 }

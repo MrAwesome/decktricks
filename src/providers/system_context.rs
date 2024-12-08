@@ -18,12 +18,12 @@ impl FullSystemContext {
     /// # Errors
     ///
     /// Can return system errors from trying to gather system information
-    pub fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx) = join_all!(
-            || DeckySystemContext::gather_with(ctx),
-            || FlatpakSystemContext::gather_with(ctx),
-            || RunningProgramSystemContext::gather_with(ctx),
-            || EmuDeckSystemContext::gather_with(ctx)
+            || DeckySystemContext::gather_with(&ctx.clone()),
+            || FlatpakSystemContext::gather_with(&ctx.clone()),
+            || RunningProgramSystemContext::gather_with(&ctx.clone()),
+            || EmuDeckSystemContext::gather_with(&ctx.clone())
         );
 
         Ok(Self {
@@ -44,7 +44,7 @@ impl RunningProgramSystemContext {
     /// # Errors
     ///
     /// Returns errors relating to finding, reading, and parsing files in /proc
-    pub fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         // This can be stored in an "initial system context" if needed
 
         let desired_string = format!("{PID_ENV_STRING}=");
@@ -67,11 +67,13 @@ impl RunningProgramSystemContext {
                                 .push(pid.into());
                         } else {
                             error!(
+                                ctx,
                                 "Expected pid, but did not find one. Command line: '''{line}'''"
                             );
                         }
                     } else {
                         error!(
+                            ctx,
                             "Expected trick ID, but did not find one. Command line: '''{line}'''"
                         );
                     }
@@ -85,24 +87,28 @@ impl RunningProgramSystemContext {
     }
 }
 
-fn get_procs_with_env(ctx: &impl ExecutionContextTrait) -> Option<String> {
+fn get_procs_with_env(ctx: &impl ExecCtx) -> Option<String> {
     // XXX: NOTE: we do not run this inside of containers in CI, as ps eww errors there.
     if running_in_ci_container() {
         return None;
     }
 
-    let run_res = SysCommand::new("/bin/ps", ["eww"]).run_with(ctx);
+    let run_res = SysCommand::new(ctx, "/bin/ps", ["eww"]).run();
 
     match run_res {
         Ok(res) => match res.as_success() {
             Ok(succ) => succ.get_message(),
             Err(err) => {
-                error!("Program error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
+                error!(
+                    ctx,
+                    "Program error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
                 None
             }
         },
         Err(err) => {
-            error!("Run error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
+            error!(
+                ctx,
+                "Run error running 'ps eww' to find running programs! Will fallback to blank output. Error: {err}");
             None
         }
     }

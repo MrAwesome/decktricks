@@ -1,3 +1,5 @@
+#![allow(clippy::needless_pass_by_value)]
+
 use decktricks::actions::SpecificActionID;
 use decktricks::prelude::*;
 use decktricks::rayon::spawn;
@@ -23,6 +25,7 @@ impl DecktricksDispatcher {
     // TODO: figure out how to send parsed tricksconfig?
     #[signal]
     fn actions(actions_json_string: GString);
+
     fn get_singleton() -> Gd<Object> {
         godot::classes::Engine::singleton()
             .get_singleton(&StringName::from("DecktricksDispatcher"))
@@ -103,9 +106,10 @@ impl DecktricksDispatcher {
         godot_print!("Running command synchronously with decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
-        Self::get_executor()
-            .map(|executor_ptr| run_with_decktricks(executor_ptr, args).unwrap_or("".into()))
-            .unwrap_or("".into())
+        Self::get_executor().map_or_else(
+            || "".into(),
+            |executor_ptr| run_with_decktricks(executor_ptr, args).unwrap_or_else(|()| "".into()),
+        )
     }
 
     #[func]
@@ -139,7 +143,10 @@ impl DecktricksDispatcher {
 
                 if let Ok(actions_json_string) = maybe_actions {
                     let mut singleton = Self::get_singleton();
-                    singleton.emit_signal(&StringName::from("actions"), &[Variant::from(actions_json_string)]);
+                    singleton.emit_signal(
+                        &StringName::from("actions"),
+                        &[Variant::from(actions_json_string)],
+                    );
                 }
             });
         }
@@ -156,7 +163,7 @@ impl DecktricksDispatcher {
 fn gargs_to_args(gargs: Array<GString>) -> Vec<String> {
     let vecgargs: Vec<GString> = (&gargs).into();
 
-    vecgargs.into_iter().map(|arg| arg.into()).collect()
+    vecgargs.into_iter().map(Into::into).collect()
 }
 fn run_with_decktricks(
     maybe_executor: Arc<Option<Executor>>,
@@ -166,13 +173,14 @@ fn run_with_decktricks(
     let maybe_cmd = DecktricksCommand::try_parse_from(args_with_cmd);
 
     match maybe_cmd {
-        Ok(cmd) => match maybe_executor.as_ref().as_ref() {
-            Some(executor) => run_with_decktricks_inner(executor, cmd),
-            None => {
+        Ok(cmd) => {
+            if let Some(executor) = maybe_executor.as_ref().as_ref() {
+                run_with_decktricks_inner(executor, cmd)
+            } else {
                 godot_error!("No executor found! This is a serious error, please report it.");
                 Err(())
             }
-        },
+        }
         Err(cmd_parse_err) => {
             godot_error!(
                 "Decktricks command {args:?} encountered a parse error: {cmd_parse_err:?}"
@@ -191,7 +199,7 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
 
     results.iter().for_each(|res| match res {
         Ok(action_success) => {
-            let msg = action_success.get_message().unwrap_or("".into());
+            let msg = action_success.get_message().unwrap_or_else(String::default);
             //godot_print!("Decktricks command {action:?} had success: {msg}");
             outputs.push(msg);
         }
@@ -212,10 +220,13 @@ fn gather_new_executor() -> Option<Executor> {
     let seed_command = DecktricksCommand::new(Action::GatherContext);
     let maybe_executor = Executor::new(ExecutorMode::Continuous, &seed_command);
 
-    maybe_executor.map(Option::from).unwrap_or_else(|e| {
-        godot_error!(
-            "Executor failed to initialize! This is a very serious error, please report it: {e:?}"
-        );
-        None
-    })
+    maybe_executor.map_or_else(
+        |e| {
+            godot_error!(
+                "Executor failed to initialize! This is a very serious error, please report it: {e:?}"
+            );
+            None
+        },
+        Option::from,
+    )
 }

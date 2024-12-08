@@ -2,6 +2,7 @@ Documentation:
     [] how to install on deck (with screenshots)
     [] how to build using docker/act
     [] prerequisites
+    [] make it clear in copy that it works for all SteamOS (and test that)
 
 Logging overhaul:
     [] switch all providers to take trick id
@@ -14,7 +15,7 @@ Prerequisites:
     [] systemctl
 
 Add to steam:
-    [] make gui take a DECKTRICKS_INITIALIZATION that just boots up in headless mode, adds to steam, and quits (or package up the CLI)
+    [] make reboot to game mode only happen in SteamOS (or double-check that it works correctly on Chimera etc, or offer a cmdline flag)
 
 [] make calls to std::fs test-safe
 [] make decktricks stable installer point to discord or reddit, and beta point to github?
@@ -233,7 +234,7 @@ Potentially popular "support me and" features:
 [] "launch in nested desktop"
 
 Snippets:
-* Find XAUTHORITY over ssh: find /run/user/1000 -maxdepth 1 | xargs file | grep 'X11 Xauthority data' | sed 's/:.*//' | xargs ls -t | head -n 1
+* Find XAUTHORITY over ssh: find /run/user/1000/ -maxdepth 1 -type f | xargs file | grep 'X11 Xauthority data' | sed 's/:.*//' | xargs ls -t1 | head -n 1
 * Launching in nested plasma: DISPLAY=:2 XAUTHORITY=/run/user/1000/nested_plasma/xauth_<.....>
 
 Tips:

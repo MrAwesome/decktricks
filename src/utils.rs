@@ -16,17 +16,17 @@ pub fn running_in_ci_container() -> bool {
 #[allow(clippy::unnecessary_wraps)]
 #[cfg(test)]
 pub(crate) fn run_remote_script(
-    _ctx: &impl ExecutionContextTrait,
+    _ctx: &impl ExecCtx,
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
-    warn!("Not running run_remote_script({url}, {local_filename}) from test...");
+    warn!(&ExecutionContext::general_for_test(), "Not running run_remote_script({url}, {local_filename}) from test...");
     success!()
 }
 
 #[cfg(not(test))]
 pub(crate) fn run_remote_script(
-    ctx: &impl ExecutionContextTrait,
+    ctx: &impl ExecCtx,
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
@@ -70,8 +70,8 @@ pub(crate) fn run_remote_script(
         )?;
     }
 
-    SysCommand::new_no_args(local_filename)
-        .run_with(ctx)?
+    SysCommand::new_no_args(ctx, local_filename)
+        .run()?
         .as_success()
 }
 
@@ -79,9 +79,9 @@ pub(crate) fn get_homedir() -> String {
     std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
 }
 
-pub(crate) fn exists_and_executable(ctx: &impl ExecutionContextTrait, path: &str) -> bool {
+pub(crate) fn exists_and_executable(ctx: &impl ExecCtx, path: &str) -> bool {
     // Using this instead of rust-native code to piggyback on the test-friendliness of SysCommand
-    let res = SysCommand::new("/bin/test", ["-x", path]).run_with(ctx);
+    let res = SysCommand::new(ctx, "/bin/test", ["-x", path]).run();
 
     match res {
         Ok(cmdres) => cmdres.ran_successfully(),
@@ -90,11 +90,11 @@ pub(crate) fn exists_and_executable(ctx: &impl ExecutionContextTrait, path: &str
 }
 
 pub(crate) fn get_running_pids_exact(
-    ctx: &impl ExecutionContextTrait,
+    ctx: &impl ExecCtx,
     binary_name: &str,
 ) -> DeckResult<Vec<String>> {
-    Ok(SysCommand::new("ps", ["-C", binary_name, "-o", "pid="])
-        .run_with(ctx)?
+    Ok(SysCommand::new(ctx, "ps", ["-C", binary_name, "-o", "pid="])
+        .run()?
         .as_success()?
         .get_message_or_blank()
         .split_whitespace()
@@ -103,18 +103,18 @@ pub(crate) fn get_running_pids_exact(
 }
 
 pub(crate) fn kill_pids(
-    ctx: &impl ExecutionContextTrait,
+    ctx: &impl ExecCtx,
     pids: &[ProcessID],
 ) -> DeckResult<ActionSuccess> {
     let mut outputs = vec![];
     let string_pids: Vec<String> = pids.iter().map(ToString::to_string).collect();
     for pid in string_pids {
-        let res = SysCommand::new("kill", [&pid]).run_with(ctx)?.as_success();
+        let res = SysCommand::new(ctx, "kill", [&pid]).run()?.as_success();
 
         if res.is_ok() {
             outputs.push(format!("Successfully killed pid '{pid}'"));
         } else {
-            warn!("Failed to kill pid '{pid}'!");
+            warn!(ctx, "Failed to kill pid '{pid}'!");
         }
     }
     let output = outputs.join("\n");

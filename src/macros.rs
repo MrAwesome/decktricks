@@ -11,17 +11,6 @@ macro_rules! success {
     };
 }
 
-// TODO: refactor this to return Err($enum(Box...etc?
-#[macro_export(local_inner_macros)]
-macro_rules! dterr {
-    ($fmt:literal, $($arg:expr),*) => {
-        Box::new($crate::errors::DecktricksError::new(::std::format!($fmt, $($arg)*)))
-    };
-    ($msg:expr) => {
-        Box::new($crate::errors::DecktricksError::new(::std::format!($msg)))
-    };
-}
-
 #[macro_export(local_inner_macros)]
 macro_rules! enum_with_all_variants {
     (

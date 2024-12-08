@@ -6,9 +6,10 @@ use std::sync::Arc;
 #[cfg(test)]
 use std::os::unix::process::ExitStatusExt;
 
-#[cfg(test)]
+// Export for unit tests in Godot
+#[cfg(any(test, feature = "test"))]
 pub type Runner = MockTestActualRunner;
-#[cfg(not(test))]
+#[cfg(not(any(test, feature = "test")))]
 pub type Runner = LiveActualRunner;
 
 pub type RunnerRc = Arc<Runner>;
@@ -19,45 +20,61 @@ pub struct SysCommandRunError {
     pub error: std::io::Error,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct SysCommand {
+    pub ctx: ExecutionContext,
     pub cmd: String,
     pub args: Vec<String>,
     pub desired_env_vars: Vec<(String, String)>
 }
 
+impl PartialEq for SysCommand {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmd == other.cmd &&
+            self.args == other.args &&
+            self.desired_env_vars == other.desired_env_vars
+    }
+}
+
 impl SysCommand {
     #[allow(clippy::needless_pass_by_value)]
-    pub fn new<S, SS, I>(cmd: S, args: I)
+    pub fn new<S, SS, I>(ctx: &impl ExecCtx, cmd: S, args: I)
         -> Self 
-        where I: IntoIterator<Item = SS>,
+        where 
+              I: IntoIterator<Item = SS>,
               S: StringType,
               SS: StringType,
     {
         Self {
+            ctx: ctx.clone().into(),
             cmd: cmd.to_string(),
             args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
         }
     }
 
-    pub fn new_no_args<S: StringType>(cmd: S) -> Self {
-        Self::new(cmd, Vec::<String>::new())
+    pub fn new_no_args<S: StringType>(ctx: &impl ExecCtx, cmd: S) -> Self {
+        Self::new(ctx, cmd, Vec::<String>::new())
     }
 }
 
 pub(crate) trait SysCommandRunner {
     fn get_cmd(&self) -> &SysCommand;
+    fn get_ctx(&self) -> &ExecutionContext;
 
     fn env(&mut self, varname: &str, value: &str) -> &Self;
 
-    fn run_with(&self, ctx: &impl ExecutionContextTrait) -> DeckResult<SysCommandResult> {
+    fn run(&self) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
-        ctx.get_runner().run(sys_command)
+        self.get_ctx().get_runner().run(sys_command)
     }
 }
 
 impl SysCommandRunner for SysCommand {
+    fn get_ctx(&self) -> &ExecutionContext {
+        &self.ctx
+    }
+
     fn get_cmd(&self) -> &SysCommand {
         self
     }
@@ -68,7 +85,7 @@ impl SysCommandRunner for SysCommand {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq)]
 pub struct SysCommandResult {
     sys_command: SysCommand,
     raw_output: std::process::Output,
@@ -76,14 +93,9 @@ pub struct SysCommandResult {
 
 #[cfg(not(test))]
 impl SysCommandResult {
-    fn new(cmd: String, args: Vec<String>, env: Vec<(String, String)>, output: std::process::Output) -> Self {
+    fn new(sys_command: SysCommand, output: std::process::Output) -> Self {
         Self {
-            sys_command: SysCommand {
-                cmd,
-                args,
-                // NOTE: this is incorrect
-                desired_env_vars: env,
-            },
+            sys_command,
             raw_output: output,
         }
     }
@@ -100,6 +112,7 @@ impl SysCommandResult {
     pub(crate) fn fake_success() -> Self {
         Self {
             sys_command: SysCommand::new(
+                &ExecutionContext::general_for_test(),
                 "nothingburger".to_string(),
                 ["you should not care about this"],
             ),
@@ -119,6 +132,7 @@ impl SysCommandResult {
     ) -> Self {
         Self {
             sys_command: SysCommand::new(
+                &ExecutionContext::general_for_test(),
                 cmd.to_string(),
                 args,
             ),
@@ -136,6 +150,7 @@ impl SysCommandResult {
     ) -> Self {
         Self {
             sys_command: SysCommand::new(
+                &ExecutionContext::general_for_test(),
                 "nothingburger".to_string(),
                 ["you should not care about this"],
             ),
@@ -155,7 +170,7 @@ pub(crate) trait SysCommandResultChecker {
 
     fn ran_successfully(&self) -> bool {
         if is_debug() {
-            debug!("== EXTERNAL COMMAND STATUS: {}", self.as_string());
+            debug!(self.sys_command().get_ctx(), "== EXTERNAL COMMAND STATUS: {}", self.as_string());
         }
 
         self.raw_output().status.success()
@@ -198,9 +213,9 @@ pub(crate) trait ActualRunner {
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult>;
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test"))]
 use mockall::mock;
-#[cfg(test)]
+#[cfg(any(test, feature = "test"))]
 mock! {
     #[derive(Debug, Clone, Copy)]
     pub TestActualRunner {}
@@ -250,7 +265,7 @@ impl ActualRunner for LiveActualRunner {
                 }))
             })?;
 
-        Ok(SysCommandResult::new(cmd.clone(), args.clone(), sys_command.desired_env_vars.clone(), output))
+        Ok(SysCommandResult::new(sys_command.clone(), output))
     }
 }
 

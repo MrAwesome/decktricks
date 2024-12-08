@@ -32,12 +32,12 @@ pub struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    pub(crate) fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
+    pub(crate) fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
-            || SysCommand::new("/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
-                .run_with(ctx),
-            || SysCommand::new("/usr/bin/systemctl", ["is-active", "plugin_loader"])
-                .run_with(ctx)
+            || SysCommand::new(ctx, "/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
+                .run(),
+            || SysCommand::new(ctx, "/usr/bin/systemctl", ["is-active", "plugin_loader"])
+                .run()
         );
 
         Ok(Self {

@@ -2,7 +2,6 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 
-#[cfg(test)]
 decktricks_logging_init!();
 
 pub mod actions;

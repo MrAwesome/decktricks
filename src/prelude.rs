@@ -11,12 +11,10 @@ pub(crate) use crate::tricks_config::*;
 
 pub(crate) use crate::run_system_command::*;
 
-pub(crate) use crate::dterr;
 pub(crate) use crate::join_all;
 pub(crate) use crate::success;
 
-#[allow(unused_imports)]
-pub use log::{debug, error, info, warn};
+pub use crate::{debug,info,warn,error};
 
 pub use crate::errors::*;
 pub use crate::providers::*;
@@ -36,9 +34,6 @@ impl StringType for &&str {}
 
 #[must_use]
 pub fn is_debug() -> bool {
-    // Leverage the global state of the logger, so we don't have to pass a context object around
-    matches!(
-        log::max_level(),
-        log::LevelFilter::Debug | log::LevelFilter::Trace
-    )
+    // TODO: switch this to use a flag, and make it do something
+    false
 }

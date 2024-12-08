@@ -46,7 +46,7 @@ impl EmuDeckSystemContext {
     /// # Errors
     ///
     /// Returns errors relating to running pgrep and checking file existence/permissions.
-    pub fn gather_with(ctx: &impl ExecutionContextTrait) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         let (is_installed, running_main_pids, running_supplementary_pids) = 
             join_all!(
                 || exists_and_executable(ctx, &get_emudeck_binary_path()),
@@ -117,8 +117,8 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new_no_args(get_emudeck_binary_path())
-            .run_with(&self.ctx)?
+        SysCommand::new_no_args(&self.ctx, get_emudeck_binary_path())
+            .run()?
             .as_success()
     }
 

@@ -1,8 +1,9 @@
+use decktricks::decktricks_logging_init;
 use decktricks::prelude::*;
 
-fn main() -> DeckResult<()> {
-    pretty_env_logger::try_init().map_err(KnownError::LoggerInitializationFail)?;
+decktricks_logging_init!();
 
+fn main() -> DeckResult<()> {
     let cmd = DecktricksCommand::parse();
 
     let executor = Executor::new(ExecutorMode::OnceOff, &cmd)?;

@@ -1,11 +1,17 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
+use decktricks::decktricks_logging_init;
+use crate::logging::DecktricksGodotLogger;
 use crate::dispatcher::DecktricksDispatcher;
 use godot::classes::Engine;
 use godot::prelude::*;
+use decktricks::prelude::*;
 mod gui;
 mod action_button;
 mod dispatcher;
+mod logging;
+
+decktricks_logging_init!(DecktricksGodotLogger);
 
 struct DecktricksGui;
 
