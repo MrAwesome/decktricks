@@ -9,6 +9,7 @@ use std::sync::LazyLock;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+// TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
     std::sync::LazyLock::new(|| Arc::new(RwLock::new(Arc::new(None))));
 

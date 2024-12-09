@@ -1,19 +1,25 @@
-# decktricks
-Tools for making life easier on the Steam Deck.
+# Decktricks
 
-# The Code
-The code is organized around three core concepts: Tricks, Actions, and Providers.
+## Install
+*Install Decktricks by going to [decktricks.com](https://decktricks.com) on your Deck in Desktop Mode!*
+*The installer will handle everything else for you, just click and run :)*
 
-Tricks are the core of this program. A trick can be either a noun or a verb. Usually, a trick is some package that can be installed or run. But sometimes, a trick is just a package (Decky) that can't be run directly, or an action ("clean up disk space").
+> [!WARNING]
+> Decktricks is still in a pre-alpha state! It is open to testing, but (and this is important!)
+> *the auto-updating code is not written yet* so you will be stuck with an old version unless you
+> remember to run the installer again later. Auto-updates should be done by Christmas 2024. :)
 
-Actions are what can be done with each trick. Generally, it's something like: `run`, `install`, `uninstall`, etc.
+## About
+Decktricks is a controller-friendly launcher for Game Mode on SteamOS (Steam Deck).
 
-Providers are what handle actions for tricks. Think "the thing that actually talks to `flatpak`".
+The idea is that Decktricks should be the last program you ever need to switch to Desktop Mode to install!
 
-# Testing
+You can use Decktricks to install and run:
+* Third-party utilities like EmuDeck, Decky, ProtonUp-QT
+* External game store launchers like Heroic and Lutris (for Epic, GOG, Amazon, Ubisoft, Humble, and more)
+* A "Nested Desktop Mode" that lets you 
 
-For changes to the core library, run `cargo test`.
+Decktricks is designed with SteamOS in mind, but it should work on any Arch Linux system with the right dependencies installed.
 
-To test changes to the GUI, run `./scripts/run_all_gui_e2e_tests.sh`.
-
-To run the GitHub Actions flow locally, run `act`.
+## Help out!
+See [CONTRIBUTING](./CONTRIBUTING.md) for details. 

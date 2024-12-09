@@ -9,3 +9,6 @@ crate-type = ["cdylib"]  # Compile this crate to a dynamic C library.
 [dependencies]
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-threads"] }
 decktricks = { path = "../.." }
+
+[dev-dependencies]
+wait-timeout = "0.2.0"

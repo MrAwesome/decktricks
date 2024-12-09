@@ -196,12 +196,10 @@ Code
 [] Codemod for? to collect::<Result<_, _>>
 [] unique error codes for each possible error
 
-Misc
-[] check out boilr for add-to-steam https://flathub.org/apps/io.github.philipk.boilr
-
 Idea
 [] web frontend that just constructs a list of desired tricks and generates a .desktop that installs decktricks cli and uses it to install everything in one go
 [] firefox, and ublock origin
+[] "clean up disk space"
 
 CLI
 [] colorize output, decide which bits of spawned program output to keep in which contexts

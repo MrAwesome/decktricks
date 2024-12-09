@@ -59,14 +59,6 @@ jobs:
 
       - run: ./ci_scripts/compress.sh
 
-      - name: Get binary from tar
-        run: |
-          mkdir /tmp/decktricks_work
-          tar xvf ./build/decktricks.tar.xz -C /tmp/decktricks_work
-
-      - name: Run GUI e2e scripts
-        run: ./scripts/run_all_gui_e2e_tests.sh /tmp/decktricks_work/decktricks-gui
-
       # These are separate so that if-no-files-found actually errors if just one is missing {{{
       - name: Upload tar
         uses: actions/upload-artifact@v4
