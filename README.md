@@ -1,20 +1,19 @@
-# Decktricks
+## Install Decktricks
+Go to **([decktricks.com](https://decktricks.com))** on your Deck in Desktop Mode!
 
-## Install
-*Install Decktricks by going to [decktricks.com](https://decktricks.com) on your Deck in Desktop Mode!*
-*The installer will handle everything else for you, just click and run :)*
+The installer will handle everything else for you.
 
-> [!WARNING]
-> Decktricks is still in a pre-alpha state! It is open to testing, but (and this is important!)
-> *the auto-updating code is not written yet* so you will be stuck with an old version unless you
+> [!IMPORTANT]
+> Decktricks is still in a pre-alpha state! It is open to testing, but 
+> <ins>**the auto-updating code is not written yet**</ins> so you will be stuck with an old version unless you
 > remember to run the installer again later. Auto-updates should be done by Christmas 2024. :)
 
-## About
-Decktricks is a controller-friendly launcher for Game Mode on SteamOS (Steam Deck).
+## About Decktricks
+Decktricks is a controller-friendly installer and launcher for Game Mode on SteamOS (Steam Deck).
 
-The idea is that Decktricks should be the last program you ever need to switch to Desktop Mode to install!
+The dream: _installing Decktricks should be the last time you ever need to switch to Desktop Mode_.
 
-You can use Decktricks to install and run:
+Today, now, even in pre-alpha, you can use Decktricks to install and run:
 * Game streaming programs like Moonlight (PC) and chiaki4deck (PS4/5)
 * Third-party utilities like EmuDeck, Decky, ProtonUp-QT, and more
 * Minecraft! (with Prism launcher)
@@ -24,8 +23,6 @@ You can use Decktricks to install and run:
 Decktricks is designed with SteamOS in mind, but it should work on any Arch Linux system with the right dependencies installed.
 
 ## In Progress
-New features are coming to Decktricks all the time! The biggest planned features:
-
 * Alpha
     * Auto-updates for Decktricks
     * Error logs in the app
