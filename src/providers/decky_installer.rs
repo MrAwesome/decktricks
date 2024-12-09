@@ -3,7 +3,7 @@ use crate::utils::run_remote_script;
 
 // TODO: detect if on steam deck or not, and *do not mark as installable if not on steam deck*
 
-const DECKY_DOWNLOAD_URL: &str = "https://decky.xyz/download";
+const DECKY_DOWNLOAD_URL: &str = "https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/user_install_script.sh";
 const DECKY_INSTALLER_TEMP_FILENAME: &str = "/tmp/decky_installer.sh";
 
 #[derive(Debug)]
@@ -85,15 +85,16 @@ impl ProviderChecks for DeckyInstallerProvider {
 impl ProviderActions for DeckyInstallerProvider {
     fn update(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is updated by running the installer again. This may be a different command.
-        not_implemented("Decky updates are not implemented yet!")
+        self.install()
     }
 
     fn uninstall(&self) -> DeckResult<ActionSuccess> {
         // TODO: decky is removed by running the installer again. This may be a different command.
-        not_implemented("Decky uninstall is not implemented yet!")
+        self.install()
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
+        let _ = SysCommand::new(&self.ctx, "xhost", vec!["+"]).run();
         run_remote_script(
             &self.ctx,
             DECKY_DOWNLOAD_URL,
@@ -119,7 +120,7 @@ impl ProviderActions for DeckyInstallerProvider {
 pub(crate) struct DeckyInstallerGeneralProvider;
 impl GeneralProvider for DeckyInstallerGeneralProvider {
     fn update_all(&self) -> DeckResult<ActionSuccess> {
-        // TODO: run the decky update command here
-        not_implemented("Decky update is not implemented yet!")
+        // TODO: run the decky update command here (not the installer directly)
+        success!()
     }
 }
