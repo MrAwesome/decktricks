@@ -56,11 +56,8 @@ Comms
 [] ask for gh stars, include a direct link
 
 Providers
-[] chiaki4deck: easy with flatpak, io.github.streetpea.Chiaki4deck
 [] xbox streaming (would require full add-to-steam support for adding launch args): https://support.microsoft.com/en-gb/topic/xbox-cloud-gaming-in-microsoft-edge-with-steam-deck-43dd011b-0ce8-4810-8302-965be6d53296
-[x] emudeck: https://www.emudeck.com/EmuDeck.desktop
 [] kodi (for streaming) (tv.kodi.Kodi)
-[x] minecraft (prism launcher?) (org.prismlauncher.PrismLauncher / com.mojang.Minecraft)
 [] system commands - *file browser* (what's the name in plasma)
 [] yuzu/etc switch emulators
 [] luxtorpeda directly (see the readme)
@@ -76,13 +73,20 @@ Providers
 [] prism launcher (minecraft)
 [] mod: RDO lobby manager
 [] customscript, bash scripts which are compiled into the binary
-[] blizzard launcher (NonSteamLaunchers probably adds this)
 [] modorganizer2: https://github.com/rockerbacon/modorganizer2-linux-installer/
     [] mkdir ~/.steam/root/steamapps/compatdata/22370/pfx/drive_c/users/steamuser/Temp
     [] sudo chattr +i ~/.steam/root/steamapps/compatdata/22370/pfx/drive_c/users/steamuser/Temp
 [] "greatest hits" tab for favorite games that just sends you to store page, "sponsored games" tab obviously
 
 Actions/Programs:
+[x] Moonlight!
+[] websites: google, etc
+[] discord! vesktop, webcord, etc
+    [] confirmation dialog: "NOTE! The official Discord app has issues with (....)"
+[] "essentials" - just installs essentials
+[] any other system settings? bluetooth, audio(!), etc
+
+SSH/IP:
 [] display IP address to user
     use if_addrs::get_if_addrs;
     use std::net::IpAddr;
@@ -95,11 +99,6 @@ Actions/Programs:
             }
         }
     }
-[x] Moonlight!
-[] websites: google, etc
-[] discord! vesktop, webcord, etc
-    [] confirmation dialog: "NOTE! The official Discord app has issues with (....)"
-[] "essentials" - just installs essentials
 [] systemctl enable --now sshd (requires keys, how to handle that?)
 [] sshfs - commands to access an sshfs (or nfs?) share, or show an rsync command
 [] temporary ssh server (launch an sshd with safe/known/set password):
@@ -112,8 +111,6 @@ Actions/Programs:
     /usr/sbin/sshd -D -p 2222 -o "PasswordAuthentication=yes" -o "HostKey=~/.ssh/id_rsa"
 
     # show connection instructions
-
-[] any other system settings? bluetooth, audio(!), etc
 
 GUI
 [] detect if in Game Mode (why?)
@@ -224,9 +221,9 @@ dependencies list:
 systemd
 ps
 
-Notes from running in container:
-cp in /usr/lib/libcrypto.so.3 and /usr/lib/libssl.so.3
-systemctl is not accessible, and most relevant binaries probably won't be
+Notes from running in Steam container:
+* cp in /usr/lib/libcrypto.so.3 and /usr/lib/libssl.so.3
+* systemctl is not accessible, and most relevant binaries probably won't be
 
 Potentially popular "support me and" features:
 [] "launch in nested desktop"
