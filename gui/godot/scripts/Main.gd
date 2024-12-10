@@ -149,7 +149,7 @@ func refresh_ui_inner(actions_json_string: String):
 		var trick_id = trick.get("id")
 		var display_name = trick.get("display_name")
 		var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
-		var description = trick.get("description")
+		#var description = trick.get("description")
 
 		# Error checking should never be needed for this access, since we
 		# check on the Rust side that we're only generating valid actions
@@ -160,7 +160,9 @@ func refresh_ui_inner(actions_json_string: String):
 		var label_box = LABEL_OUTER.instantiate()
 		var label = label_box.get_child(0)
 		label.text = display_name
-		label_box.tooltip_text = description
+
+		# These ended up being spammy and buggy and too big
+		# label_box.tooltip_text = description
 
 		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
 
