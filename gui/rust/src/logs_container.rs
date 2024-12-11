@@ -41,6 +41,8 @@ impl Logs {
         let log_channel_scene: Gd<PackedScene> =
             try_load::<PackedScene>("res://scenes/log_channel.tscn")?;
 
+        godot_print!("Adding all logs... {:?}", parsed.all.clone());
+
         self.make_or_update_log_channel(
             &log_channel_scene,
             "all".into(),
@@ -51,8 +53,6 @@ impl Logs {
             "general".into(),
             parsed.general,
         )?;
-
-        godot_print!("Adding trick logs... {:?}", parsed.tricks);
 
         for (trick_id, trick_logtext) in parsed.tricks {
             self.make_or_update_log_channel(

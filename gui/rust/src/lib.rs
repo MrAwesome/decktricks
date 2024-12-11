@@ -12,7 +12,7 @@ mod gui;
 pub mod logging;
 pub mod logs_container;
 
-decktricks_logging_init!(LogType::Warn, DecktricksGodotLogger);
+decktricks_logging_init!(LogType::Log, DecktricksGodotLogger);
 
 // For use only within this crate, and not within logging.rs:
 pub(crate) static EARLY_LOGGING_CONTEXT: LazyLock<Arc<ExecutionContext>> =

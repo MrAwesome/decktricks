@@ -65,6 +65,19 @@ impl LogType {
     }
 }
 
+impl From<u8> for LogType {
+    fn from(log_level: u8) -> Self {
+        match log_level {
+            0 => Self::Error,
+            1 => Self::Warn,
+            3 => Self::Info,
+            4 => Self::Debug,
+
+            _ => Self::Log,
+        }
+    }
+}
+
 
 // * "Run"
 // * "Install"

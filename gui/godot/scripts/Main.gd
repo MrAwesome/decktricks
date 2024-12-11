@@ -226,6 +226,8 @@ func _ready():
 	
 	%Logs.populate_logs()
 
+	dd.log(2, "Decktricks GUI initialization complete!")
+
 	print("Decktricks GUI initialization complete!")
 	if should_exit:
 		get_tree().quit()

@@ -5,7 +5,7 @@ use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use std::time::Duration;
 use crate::early_log_ctx;
 use decktricks::actions::SpecificActionID;
-use decktricks::prelude::*;
+use decktricks::{inner_print, prelude::*};
 use decktricks::rayon::spawn;
 use decktricks::tricks_config::DEFAULT_CONFIG_CONTENTS;
 use godot::prelude::*;
@@ -179,6 +179,17 @@ impl DecktricksDispatcher {
         //       use "get-config" with an executor
         DEFAULT_CONFIG_CONTENTS.into()
     }
+
+    #[func]
+    fn log(log_level: u8, message: GString) {
+        let log_type = LogType::from(log_level);
+        inner_print!(
+            log_type,
+            early_log_ctx(),
+            "{}",
+            message
+        );
+    }
 }
 
 fn gargs_to_args(gargs: Array<GString>) -> Vec<String> {
@@ -199,7 +210,7 @@ fn run_with_decktricks(
             if let Some(executor) = maybe_executor.as_ref().as_ref() {
 
                 // Explicitly show logs for commands we explicitly asked for
-                cmd.log_level = Some(LogType::Log);
+                cmd.log_level = Some(LogType::Info);
 
                 run_with_decktricks_inner(executor, cmd)
             } else {
