@@ -3,7 +3,6 @@ use crate::gui::GuiType;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerGeneralProvider;
 use crate::providers::flatpak::FlatpakGeneralProvider;
-use crate::providers::system_context::FullSystemContext;
 use rayon::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -35,9 +34,9 @@ pub(crate) enum GeneralAction {
 }
 
 impl GeneralAction {
-    pub(crate) fn do_with(self, executor: &Executor) -> Vec<DeckResult<ActionSuccess>> {
+    pub(crate) fn do_with(self, executor: &Executor, current_log_level: LogType, logger: LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
         let (loader, full_ctx, runner) = executor.get_pieces();
-        let general_ctx = GeneralExecutionContext::new(runner.clone());
+        let general_ctx = GeneralExecutionContext::new(runner.clone(), current_log_level, logger.clone());
         match self {
             Self::List { installed } => {
                 let tricks = loader.get_all_tricks();
@@ -47,7 +46,7 @@ impl GeneralAction {
                         .filter(|name_and_trick| {
                             let trick = name_and_trick.1;
                             let trick_ctx =
-                                SpecificExecutionContext::new(trick.clone(), runner.clone());
+                                SpecificExecutionContext::new(trick.clone(), runner.clone(), current_log_level, logger.clone());
                             let provider = DynTrickProvider::new(&trick_ctx, full_ctx);
                             provider.is_installed()
                         })
@@ -91,7 +90,7 @@ impl GeneralAction {
             }
             Self::Actions { id, json } => {
                 vec![get_all_available_actions(
-                    loader, full_ctx, runner, &id, json,
+                    executor, &id, current_log_level, logger.clone(), json,
                 )]
             }
             Self::Gui { gui } => vec![gui.launch(executor)],
@@ -123,15 +122,16 @@ impl GeneralAction {
 }
 
 fn get_all_available_actions_for_all_tricks(
-    loader: &TricksLoader,
-    full_ctx: &FullSystemContext,
-    runner: &RunnerRc,
+    executor: &Executor,
+    current_log_level: LogType,
+    logger: LoggerRc,
 ) -> Vec<(TrickID, Vec<SpecificActionID>)> {
+    let (loader, _full_ctx, _runner) = executor.get_pieces();
     let tricks = loader.get_hashmap();
 
     let mut name_to_actions = vec![];
     for (id, trick) in tricks {
-        let actions = get_all_available_actions_for_trick(trick, full_ctx, runner);
+        let actions = get_all_available_actions_for_trick(executor, trick, current_log_level, logger.clone());
 
         name_to_actions.push((id.clone(), actions));
     }
@@ -144,26 +144,29 @@ fn get_all_available_actions_for_all_tricks(
 }
 
 fn get_all_available_actions_for_trick(
+    executor: &Executor,
     trick: &Trick,
-    full_ctx: &FullSystemContext,
-    runner: &RunnerRc,
+    current_log_level: LogType,
+    logger: LoggerRc,
 ) -> Vec<SpecificActionID> {
-    let ctx = SpecificExecutionContext::new(trick.clone(), runner.clone());
+    let (_loader, full_ctx, runner) = executor.get_pieces();
+    let ctx = SpecificExecutionContext::new(trick.clone(), runner.clone(), current_log_level, logger);
     let provider = DynTrickProvider::new(&ctx, full_ctx);
 
     provider.get_available_actions()
 }
 
 fn get_all_available_actions(
-    loader: &TricksLoader,
-    full_ctx: &FullSystemContext,
-    runner: &RunnerRc,
+    executor: &Executor,
     maybe_id: &Option<TrickID>,
+    current_log_level: LogType,
+    logger: LoggerRc,
     json: bool,
 ) -> DeckResult<ActionSuccess> {
+    let (loader, _full_ctx, _runner) = executor.get_pieces();
     if let Some(id) = maybe_id {
         let trick = loader.get_trick(id.as_ref())?;
-        let action_ids = get_all_available_actions_for_trick(trick, full_ctx, runner);
+        let action_ids = get_all_available_actions_for_trick(executor, trick, current_log_level, logger);
 
         let mut names = vec![];
         for action_id in action_ids {
@@ -178,7 +181,7 @@ fn get_all_available_actions(
         }
     } else {
         let mut all_available = vec![];
-        let results = get_all_available_actions_for_all_tricks(loader, full_ctx, runner);
+        let results = get_all_available_actions_for_all_tricks(executor, current_log_level, logger);
 
         // TODO: unit test this:
         let output = if json {

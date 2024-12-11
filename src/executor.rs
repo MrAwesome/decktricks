@@ -2,9 +2,12 @@ use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
 use std::sync::Arc;
 
-pub trait ExecCtx: Clone + Send + Sync + Sized + Into<ExecutionContext> {
+pub trait ExecCtx: Clone + Send + Sync {
+    fn as_ctx(&self) -> ExecutionContext;
     fn get_runner(&self) -> &RunnerRc;
     fn get_log_channel(&self) -> &LogChannel;
+    fn get_current_log_level(&self) -> LogType;
+    fn get_logger(&self) -> LoggerRc;
 }
 
 #[derive(Debug, Clone)]
@@ -33,6 +36,24 @@ impl ExecCtx for ExecutionContext {
             Self::Specific(x) => x.get_log_channel(),
         }
     }
+
+    fn get_current_log_level(&self) -> LogType {
+        match self {
+            Self::General(x) => x.get_current_log_level(),
+            Self::Specific(x) => x.get_current_log_level(),
+        }
+    }
+
+    fn get_logger(&self) -> LoggerRc {
+        match self {
+            Self::General(x) => x.get_logger(),
+            Self::Specific(x) => x.get_logger(),
+        }
+    }
+
+    fn as_ctx(&self) -> ExecutionContext {
+        self.clone()
+    }
 }
 
 impl ExecCtx for &ExecutionContext {
@@ -49,13 +70,40 @@ impl ExecCtx for &ExecutionContext {
             ExecutionContext::Specific(x) => x.get_log_channel(),
         }
     }
+
+    fn get_current_log_level(&self) -> LogType {
+        match self {
+            ExecutionContext::General(x) => x.get_current_log_level(),
+            ExecutionContext::Specific(x) => x.get_current_log_level(),
+        }
+    }
+
+    fn get_logger(&self) -> LoggerRc {
+        match self {
+            ExecutionContext::General(x) => x.get_logger(),
+            ExecutionContext::Specific(x) => x.get_logger(),
+        }
+    }
+
+    fn as_ctx(&self) -> ExecutionContext {
+        (*self).clone()
+    }
+}
+
+impl ExecutionContext {
+    // TODO: code smell
+    #[must_use]
+    pub fn internal_get_for_logging(current_log_level: LogType, logger: LoggerRc) -> Self {
+        let runner = Arc::new(Runner::new());
+        Self::General(GeneralExecutionContext::new(runner, current_log_level, logger))
+    }
 }
 
 // Export for unit tests in Godot
 #[cfg(test)]
 impl ExecutionContext {
     pub(crate) fn general_for_test_with(runner: RunnerRc) -> Self {
-        Self::General(GeneralExecutionContext::new(runner))
+        Self::General(GeneralExecutionContext::new(runner, LogType::Warn, Arc::new(DecktricksConsoleLogger::new())))
     }
 
     pub(crate) fn general_for_test() -> Self {
@@ -93,8 +141,10 @@ pub struct SpecificExecutionContext {
     // still track all procs we have launched?
     //pub trick_id: TrickID,
     pub log_channel: LogChannel,
+    pub current_log_level: LogType,
     pub runner: RunnerRc,
     pub trick: Trick,
+    pub logger: LoggerRc,
 }
 
 #[derive(Debug, Clone)]
@@ -103,55 +153,19 @@ pub struct GeneralExecutionContext {
     // still track all procs we have launched?
     //pub trick_id: TrickID,
     pub log_channel: LogChannel,
+    pub current_log_level: LogType,
     pub runner: RunnerRc,
-}
-
-impl ExecCtx for GeneralExecutionContext {
-    fn get_runner(&self) -> &RunnerRc {
-        &self.runner
-    }
-
-    fn get_log_channel(&self) -> &LogChannel {
-        &self.log_channel
-    }
-}
-
-impl ExecCtx for SpecificExecutionContext {
-    fn get_runner(&self) -> &RunnerRc {
-        &self.runner
-    }
-
-    fn get_log_channel(&self) -> &LogChannel {
-        &self.log_channel
-    }
-}
-
-impl SpecificExecutionContext {
-    #[must_use]
-    pub fn new(trick: Trick, runner: RunnerRc) -> Self {
-        Self {
-            log_channel: LogChannel::TrickID(trick.id.clone()),
-            runner,
-            trick,
-        }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn test(trick: Trick) -> Self {
-        Self {
-            log_channel: LogChannel::TrickID(trick.id.clone()),
-            runner: Arc::new(MockTestActualRunner::new()),
-            trick,
-        }
-    }
+    pub logger: LoggerRc,
 }
 
 impl GeneralExecutionContext {
     #[must_use]
-    pub fn new(runner: RunnerRc) -> Self {
+    pub fn new(runner: RunnerRc, current_log_level: LogType, logger: LoggerRc) -> Self {
         Self {
             log_channel: LogChannel::General,
+            current_log_level,
             runner,
+            logger,
         }
     }
 
@@ -160,8 +174,78 @@ impl GeneralExecutionContext {
     #[must_use]
     pub fn test() -> Self {
         Self {
+            current_log_level: LogType::Warn,
             log_channel: LogChannel::General,
             runner: Arc::new(MockTestActualRunner::new()),
+            logger: Arc::new(DecktricksConsoleLogger::new()),
+        }
+    }
+}
+
+impl ExecCtx for GeneralExecutionContext {
+    fn as_ctx(&self) -> ExecutionContext {
+        ExecutionContext::General(self.clone())
+    }
+
+    fn get_runner(&self) -> &RunnerRc {
+        &self.runner
+    }
+
+    fn get_log_channel(&self) -> &LogChannel {
+        &self.log_channel
+    }
+
+    fn get_current_log_level(&self) -> LogType {
+        self.current_log_level
+    }
+
+    fn get_logger(&self) -> LoggerRc {
+        self.logger.clone()
+    }
+}
+
+impl ExecCtx for SpecificExecutionContext {
+    fn as_ctx(&self) -> ExecutionContext {
+        ExecutionContext::Specific(self.clone())
+    }
+
+    fn get_runner(&self) -> &RunnerRc {
+        &self.runner
+    }
+
+    fn get_log_channel(&self) -> &LogChannel {
+        &self.log_channel
+    }
+
+    fn get_current_log_level(&self) -> LogType {
+        self.current_log_level
+    }
+
+    fn get_logger(&self) -> LoggerRc {
+        self.logger.clone()
+    }
+}
+
+impl SpecificExecutionContext {
+    #[must_use]
+    pub fn new(trick: Trick, runner: RunnerRc, current_log_level: LogType, logger: LoggerRc) -> Self {
+        Self {
+            log_channel: LogChannel::TrickID(trick.id.clone()),
+            current_log_level,
+            runner,
+            trick,
+            logger,
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test(trick: Trick) -> Self {
+        Self {
+            log_channel: LogChannel::TrickID(trick.id.clone()),
+            current_log_level: LogType::Warn,
+            runner: Arc::new(MockTestActualRunner::new()),
+            trick,
+            logger: Arc::new(DecktricksConsoleLogger::new()),
         }
     }
 }
@@ -178,6 +262,7 @@ pub struct Executor {
     pub loader: TricksLoader,
     pub full_ctx: FullSystemContext,
     pub runner: RunnerRc,
+    current_log_level: LogType,
 }
 
 impl Executor {
@@ -188,7 +273,12 @@ impl Executor {
     /// Any errors that might arise from parsing the config
     /// or from gathering system resources.
     ///
-    pub fn new(mode: ExecutorMode, command: &DecktricksCommand) -> DeckResult<Self> {
+    pub fn create_with_gather(
+        mode: ExecutorMode,
+        command: &DecktricksCommand,
+        current_log_level: LogType,
+        logger: LoggerRc,
+    ) -> DeckResult<Self> {
         let maybe_config_path = command.config.as_ref();
         let loader = match maybe_config_path {
             Some(config_path) => TricksLoader::from_config(config_path)?,
@@ -213,7 +303,8 @@ impl Executor {
         //      multiple times with the same system context and so we always
         //      want to gather context.
         let full_ctx = {
-            let gather_execution_ctx = GeneralExecutionContext::new(runner.clone());
+            let gather_execution_ctx =
+                GeneralExecutionContext::new(runner.clone(), current_log_level, logger);
             if matches!(mode, ExecutorMode::OnceOff) {
                 let do_not_gather = command
                     .action
@@ -228,7 +319,7 @@ impl Executor {
             }
         };
 
-        Ok(Self::with(mode, loader, full_ctx, runner))
+        Ok(Self::with(mode, loader, full_ctx, runner, current_log_level))
     }
 
     #[must_use]
@@ -237,12 +328,14 @@ impl Executor {
         loader: TricksLoader,
         full_ctx: FullSystemContext,
         runner: RunnerRc,
+        current_log_level: LogType,
     ) -> Self {
         Self {
             mode,
             loader,
             full_ctx,
             runner,
+            current_log_level,
         }
     }
 
@@ -254,9 +347,10 @@ impl Executor {
     ///
     /// Almost any `KnownError` can happen by this point, as this is the entry point to most of our
     /// program logic.
-    pub fn execute(&self, action: &Action) -> Vec<DeckResult<ActionSuccess>> {
-        let typed_action = TypedAction::from(action);
-        typed_action.do_with(self)
+    pub fn execute(&self, command: &DecktricksCommand, logger: LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
+        let typed_action = TypedAction::from(&command.action);
+        let current_log_level = command.log_level.unwrap_or(self.current_log_level);
+        typed_action.do_with(self, current_log_level, logger)
     }
 
     //    pub fn reload_config(&mut self) -> DeckResult<()> {
@@ -298,7 +392,7 @@ mod tests {
         let ctx = ExecutionContext::general_for_test_with(runner.clone());
         let full_ctx = FullSystemContext::gather_with(&ctx)?;
 
-        let executor = Executor::with(ExecutorMode::OnceOff, loader, full_ctx, runner);
+        let executor = Executor::with(ExecutorMode::OnceOff, loader, full_ctx, runner, LogType::Warn);
         Ok(executor)
     }
 
@@ -309,7 +403,7 @@ mod tests {
         });
 
         let executor = get_executor(None)?;
-        let results = executor.execute(&command.action);
+        let results = executor.execute(&command);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => assert_eq!(
@@ -328,7 +422,7 @@ mod tests {
         });
 
         let executor = get_executor(None)?;
-        let results = executor.execute(&command.action);
+        let results = executor.execute(&command);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => panic!(
@@ -345,7 +439,7 @@ mod tests {
         let command = DecktricksCommand::new(Action::List { installed: false });
 
         let executor = get_executor(None)?;
-        let results = executor.execute(&command.action);
+        let results = executor.execute(&command);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(res
@@ -384,7 +478,7 @@ mod tests {
             .returning(|_| Ok(SysCommandResult::fake_success()));
 
         let executor = get_executor(Some(mock))?;
-        let results = executor.execute(&command.action);
+        let results = executor.execute(&command);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(res

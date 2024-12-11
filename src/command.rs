@@ -1,3 +1,5 @@
+use clap::ValueEnum;
+use serde::Serialize;
 use crate::gui::GuiType;
 use crate::prelude::TypedAction;
 pub use clap::{Parser, Subcommand};
@@ -22,9 +24,11 @@ pub struct DecktricksCommand {
     // Filename of an override config
     #[clap(short, long)]
     pub config: Option<String>,
-    // Currently unused since pretty_env_logger uses env variables.
-    // #[clap(short, long)]
-    // pub debug: bool,
+
+    // Will default to the current_log_level of the executor
+    #[clap(short, long)]
+    pub log_level: Option<LogType>,
+
 }
 
 impl DecktricksCommand {
@@ -34,9 +38,33 @@ impl DecktricksCommand {
             action,
             gather_context_on_specific_actions: false,
             config: None,
+            log_level: None,
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, Serialize, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
+pub enum LogType {
+    Error = 0,
+    Warn = 1,
+    Log = 2,
+    Info = 3,
+    Debug = 4,
+}
+
+impl LogType {
+    #[must_use]
+    pub const fn get_prefix_for(self) -> &'static str {
+        match self {
+            LogType::Error => "[ERROR] ",
+            LogType::Warn => "[WARN] ",
+            LogType::Log => "[LOG] ",
+            LogType::Info => "[INFO] ",
+            LogType::Debug => "[DEBUG] ",
+        }
+    }
+}
+
 
 // * "Run"
 // * "Install"

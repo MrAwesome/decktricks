@@ -1,17 +1,32 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
-use decktricks::decktricks_logging_init;
-use crate::logging::DecktricksGodotLogger;
 use crate::dispatcher::DecktricksDispatcher;
+use crate::logging::DecktricksGodotLogger;
+use decktricks::decktricks_logging_init;
+use decktricks::prelude::*;
 use godot::classes::Engine;
 use godot::prelude::*;
-use decktricks::prelude::*;
-mod gui;
 mod action_button;
-mod dispatcher;
-mod logging;
+pub mod dispatcher;
+mod gui;
+pub mod logging;
+pub mod logs_container;
 
-decktricks_logging_init!(DecktricksGodotLogger);
+decktricks_logging_init!(LogType::Warn, DecktricksGodotLogger);
+
+// For use only within this crate, and not within logging.rs:
+pub(crate) static EARLY_LOGGING_CONTEXT: LazyLock<Arc<ExecutionContext>> =
+    LazyLock::new(|| {
+        Arc::new(ExecutionContext::internal_get_for_logging(
+            CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL,
+            Arc::new(DecktricksGodotLogger::new()),
+        ))
+    });
+
+// For use only within this crate, and not within logging.rs:
+pub(crate) fn early_log_ctx() -> &'static ExecutionContext {
+    &EARLY_LOGGING_CONTEXT
+}
 
 struct DecktricksGui;
 

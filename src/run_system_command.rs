@@ -25,28 +25,27 @@ pub struct SysCommand {
     pub ctx: ExecutionContext,
     pub cmd: String,
     pub args: Vec<String>,
-    pub desired_env_vars: Vec<(String, String)>
+    pub desired_env_vars: Vec<(String, String)>,
 }
 
 impl PartialEq for SysCommand {
     fn eq(&self, other: &Self) -> bool {
-        self.cmd == other.cmd &&
-            self.args == other.args &&
-            self.desired_env_vars == other.desired_env_vars
+        self.cmd == other.cmd
+            && self.args == other.args
+            && self.desired_env_vars == other.desired_env_vars
     }
 }
 
 impl SysCommand {
     #[allow(clippy::needless_pass_by_value)]
-    pub fn new<S, SS, I>(ctx: &impl ExecCtx, cmd: S, args: I)
-        -> Self 
-        where 
-              I: IntoIterator<Item = SS>,
-              S: StringType,
-              SS: StringType,
+    pub fn new<S, SS, I>(ctx: &impl ExecCtx, cmd: S, args: I) -> Self
+    where
+        I: IntoIterator<Item = SS>,
+        S: StringType,
+        SS: StringType,
     {
         Self {
-            ctx: ctx.clone().into(),
+            ctx: ctx.as_ctx(),
             cmd: cmd.to_string(),
             args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
@@ -145,9 +144,7 @@ impl SysCommandResult {
         }
     }
 
-    pub(crate) fn success_output(
-        stdout: &str,
-    ) -> Self {
+    pub(crate) fn success_output(stdout: &str) -> Self {
         Self {
             sys_command: SysCommand::new(
                 &ExecutionContext::general_for_test(),
@@ -170,7 +167,11 @@ pub(crate) trait SysCommandResultChecker {
 
     fn ran_successfully(&self) -> bool {
         if is_debug() {
-            debug!(self.sys_command().get_ctx(), "== EXTERNAL COMMAND STATUS: {}", self.as_string());
+            debug!(
+                self.sys_command().get_ctx(),
+                "== EXTERNAL COMMAND STATUS: {}",
+                self.as_string()
+            );
         }
 
         self.raw_output().status.success()
@@ -180,7 +181,9 @@ pub(crate) trait SysCommandResultChecker {
         if self.ran_successfully() {
             success!(String::from_utf8_lossy(&self.raw_output().stdout))
         } else {
-            Err(KnownError::SystemCommandFailed(Box::new(self.as_concrete())))
+            Err(KnownError::SystemCommandFailed(Box::new(
+                self.as_concrete(),
+            )))
         }
     }
 
@@ -256,14 +259,18 @@ impl ActualRunner for LiveActualRunner {
             command.env(var, val);
         }
 
-        let output = command
-            .output()
-            .map_err(|e| {
-                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                    cmd: sys_command.clone(),
-                    error: e,
-                }))
-            })?;
+        let output = command.output().map_err(|e| {
+            KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
+                cmd: sys_command.clone(),
+                error: e,
+            }))
+        })?;
+
+        log!(
+            sys_command.get_ctx(),
+            "Command {sys_command:#?} ran successfully with output: '{}'",
+            String::from_utf8_lossy(&output.stdout)
+        );
 
         Ok(SysCommandResult::new(sys_command.clone(), output))
     }

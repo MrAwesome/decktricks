@@ -1,5 +1,9 @@
 #![allow(clippy::needless_pass_by_value)]
 
+use crate::logging::get_log_level;
+use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
+use std::time::Duration;
+use crate::early_log_ctx;
 use decktricks::actions::SpecificActionID;
 use decktricks::prelude::*;
 use decktricks::rayon::spawn;
@@ -9,11 +13,19 @@ use std::sync::LazyLock;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+
+// TODO: trick logs not getting added
+// TODO: it seems like there can be a condition where the active executor sees a different version
+// of the world from the UI? Given that the update timers are so different (5 and 3)
+const TODO: i32 = 0;
+
+const UI_REFRESH_DELAY_MILLIS: u64 = 500;
+
 // TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
-    std::sync::LazyLock::new(|| Arc::new(RwLock::new(Arc::new(None))));
+    LazyLock::new(|| Arc::new(RwLock::new(Arc::new(None))));
 
-static STARTUP: LazyLock<Instant> = std::sync::LazyLock::new(Instant::now);
+static STARTUP: LazyLock<Instant> = LazyLock::new(Instant::now);
 
 #[derive(GodotClass)]
 #[class(init,base=Object)]
@@ -72,8 +84,8 @@ impl DecktricksDispatcher {
                     };
                     *old_arc = new_inner_arc;
                 },
-                Err(err) =>
-                    godot_error!("Failed to access executor while writing! This is a serious error, please report it: {err:?}")
+                Err(err) => error!(early_log_ctx(), "Failed to access executor while writing! This is a serious error, please report it: {err:?}")
+                
             }
         };
 
@@ -89,7 +101,7 @@ impl DecktricksDispatcher {
         match read_result {
             Ok(guard) => Some((*guard).clone()),
             Err(err) => {
-                godot_error!("Failed to access executor while reading! This is a serious error, please report it: {err:?}");
+                error!(early_log_ctx(), "Failed to access executor while reading! This is a serious error, please report it: {err:?}");
                 None
             }
         }
@@ -98,13 +110,13 @@ impl DecktricksDispatcher {
     #[func]
     fn get_time_passed_ms(section: GString) -> GString {
         let time_passed_ms = STARTUP.elapsed().as_millis();
-        godot_print!("[{section}] Time passed: {}", time_passed_ms);
+        info!(early_log_ctx(), "[{section}] Time passed: {}", time_passed_ms);
         time_passed_ms.to_string().into()
     }
 
     #[func]
     fn sync_run_with_decktricks(gargs: Array<GString>) -> GString {
-        godot_print!("Running command synchronously with decktricks: {gargs}");
+        info!(early_log_ctx(), "Running command synchronously with decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
         Self::get_executor().map_or_else(
@@ -115,24 +127,32 @@ impl DecktricksDispatcher {
 
     #[func]
     fn async_run_with_decktricks(gargs: Array<GString>) {
-        godot_print!("Dispatching command to decktricks: {gargs}");
+        info!(early_log_ctx(), "Dispatching command to decktricks: {gargs}");
         let args = gargs_to_args(gargs);
 
         let maybe_executor_ptr = Self::get_executor();
 
         if let Some(executor_ptr) = maybe_executor_ptr {
             spawn(move || {
-                run_with_decktricks(executor_ptr, args).unwrap_or("".into());
+                // TODO: just log in real time?
+                let output = run_with_decktricks(executor_ptr, args).unwrap_or("".into());
+            });
+            spawn(|| {
+                let x = "TODO";
+                std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
+                Self::async_update_actions();
             });
         }
     }
 
     // TODO: move this out of dispatcher and into a more general object?
     #[func]
-    fn get_display_name_mapping() -> Dictionary {
+    #[must_use]
+    pub fn get_display_name_mapping() -> Dictionary {
         Dictionary::from_iter(SpecificActionID::get_display_name_mapping())
     }
 
+    // This is what actually triggers a UI refresh. This is called on a timer from GDScript.
     #[func]
     fn async_update_actions() {
         let maybe_executor_ptr = Self::get_executor();
@@ -172,18 +192,23 @@ fn run_with_decktricks(
 ) -> Result<GString, ()> {
     let args_with_cmd = vec!["decktricks".into()].into_iter().chain(args.clone());
     let maybe_cmd = DecktricksCommand::try_parse_from(args_with_cmd);
+    let todo = "set current log level of command here, and pass through overriding the executor's level";
 
     match maybe_cmd {
-        Ok(cmd) => {
+        Ok(mut cmd) => {
             if let Some(executor) = maybe_executor.as_ref().as_ref() {
+
+                // Explicitly show logs for commands we explicitly asked for
+                cmd.log_level = Some(LogType::Log);
+
                 run_with_decktricks_inner(executor, cmd)
             } else {
-                godot_error!("No executor found! This is a serious error, please report it.");
+                error!(early_log_ctx(), "No executor found! This is a serious error, please report it.");
                 Err(())
             }
         }
         Err(cmd_parse_err) => {
-            godot_error!(
+            error!(early_log_ctx(), 
                 "Decktricks command {args:?} encountered a parse error: {cmd_parse_err:?}"
             );
             Err(())
@@ -194,19 +219,19 @@ fn run_with_decktricks(
 fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Result<GString, ()> {
     let mut experienced_error = false;
     let action = &cmd.action;
-    let results = executor.execute(action);
+    let results = executor.execute(&cmd, CRATE_DECKTRICKS_DEFAULT_LOGGER.clone());
 
     let mut outputs = vec![];
 
     results.iter().for_each(|res| match res {
         Ok(action_success) => {
             let msg = action_success.get_message().unwrap_or_else(String::default);
-            //godot_print!("Decktricks command {action:?} had success: {msg}");
+            info!(early_log_ctx(), "Decktricks command {action:?} finished with success: '{msg}'");
             outputs.push(msg);
         }
         Err(known_error) => {
             experienced_error = true;
-            godot_error!("Decktricks command {action:?} encountered an error: {known_error}");
+            error!(early_log_ctx(), "Decktricks command {action:?} encountered an error: '{known_error}'");
         }
     });
 
@@ -219,11 +244,19 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
 
 fn gather_new_executor() -> Option<Executor> {
     let seed_command = DecktricksCommand::new(Action::GatherContext);
-    let maybe_executor = Executor::new(ExecutorMode::Continuous, &seed_command);
+
+    let x = "use this elsewhere? make particular commands override" ;
+
+    let maybe_executor = Executor::create_with_gather(
+        ExecutorMode::Continuous,
+        &seed_command,
+        get_log_level(),
+        CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
+    );
 
     maybe_executor.map_or_else(
         |e| {
-            godot_error!(
+            error!(early_log_ctx(), 
                 "Executor failed to initialize! This is a very serious error, please report it: {e:?}"
             );
             None

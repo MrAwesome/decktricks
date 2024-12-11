@@ -2,7 +2,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 
-decktricks_logging_init!();
+decktricks_logging_init!(LogType::Warn);
 
 pub mod actions;
 pub mod add_to_steam;

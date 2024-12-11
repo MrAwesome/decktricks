@@ -1,5 +1,10 @@
 [] AUTO UPDATES
 [] LOGGING
+    [] use LogChannel tscn. get_logs() on dd, and then create a logchannel for each one
+    [] have errors get logged
+    [] wrap panics?
+    [] wrap text
+    [] stop logs from scrolling back to top on refresh
 
 Documentation:
     [] how to install on deck (with screenshots)

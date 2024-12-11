@@ -24,6 +24,10 @@ autostart = true
 wait_time = 3.0
 autostart = true
 
+[node name="LogRefreshTimer" type="Timer" parent="."]
+wait_time = 3.0
+autostart = true
+
 [node name="ExecutorRefreshTimer" type="Timer" parent="."]
 wait_time = 5.0
 autostart = true
@@ -48,10 +52,16 @@ follow_focus = true
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Exit" type="CenterContainer" parent="TabContainer"]
+[node name="Logs" type="Logs" parent="TabContainer"]
+unique_name_in_owner = true
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
+
+[node name="Exit" type="CenterContainer" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
 
 [node name="ExitButton" type="Button" parent="TabContainer/Exit"]
 layout_mode = 2
@@ -101,6 +111,7 @@ layout_mode = 2
 
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
 [connection signal="timeout" from="ActionsRefreshTimer" to="." method="_on_actions_refresh_timer_timeout"]
+[connection signal="timeout" from="LogRefreshTimer" to="." method="_on_log_refresh_timer_timeout"]
 [connection signal="focus_entered" from="TabContainer/Exit/ExitButton" to="TabContainer/Exit/ExitButton" method="_on_focus_entered"]
 [connection signal="pressed" from="TabContainer/Exit/ExitButton" to="TabContainer/Exit/ExitButton" method="_on_pressed"]
 [connection signal="visibility_changed" from="TabContainer/Exit/ExitButton" to="TabContainer/Exit/ExitButton" method="_on_visibility_changed"]

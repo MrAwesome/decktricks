@@ -223,13 +223,12 @@ func _ready():
 		var test_cmd_args: Array[String]
 		test_cmd_args.assign(should_test.split("|DELIM|"))
 		dd.sync_run_with_decktricks(test_cmd_args)
+	
+	%Logs.populate_logs()
 
 	print("Decktricks GUI initialization complete!")
-
 	if should_exit:
 		get_tree().quit()
-
-
 
 func _input(event: InputEvent) -> void:
 	# If this window loses focus, do not accept any input (otherwise,
@@ -243,8 +242,12 @@ func _input(event: InputEvent) -> void:
 	# var screen_size: Vector2i = DisplayServer.screen_get_size()
 	# print(screen_size.x)
 # TODO: come up with reasonable values for these timers
+
 func _on_ui_refresh_timer_timeout() -> void:
 	dd.async_update_actions()
+
+func _on_log_refresh_timer_timeout() -> void:
+	%Logs.populate_logs()
 
 func _on_actions_refresh_timer_timeout() -> void:
 	dd.async_executor_refresh()

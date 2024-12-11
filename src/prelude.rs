@@ -14,7 +14,7 @@ pub(crate) use crate::run_system_command::*;
 pub(crate) use crate::join_all;
 pub(crate) use crate::success;
 
-pub use crate::{debug,info,warn,error};
+pub use crate::{log,debug,info,warn,error};
 
 pub use crate::errors::*;
 pub use crate::providers::*;

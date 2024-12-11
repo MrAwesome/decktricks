@@ -1,13 +1,15 @@
 use decktricks::decktricks_logging_init;
 use decktricks::prelude::*;
 
-decktricks_logging_init!();
+decktricks_logging_init!(LogType::Warn);
 
 fn main() -> DeckResult<()> {
     let cmd = DecktricksCommand::parse();
 
-    let executor = Executor::new(ExecutorMode::OnceOff, &cmd)?;
-    let results = executor.execute(&cmd.action);
+    let logger = CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
+    let log_level = cmd.log_level.unwrap_or(CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL);
+    let executor = Executor::create_with_gather(ExecutorMode::OnceOff, &cmd, log_level, logger.clone())?;
+    let results = executor.execute(&cmd, logger);
 
     let mut experienced_error = false;
     results.iter().for_each(|res| match res {
