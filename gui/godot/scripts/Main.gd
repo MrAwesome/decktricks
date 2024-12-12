@@ -246,14 +246,10 @@ func _input(event: InputEvent) -> void:
 # TODO: come up with reasonable values for these timers
 
 func _on_ui_refresh_timer_timeout() -> void:
-	dd.async_update_actions()
+	dd.async_executor_refresh()
 
 func _on_log_refresh_timer_timeout() -> void:
 	%Logs.populate_logs()
-
-func _on_actions_refresh_timer_timeout() -> void:
-	dd.async_executor_refresh()
-
 
 func _on_exit_tab_focus_entered() -> void:
 	print("Would exit")

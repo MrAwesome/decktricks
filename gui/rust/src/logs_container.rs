@@ -5,7 +5,7 @@ use godot::classes::ScrollContainer;
 use std::fmt::Display;
 
 use godot::classes::TabContainer;
-use godot::classes::TextEdit;
+use godot::classes::RichTextLabel;
 use godot::prelude::*;
 
 #[derive(Debug)]
@@ -40,8 +40,6 @@ impl Logs {
 
         let log_channel_scene: Gd<PackedScene> =
             try_load::<PackedScene>("res://scenes/log_channel.tscn")?;
-
-        godot_print!("Adding all logs... {:?}", parsed.all.clone());
 
         self.make_or_update_log_channel(
             &log_channel_scene,
@@ -97,14 +95,17 @@ impl Logs {
 
 
         match scroll.get_child(0) {
-            Some(child) => match child.try_cast::<TextEdit>() {
+            Some(child) => match child.try_cast::<RichTextLabel>() {
                 Ok(mut textedit) => {
-                    // NOTE: modifications to GDScript strings always return a new string, so it
-                    // seems unlikely there's a way to just append updated log text here
-                    textedit.set_text(&text);
+                    // Given that logs are always appends, just checking length should be enough always:
+                    if textedit.get_text().len() != text.len() {
+                        // NOTE: modifications to GDScript strings always return a new string, so it
+                        // seems unlikely there's a way to just append updated log text here
+                        textedit.set_text(&text);
+                    }
                 }
                 Err(err) => Err(Box::new(LogLoadingError(format!(
-                                "Failed to cast to TextEdit: {err}"
+                                "Failed to cast to RichTextLabel: {err}"
                 ))))?,
             },
             None => Err(Box::new(LogLoadingError(

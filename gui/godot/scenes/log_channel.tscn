@@ -5,13 +5,10 @@
 [node name="LogChannel" type="ScrollContainer"]
 metadata/_tab_index = 0
 
-[node name="TextEdit" type="TextEdit" parent="."]
+[node name="TextEdit" type="RichTextLabel" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_colors/font_readonly_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = ExtResource("1_8p05q")
-theme_override_font_sizes/font_size = 23
-editable = false
-wrap_mode = 1
-scroll_smooth = true
+theme_override_fonts/normal_font = ExtResource("1_8p05q")
+theme_override_font_sizes/normal_font_size = 18
+scroll_following = true

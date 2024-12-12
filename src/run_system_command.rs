@@ -268,7 +268,7 @@ impl ActualRunner for LiveActualRunner {
 
         info!(
             sys_command.get_ctx(),
-            "Command {sys_command:#?} ran successfully with output: '{}'",
+            "Command {sys_command:#?} ran successfully with output:\n\n{}",
             String::from_utf8_lossy(&output.stdout)
         );
 

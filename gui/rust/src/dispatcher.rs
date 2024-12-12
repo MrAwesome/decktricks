@@ -19,7 +19,7 @@ use std::time::Instant;
 // of the world from the UI? Given that the update timers are so different (5 and 3)
 const TODO: i32 = 0;
 
-const UI_REFRESH_DELAY_MILLIS: u64 = 500;
+const UI_REFRESH_DELAY_MILLIS: u64 = 100;
 
 // TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
@@ -76,17 +76,21 @@ impl DecktricksDispatcher {
                 Arc::new(gather_new_executor())
             };
 
-            match lock.write() {
+            let maybe_executor = match lock.write() {
                 Ok(mut old_arc) => {
                     let new_inner_arc = match *new_inner_arc {
                         Some(_) => new_inner_arc,
                         None => Arc::new(gather_new_executor())
                     };
-                    *old_arc = new_inner_arc;
+                    *old_arc = new_inner_arc.clone();
+                    Some(new_inner_arc)
                 },
-                Err(err) => error!(early_log_ctx(), "Failed to access executor while writing! This is a serious error, please report it: {err:?}")
-                
-            }
+                Err(err) => {
+                    error!(early_log_ctx(), "Failed to access executor while writing! This is a serious error, please report it: {err:?}");
+                    None
+                }
+            };
+            maybe_executor.inspect(|ex| Self::async_update_actions(ex.clone()));
         };
 
         if sync_run {
@@ -125,6 +129,7 @@ impl DecktricksDispatcher {
         )
     }
 
+    // NOTE: do not run this from executor refresh, because it will cause a loop
     #[func]
     fn async_run_with_decktricks(gargs: Array<GString>) {
         info!(early_log_ctx(), "Dispatching command to decktricks: {gargs}");
@@ -140,7 +145,7 @@ impl DecktricksDispatcher {
             spawn(|| {
                 let x = "TODO";
                 std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
-                Self::async_update_actions();
+                Self::async_executor_refresh();
             });
         }
     }
@@ -153,24 +158,19 @@ impl DecktricksDispatcher {
     }
 
     // This is what actually triggers a UI refresh. This is called on a timer from GDScript.
-    #[func]
-    fn async_update_actions() {
-        let maybe_executor_ptr = Self::get_executor();
+    fn async_update_actions(executor: Arc<Option<Executor>>) {
+        spawn(move || {
+            let maybe_actions =
+                run_with_decktricks(executor, vec!["actions".into(), "--json".into()]);
 
-        if let Some(executor_ptr) = maybe_executor_ptr {
-            spawn(move || {
-                let maybe_actions =
-                    run_with_decktricks(executor_ptr, vec!["actions".into(), "--json".into()]);
-
-                if let Ok(actions_json_string) = maybe_actions {
-                    let mut singleton = Self::get_singleton();
-                    singleton.emit_signal(
-                        &StringName::from("actions"),
-                        &[Variant::from(actions_json_string)],
-                    );
-                }
-            });
-        }
+            if let Ok(actions_json_string) = maybe_actions {
+                let mut singleton = Self::get_singleton();
+                singleton.emit_signal(
+                    &StringName::from("actions"),
+                    &[Variant::from(actions_json_string)],
+                );
+            }
+        });
     }
 
     #[func]

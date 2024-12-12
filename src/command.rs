@@ -56,11 +56,11 @@ impl LogType {
     #[must_use]
     pub const fn get_prefix_for(self) -> &'static str {
         match self {
-            LogType::Error => "[ERROR] ",
-            LogType::Warn => "[WARN] ",
-            LogType::Log => "[LOG] ",
-            LogType::Info => "[INFO] ",
-            LogType::Debug => "[DEBUG] ",
+            LogType::Error => "[ERROR]",
+            LogType::Warn => "[WARN]",
+            LogType::Log => "[LOG]",
+            LogType::Info => "[INFO]",
+            LogType::Debug => "[DEBUG]",
         }
     }
 }

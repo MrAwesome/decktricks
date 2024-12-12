@@ -25,6 +25,8 @@ Prerequisites:
 Add to steam:
     [] make reboot to game mode only happen in SteamOS (or double-check that it works correctly on Chimera etc, or offer a cmdline flag)
 
+[] e2e test: use test config, check that pressing enter launches first program
+[] do longevity test (leave running for a long time and check memory usage)
 [] make calls to std::fs test-safe
 [] make decktricks stable installer point to discord or reddit, and beta point to github?
 [] make "decktricks gui" default to godot, run "decktricks-gui"
