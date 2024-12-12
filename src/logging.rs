@@ -11,11 +11,11 @@ macro_rules! decktricks_logging_init {
         use std::sync::{Arc, LazyLock, RwLock};
         use $crate::prelude::LogType;
 
-        static CRATE_DECKTRICKS_DEFAULT_LOGGER: LazyLock<Arc<$logger>> = LazyLock::new(|| Arc::new(<$logger>::new()));
+        pub static CRATE_DECKTRICKS_DEFAULT_LOGGER: LazyLock<Arc<$logger>> = LazyLock::new(|| Arc::new(<$logger>::new()));
 
-        const CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL: LogType = $min_log_level;
+        pub const CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL: LogType = $min_log_level;
 
-        static CRATE_DECKTRICKS_CURRENT_LOG_LEVEL: LazyLock<Arc<RwLock<LogType>>> =
+        pub static CRATE_DECKTRICKS_CURRENT_LOG_LEVEL: LazyLock<Arc<RwLock<LogType>>> =
             LazyLock::new(|| Arc::new(RwLock::new($min_log_level)));
     };
 }

@@ -13,13 +13,7 @@ use std::sync::LazyLock;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
-
-// TODO: trick logs not getting added
-// TODO: it seems like there can be a condition where the active executor sees a different version
-// of the world from the UI? Given that the update timers are so different (5 and 3)
-const TODO: i32 = 0;
-
-const UI_REFRESH_DELAY_MILLIS: u64 = 100;
+const UI_REFRESH_DELAY_MILLIS: u64 = 200;
 
 // TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
@@ -139,11 +133,9 @@ impl DecktricksDispatcher {
 
         if let Some(executor_ptr) = maybe_executor_ptr {
             spawn(move || {
-                // TODO: just log in real time?
-                let output = run_with_decktricks(executor_ptr, args).unwrap_or("".into());
+                run_with_decktricks(executor_ptr, args).unwrap_or("".into());
             });
             spawn(|| {
-                let x = "TODO";
                 std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
                 Self::async_executor_refresh();
             });
@@ -203,7 +195,6 @@ fn run_with_decktricks(
 ) -> Result<GString, ()> {
     let args_with_cmd = vec!["decktricks".into()].into_iter().chain(args.clone());
     let maybe_cmd = DecktricksCommand::try_parse_from(args_with_cmd);
-    let todo = "set current log level of command here, and pass through overriding the executor's level";
 
     match maybe_cmd {
         Ok(mut cmd) => {
@@ -255,8 +246,6 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
 
 fn gather_new_executor() -> Option<Executor> {
     let seed_command = DecktricksCommand::new(Action::GatherContext);
-
-    let x = "use this elsewhere? make particular commands override" ;
 
     let maybe_executor = Executor::create_with_gather(
         ExecutorMode::Continuous,
