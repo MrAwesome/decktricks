@@ -132,8 +132,9 @@ impl DecktricksLogger for DecktricksConsoleLogger {
 macro_rules! inner_print {
     ($logtype:expr, $ctx:expr, $fmt:literal $(, $args:expr )*) => {{
         if $logtype <= $ctx.get_current_log_level() {
+            let ctx = $ctx;
             let prefix = $logtype.get_prefix_for();
-            let channel = $ctx.get_log_channel();
+            let channel = ctx.get_log_channel();
             let full_filename = ::std::file!();
             let filename = full_filename.split_once("decktricks")
                 .map(|(_, s)| s.split_once("/")

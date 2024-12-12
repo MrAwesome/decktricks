@@ -20,7 +20,7 @@ pub(crate) fn run_remote_script(
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
-    warn!(&ExecutionContext::general_for_test(), "Not running run_remote_script({url}, {local_filename}) from test...");
+    warn!(ExecutionContext::general_for_test(), "Not running run_remote_script({url}, {local_filename}) from test...");
     success!()
 }
 

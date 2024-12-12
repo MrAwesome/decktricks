@@ -29,9 +29,10 @@ fn broken_command_gives_error() -> Result<(), DynamicError> {
 }
 
 // NOTE: running this with the default config to check the actual time taken in the real world
+// NOTE: this will take longer based on the number of flatpaks installed on the system
 #[test]
 fn time_see_all_available_actions() -> Result<(), DynamicError> {
-    let see_all_max_time = Duration::from_millis(100);
+    let see_all_max_time = Duration::from_millis(200);
     let start = Instant::now();
     decktricks_cli!["actions"]?;
     let time_taken = start.elapsed();

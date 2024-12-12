@@ -128,7 +128,7 @@ fn gather_procs() -> DeckResult<()> {
 
     mock.expect_run()
         .returning(move |_| Ok(SysCommandResult::success_output(&pseww_output)));
-    let ctx = GeneralExecutionContext::new(std::sync::Arc::new(mock));
+    let ctx = GeneralExecutionContext::test_with_runner(std::sync::Arc::new(mock));
     let proc_ctx = RunningProgramSystemContext::gather_with(&ctx)?;
     assert_eq!(
         desired_pid,

@@ -276,7 +276,7 @@ mod tests {
                 ))
             });
 
-        let ctx = SpecificExecutionContext::new(Trick::test(), std::sync::Arc::new(mock));
+        let ctx = SpecificExecutionContext::test_with_runner(Trick::test(), std::sync::Arc::new(mock));
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
             Ok(action_success) => assert_eq!(
@@ -304,7 +304,7 @@ mod tests {
             )))
             .returning(move |_| Ok(failure.clone()));
 
-        let ctx = SpecificExecutionContext::new(Trick::test(), std::sync::Arc::new(mock));
+        let ctx = SpecificExecutionContext::test_with_runner(Trick::test(), std::sync::Arc::new(mock));
 
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {

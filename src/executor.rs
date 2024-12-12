@@ -180,6 +180,16 @@ impl GeneralExecutionContext {
             logger: Arc::new(DecktricksConsoleLogger::new()),
         }
     }
+
+    #[must_use]
+    pub fn test_with_runner(runner: RunnerRc) -> Self {
+        Self {
+            current_log_level: LogType::Warn,
+            log_channel: LogChannel::General,
+            runner,
+            logger: Arc::new(DecktricksConsoleLogger::new()),
+        }
+    }
 }
 
 impl ExecCtx for GeneralExecutionContext {
@@ -244,6 +254,17 @@ impl SpecificExecutionContext {
             log_channel: LogChannel::TrickID(trick.id.clone()),
             current_log_level: LogType::Warn,
             runner: Arc::new(MockTestActualRunner::new()),
+            trick,
+            logger: Arc::new(DecktricksConsoleLogger::new()),
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_with_runner(trick: Trick, runner: Arc<MockTestActualRunner>) -> Self {
+        Self {
+            log_channel: LogChannel::TrickID(trick.id.clone()),
+            current_log_level: LogType::Warn,
+            runner,
             trick,
             logger: Arc::new(DecktricksConsoleLogger::new()),
         }
@@ -403,7 +424,8 @@ mod tests {
         });
 
         let executor = get_executor(None)?;
-        let results = executor.execute(&command);
+        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
+        let results = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => assert_eq!(
@@ -422,7 +444,8 @@ mod tests {
         });
 
         let executor = get_executor(None)?;
-        let results = executor.execute(&command);
+        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
+        let results = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => panic!(
@@ -439,7 +462,8 @@ mod tests {
         let command = DecktricksCommand::new(Action::List { installed: false });
 
         let executor = get_executor(None)?;
-        let results = executor.execute(&command);
+        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
+        let results = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(res
@@ -478,7 +502,8 @@ mod tests {
             .returning(|_| Ok(SysCommandResult::fake_success()));
 
         let executor = get_executor(Some(mock))?;
-        let results = executor.execute(&command);
+        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
+        let results = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(res

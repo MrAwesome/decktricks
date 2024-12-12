@@ -133,7 +133,7 @@ mod tests {
         });
 
         let trick = Trick::test();
-        let ctx = SpecificExecutionContext::new(trick, std::sync::Arc::new(mock));
+        let ctx = SpecificExecutionContext::test_with_runner(trick, std::sync::Arc::new(mock));
         let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, ctx, Vec::default());
         // TODO: generalize these to be default implementations?
 
