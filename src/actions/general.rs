@@ -34,7 +34,7 @@ pub(crate) enum GeneralAction {
 }
 
 impl GeneralAction {
-    pub(crate) fn do_with(self, executor: &Executor, current_log_level: LogType, logger: LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
+    pub(crate) fn do_with(self, executor: &Executor, current_log_level: LogType, logger: &LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
         let (loader, full_ctx, runner) = executor.get_pieces();
         let general_ctx = GeneralExecutionContext::new(runner.clone(), current_log_level, logger.clone());
         match self {
@@ -124,7 +124,7 @@ impl GeneralAction {
 fn get_all_available_actions_for_all_tricks(
     executor: &Executor,
     current_log_level: LogType,
-    logger: LoggerRc,
+    logger: &LoggerRc,
 ) -> Vec<(TrickID, Vec<SpecificActionID>)> {
     let (loader, _full_ctx, _runner) = executor.get_pieces();
     let tricks = loader.get_hashmap();
@@ -181,7 +181,7 @@ fn get_all_available_actions(
         }
     } else {
         let mut all_available = vec![];
-        let results = get_all_available_actions_for_all_tricks(executor, current_log_level, logger);
+        let results = get_all_available_actions_for_all_tricks(executor, current_log_level, &logger);
 
         // TODO: unit test this:
         let output = if json {

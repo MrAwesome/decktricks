@@ -1,0 +1,14 @@
+[package]
+name = "decktricks-update"
+version = "0.1.0"
+edition = "2021"
+
+# IMPORTANT! This should *never* have any reliance on decktricks code,
+# to avoid a situation where a bad code push there
+# takes out our ability to patch remotely.
+# 
+# This list should be as small as possible, and only use
+# well-tested common crates with pinned stable versions.
+[dependencies]
+twox-hash = "1.6.3"
+ureq = "2.11.0"

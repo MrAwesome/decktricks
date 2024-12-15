@@ -50,7 +50,7 @@ impl From<&Action> for TypedAction {
 impl TypedAction {
     pub(crate) fn do_with(self, executor: &Executor, current_log_level: LogType, logger: LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
         match self {
-            Self::General(general_action) => general_action.do_with(executor, current_log_level, logger),
+            Self::General(general_action) => general_action.do_with(executor, current_log_level, &logger),
             Self::Specific(specific_action) => {
                 vec![specific_action.do_with(executor, current_log_level, logger)]
             }

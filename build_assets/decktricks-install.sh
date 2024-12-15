@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# []: todo: check hashes and redownload if needed? once only, don't loop
+# []: tell user if failure happens in writing files (usually because it was run as root) and how to fix ('sudo rm -rf ~/.local/share/decktricks/')
+
 set -euxo pipefail
 ERROR=0
 
@@ -9,7 +12,9 @@ restart_to_game_mode_manual() {
 
 xdotool getwindowfocus windowstate --add ABOVE || true
 
-curl -L -O --progress-bar --output-dir /tmp --connect-timeout 60 "https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz"
+curl -f -L -O --progress-bar --retry 7 --connect-timeout 60 \
+    --output-dir "/tmp" \
+    'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz'
 
 DTDIR="$HOME/.local/share/decktricks" 
 mkdir -p "$DTDIR"

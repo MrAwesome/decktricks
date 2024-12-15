@@ -1,10 +1,18 @@
 [] AUTO UPDATES
+    [] make a better endpoint than just using github?
 [] LOGGING
     [] use LogChannel tscn. get_logs() on dd, and then create a logchannel for each one
     [] have errors get logged
     [] wrap panics?
     [] wrap text
     [] stop logs from scrolling back to top on refresh
+[] ADD TO STEAM
+    [] "exit and restart steam" that appears and turns red when created
+[] HANGING ON EXIT
+    [] investigate why this is happening (figure out a repro case from lemuel's message and check over ssh on deck)
+[] SET SUDO PASSWORD
+    [] use a text popup box to ask for it, if it's not set
+    [] look up how to reset it?
 
 Documentation:
     [] how to install on deck (with screenshots)
@@ -18,39 +26,29 @@ Logging overhaul:
     [] can TrickID be &'static? it seems like they will always be? we have no need to ever construct a new one at runtime, they always come from outside, right?
     [] remove old loggers and use new system only
 
-Prerequisites:
-    [] flatpak
-    [] systemctl
-
 Add to steam:
     [] make reboot to game mode only happen in SteamOS (or double-check that it works correctly on Chimera etc, or offer a cmdline flag)
 
-[] e2e test: use test config, check that pressing enter launches first program
-[] do longevity test (leave running for a long time and check memory usage)
-[] make calls to std::fs test-safe
-[] make decktricks stable installer point to discord or reddit, and beta point to github?
-[] make "decktricks gui" default to godot, run "decktricks-gui"
-[] cargo clippy in CI
-[] make Dockerfile pull 'latest' instead of main
-[] curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --help
-[] cargo update
-[] implement general updates!
-[] make cargo test in base repo run tests in GUI as well (and vice-versa?)
-[] make cargo test --e2e run the tests in scripts/tests/
-[] make pre-commit hook or build.sh store in benchmarks?
-[] full-system-context-not-needed flag for certain commands?
-[] bind A to ui_accept
-[] hide commands that aren't present automatically? or just hide anything that doesn't have a single option besides info?
-[] look for libraries that will warn you of potential panics
-[] figure out why integration test is happening by default
-[] fix tooltip wrapping
-[] "launch in nested desktop mode" (implement how? flag to SysCommand telling it to look for nested session, start it if not running, and run the command inside the nested X session? or just start a nested session each time we request it?)
-    [] DISPLAY=:1 QT_QPA_PLATFORM=wayland <cmd> https://community.kde.org/KWin/Wayland
-    [] find correct DISPLAY programmatically
-    [] xdpyinfo -display :1 
-    [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
-[] test inputs in nested desktop mode
-[] design about page, settings page
+General:
+    [] try profile lto
+    [] sort tricks alphabetically, make categories
+    [] e2e test: use test config, check that pressing enter launches first program
+    [] make calls to std::fs test-safe
+    [] make decktricks stable installer point to discord or reddit, and beta point to github?
+    [] add help message to 'decktricks' pointing to gui command
+    [] cargo clippy in CI?
+    [] make Dockerfile pull stable instead of main
+    [] make pre-commit hook or build.sh store in benchmarks?
+    [] full-system-context-not-needed flag for certain commands?
+    [] hide commands that aren't present automatically? or just hide anything that doesn't have a single option besides info?
+    [] look for libraries that will warn you of potential panics
+    [] "launch in nested desktop mode" (implement how? flag to SysCommand telling it to look for nested session, start it if not running, and run the command inside the nested X session? or just start a nested session each time we request it?)
+        [] DISPLAY=:1 QT_QPA_PLATFORM=wayland <cmd> https://community.kde.org/KWin/Wayland
+        [] find correct DISPLAY programmatically
+        [] xdpyinfo -display :1 
+        [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
+    [] test inputs in nested desktop mode
+    [] design about page, settings page
 
 Settings:
 [] "All Conditional Actions Always Available (Expert)" / "Allow force install / force uninstall"
@@ -93,6 +91,7 @@ Actions/Programs:
 [] websites: google, etc
 [] discord! vesktop, webcord, etc
     [] confirmation dialog: "NOTE! The official Discord app has issues with (....)"
+    [] confirmation dialog: "NOTE! Spotify often fails to log in in game mode, try launching in nested desktop mode first"
 [] "essentials" - just installs essentials
 [] any other system settings? bluetooth, audio(!), etc
 
