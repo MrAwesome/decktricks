@@ -5,7 +5,7 @@ use std::path::Path;
 use std::process::Command;
 use twox_hash::XxHash64;
 
-fn xxhash_file<F: AsRef<Path>>(fullpath: F) -> Result<String, Box<dyn Error>> {
+fn xxhash_file(fullpath: &str) -> Result<String, Box<dyn Error>> {
     let data = std::fs::read(fullpath)?;
     xxhash_data(&data)
 }
@@ -18,16 +18,16 @@ fn xxhash_data(data: &[u8]) -> Result<String, Box<dyn Error>> {
 }
 
 // TODO: use crates
-fn untar<F: AsRef<Path>, D: AsRef<Path>>(
-    filename: F,
-    dest_dir: D,
+fn untar(
+    filename: &str,
+    dest_dir: &str,
 ) -> Result<Vec<String>, Box<dyn Error>> {
     let mut c = Command::new("tar");
     c.args([
         "-xvf",
-        &filename.as_ref().to_string_lossy(),
+        filename,
         "-C",
-        &dest_dir.as_ref().to_string_lossy(),
+        dest_dir,
     ]);
     let output = c.output()?;
     let text = String::from_utf8_lossy(&output.stdout);
@@ -35,8 +35,8 @@ fn untar<F: AsRef<Path>, D: AsRef<Path>>(
     Ok(full_filenames.map(ToString::to_string).collect())
 }
 
-fn generate_hashes_for_tarball<F: AsRef<Path>>(
-    tarball_filename: F,
+fn generate_hashes_for_tarball(
+    tarball_filename: &str,
 ) -> Result<Vec<(String, String)>, Box<dyn Error>> {
     let d = tempfile::tempdir()?;
     let tempdir_path = d
@@ -44,18 +44,16 @@ fn generate_hashes_for_tarball<F: AsRef<Path>>(
         .to_str()
         .ok_or_else(|| SimpleError("Failed to get str for tempdir path! Dir: {d:#?}".into()))?;
 
-    let inner_filenames = untar(&tarball_filename, tempdir_path)?;
+    let inner_filenames = untar(tarball_filename, tempdir_path)?;
 
     let inner_hashes = inner_filenames
         .iter()
-        .map(|temp_filename| Path::join(d.path(), temp_filename))
-        .map(xxhash_file)
+        .map(|temp_filename| xxhash_file(Path::join(d.path(), temp_filename).to_string_lossy().into_owned().as_ref()))
         .collect::<Result<Vec<_>, _>>()?;
 
     // Note that we return only the filename of the tarball, as we don't want our local paths
     // reflected in the hash sums file.
-    let tarball_filename_only: String = tarball_filename
-        .as_ref()
+    let tarball_filename_only: String = Path::new(tarball_filename)
         .file_name()
         .ok_or_else(|| {
             SimpleError("Failed to get filename for tarball path! Path: {tarball_filename}".into())
@@ -72,8 +70,8 @@ fn generate_hashes_for_tarball<F: AsRef<Path>>(
     Ok(filename_to_hash)
 }
 
-pub fn generate_hashfile_for_tarball<F: AsRef<Path>>(
-    filename: F,
+pub fn generate_hashfile_for_tarball(
+    filename: &str,
 ) -> Result<String, Box<dyn Error>> {
     let filename_to_hash = generate_hashes_for_tarball(filename)?;
     let text = filename_to_hash
@@ -109,7 +107,7 @@ test-data.tar.xz 16612534869068c7";
         let mut f = tempfile::NamedTempFile::new().unwrap();
         write!(f, "{}", KNOWN_HASHES[1].0).unwrap();
         let filename = f.path();
-        let lawl_hashed = xxhash_file(filename);
+        let lawl_hashed = xxhash_file(filename.to_str().unwrap());
         assert_eq!(KNOWN_HASHES[1].1, lawl_hashed.unwrap());
     }
 
