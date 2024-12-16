@@ -4,7 +4,7 @@ mod error;
 mod live_update;
 mod download;
 
-pub use xxhash::generate_hashes;
+pub use xxhash::generate_hashfile_for_tarball;
 pub use live_update::live_update;
 
 pub(crate) const NUM_RETRIES: u8 = 5;

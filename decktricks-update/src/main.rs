@@ -16,7 +16,7 @@
 // We handle all args ourselves just to keep the number of dependencies for this very critical code
 // as low as possible.
 use decktricks_update::live_update;
-use decktricks_update::generate_hashes;
+use decktricks_update::generate_hashfile_for_tarball;
 
 fn print_usage_and_exit() -> ! {
     eprintln!("Usage: decktricks-update <cmd>
@@ -34,12 +34,14 @@ fn main() {
     let output = match args.next() {
         Some(arg) => match arg.as_str() {
             "generate-hashes" => match args.next() {
-                Some(hashes_arg) => generate_hashes(hashes_arg.as_str()),
+                Some(hashes_arg) => generate_hashfile_for_tarball(hashes_arg.as_str()),
                 None => print_usage_and_exit()
             }
             "live-update" => live_update(),
+            _ => print_usage_and_exit(),
         }
         None => print_usage_and_exit()
     };
-    println!("{}", output);
+    // TODO: handle errors and report back to gui
+    println!("{}", output.unwrap());
 }

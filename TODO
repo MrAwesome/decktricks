@@ -192,11 +192,15 @@ General
 [] fix up global updates - the logic on which providers run them, and how errors/messages are propagated/printed
 [] Find out PATH on deck, and how to update it if necessary
 
-[] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
 [] figure out how to give specific error messages for things like "can't be run because it's not installed"
-[] try out immutable disks in virtualbox for fresh-install testing
+
 
 [] dependencies between tricks
+
+Testing
+[] create better testing for uninstalled/installed and how it affects what's available for e.g. flatpak
+[] try out immutable disks in virtualbox for fresh-install testing
+[] try out quickcheck
 
 Code
 [] Codemod for? to collect::<Result<_, _>>
