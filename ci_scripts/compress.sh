@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 cd "$REPOBUILD"
 
 cd inside_tar/
-tar cJf decktricks.tar.xz ./*
+tar cJf decktricks.tar.xz -- *
 cd ..
 
 cp inside_tar/decktricks.tar.xz .
