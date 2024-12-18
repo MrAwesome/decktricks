@@ -1,11 +1,13 @@
 mod xxhash;
+mod check_hashes;
 mod utils;
 mod error;
 mod live_update;
 mod download;
 
-pub use xxhash::generate_hashfile_for_tarball;
-pub use live_update::live_update;
+pub use xxhash::*;
+pub use live_update::*;
+pub use check_hashes::*;
 
 pub(crate) const NUM_RETRIES: u8 = 5;
 pub(crate) const DECKTRICKS_DOWNLOAD_URL: &str =

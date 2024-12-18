@@ -64,11 +64,11 @@ Comms
 [] ask for gh stars, include a direct link
 
 Providers
+[] luxtorpeda directly!!! (see the readme)
 [] xbox streaming (would require full add-to-steam support for adding launch args): https://support.microsoft.com/en-gb/topic/xbox-cloud-gaming-in-microsoft-edge-with-steam-deck-43dd011b-0ce8-4810-8302-965be6d53296
 [] kodi (for streaming) (tv.kodi.Kodi)
 [] system commands - *file browser* (what's the name in plasma)
 [] yuzu/etc switch emulators
-[] luxtorpeda directly (see the readme)
 [] https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck
     [] individual launchers from within this?
 [] check out "setup helpers" in steamfork: https://github.com/SteamFork/SteamForkTools/tree/main/bin

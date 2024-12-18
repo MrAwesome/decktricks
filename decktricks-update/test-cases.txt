@@ -1,0 +1,6 @@
+test-data/XXH64SUMS.correct
+test-data/XXH64SUMS.lawl_incorrect
+test-data/XXH64SUMS.lol_filename_missing
+test-data/XXH64SUMS.lol_incorrect
+test-data/XXH64SUMS.nonexistent_file
+test-data/XXH64SUMS.tar_incorrect
