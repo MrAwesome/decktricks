@@ -1,5 +1,5 @@
 ## Install Decktricks
-Go to **([decktricks.com](https://decktricks.com))** on your Deck in Desktop Mode!
+Go to **([decktricks.com](https://decktricks.com))** in Desktop Mode!
 
 The installer will handle everything else for you.
 
