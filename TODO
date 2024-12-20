@@ -30,6 +30,7 @@ Add to steam:
     [] make reboot to game mode only happen in SteamOS (or double-check that it works correctly on Chimera etc, or offer a cmdline flag)
 
 General:
+    [] switch all variables in bash scripts to lowercase
     [] try profile lto
     [] sort tricks alphabetically, make categories
     [] e2e test: use test config, check that pressing enter launches first program
