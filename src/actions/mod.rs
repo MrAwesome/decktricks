@@ -30,7 +30,7 @@ impl From<&Action> for TypedAction {
             Action::Actions { id, json } => Self::General(GeneralAction::Actions { id, json }),
             Action::Gui { gui } => Self::General(GeneralAction::Gui { gui }),
             Action::GetConfig => Self::General(GeneralAction::GetConfig),
-            Action::Version => Self::General(GeneralAction::Version),
+            Action::Version { verbose } => Self::General(GeneralAction::Version { verbose }),
 
             // Internal use:
             Action::GetActionDisplayNameMapping => {
@@ -49,9 +49,16 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    pub(crate) fn do_with(self, executor: &Executor, current_log_level: LogType, logger: LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
+    pub(crate) fn do_with(
+        self,
+        executor: &Executor,
+        current_log_level: LogType,
+        logger: LoggerRc,
+    ) -> Vec<DeckResult<ActionSuccess>> {
         match self {
-            Self::General(general_action) => general_action.do_with(executor, current_log_level, &logger),
+            Self::General(general_action) => {
+                general_action.do_with(executor, current_log_level, &logger)
+            }
             Self::Specific(specific_action) => {
                 vec![specific_action.do_with(executor, current_log_level, logger)]
             }

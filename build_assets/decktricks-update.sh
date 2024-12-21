@@ -168,4 +168,7 @@ if "$checksums_enabled" && ! "$failed_hash_check"; then
     cp "$temp_hash_filename" "$installed_hash_filename"
 fi
 
-echo "[INFO] Decktricks has been updated! Version: $("$dtdir"/decktricks version)"
+set +x
+echo -e "\n\n\n"
+echo "[INFO] Decktricks has been updated successfully! Version info:
+$("$dtdir"/decktricks version --verbose || echo "UNKNOWN")"

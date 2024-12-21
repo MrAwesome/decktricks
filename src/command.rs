@@ -135,7 +135,10 @@ pub enum Action {
         gui: GuiType,
     },
     GetConfig,
-    Version,
+    Version {
+        #[clap(long)]
+        verbose: bool,
+    },
 
 
     // Internal use:

@@ -227,8 +227,11 @@ func _ready():
 	%Logs.populate_logs()
 
 	dd.log(2, "Decktricks GUI initialization complete!")
-
 	print("Decktricks GUI initialization complete!")
+
+	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])
+	dd.log(2, "Version info:\n" + version_info)
+	print("Version info:\n" + version_info)
 	if should_exit:
 		get_tree().quit()
 

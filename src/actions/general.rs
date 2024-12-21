@@ -19,7 +19,7 @@ pub(crate) enum GeneralAction {
     },
     UpdateAll,
     GetConfig,
-    Version,
+    Version { verbose: bool },
 
     // Internal use:
     GetActionDisplayNameMapping,
@@ -100,8 +100,16 @@ impl GeneralAction {
                 // TODO: if using live configs, use here
                 vec![success!(DEFAULT_CONFIG_CONTENTS)]
             }
-            Self::Version => {
-                vec![success!(env!("CARGO_PKG_VERSION"))]
+            Self::Version { verbose } => {
+                let ver_str = env!("CARGO_PKG_VERSION");
+                let msg = if verbose {
+                    let git_hash = option_env!("/tmp/.decktricks_git_hash").unwrap_or_default();
+                    let git_title = option_env!("/tmp/.decktricks_git_title").unwrap_or_default();
+                    format!("Version: {ver_str}\nGit Hash: {git_hash}\nTitle: {git_title}")
+                } else {
+                    ver_str.to_string()
+                };
+                vec![success!(msg)]
             }
             Self::GetActionDisplayNameMapping => {
                 let display_mapping = SpecificActionID::get_display_name_mapping();
