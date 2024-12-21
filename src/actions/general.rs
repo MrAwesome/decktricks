@@ -19,6 +19,7 @@ pub(crate) enum GeneralAction {
     },
     UpdateAll,
     GetConfig,
+    Version,
 
     // Internal use:
     GetActionDisplayNameMapping,
@@ -98,6 +99,9 @@ impl GeneralAction {
             Self::GetConfig => {
                 // TODO: if using live configs, use here
                 vec![success!(DEFAULT_CONFIG_CONTENTS)]
+            }
+            Self::Version => {
+                vec![success!(env!("CARGO_PKG_VERSION"))]
             }
             Self::GetActionDisplayNameMapping => {
                 let display_mapping = SpecificActionID::get_display_name_mapping();

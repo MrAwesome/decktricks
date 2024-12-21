@@ -1,87 +1,131 @@
 #!/bin/bash
 
-set -euxo pipefail
+# NOTE: curl, tar, sed, rsync, and xxh64sum should always be present on SteamOS.
+# NOTE: this file prints directly to stdout, as we will redirect output to a log file when running it.
 
-# [] use rust code
-# [] fetch remote hashes file
-# [] check if any listed hashes differ using xxh128sum
-# [] check that all files are writable
-# []    if not, write out an error message and fail out, recommend 'sudo rm -rf ~/.local/share/decktricks' and reinstall
-# [] download stable
-#   [] download to same filesystem! create a temporary dir in decktricks/tmp_update/ (make sure is writable/removable)
-#   [] consider using rsync with continue for downloads over a slow connection?
-# [] untar stable
-# [] check filesize + hashes
-# []    if failed: redownload and repeat (once only, no loop. if failed second time, just warn user and leave it)
-# []    if success: link in temporary files, etc
-#
+set -euxo pipefail
+if [ "$(id -u)" -eq 0 ]; then
+    echo "[WARN] This script should never be run as root! Exiting now..."
+    exit 1
+fi
+
+echo "[INFO] Decktricks update starting at $(date)..."
+
+# TODOs: 
 # [] have godot gui check for error/success messages and inform user
 # [] write changelog in logs
 
 dtdir="$HOME/.local/share/decktricks" 
+mkdir -p "$dtdir"
 cd "$dtdir"
+final_message=""
 
-decktricks_xz_hash_filename="$dtdir/decktricks_tar_xz_hash"
-tmp_update="$dtdir/tmp_update"
-tar_filename_only="$tmp_update/decktricks.tar.gz"
-tar_full_filename="$tmp_update/decktricks.tar.gz"
+# NOTE: to future maintainers, be *EXTREMELY* careful about setting this value anywhere.
+# In fact, just don't do it. This is meant as an override for local testing or power users.
+#
+# If you ever somehow set it to "true" somewhere by default, all updates for all users
+# will be paused forever.
+#
+# If you want to pause updates temporarily, just add a non-empty file named UPDATES_PAUSED
+# (containing a user-friendly message indicating why they are paused) to the latest
+# stable release, and delete that file once updates should be enabled again.
+if [[ "${XX_DECKTRICKS_UPDATES_FORCE_DISABLED_XX:-false}" == "true" ]]; then
+    echo "[WARN] Updates have been force-disabled, will not continue."
+    exit 1
+fi
+
+repo_link="https://github.com/MrAwesome/decktricks"
+issues_link="$repo_link/issues"
+news_link="$repo_link"
+releases_link="$repo_link/releases/download/stable"
+remote_updates_paused_link="$releases_link/UPDATES_PAUSED"
+
+# Clean up any old tmp_update dirs we may have left behind, just in case:
+find . -maxdepth 1 -type d -name 'tmp_update_*' -exec rm -rf {} +
+
+# This *MUST* be in the same filesystem as our decktricks dir, so we just make it a subdir.
+tmp_update="$dtdir/tmp_update_$(date +%s)_$$"
+mkdir -p "$tmp_update"
+trap 'set +x; echo -e "\n\n!!!!!!!!!"; echo "$final_message"; rm -rf "$tmp_update"' EXIT
+
+hash_filename_only="DECKTRICKS_TARBALL_XXH64SUM"
+installed_hash_filename="$dtdir/$hash_filename_only"
+temp_hash_filename="$tmp_update/$hash_filename_only"
+remote_hash_filename="$releases_link/$hash_filename_only"
+
+tar_filename_only="decktricks.tar.xz"
+tar_full_filename="$tmp_update/$tar_filename_only"
+remote_tar_filename="$releases_link/$tar_filename_only"
 tar_output_dir="$tmp_update/extracted"
+mkdir -p "$tar_output_dir"
 
-mkdir -p "$dtdir/logs"
-logfile="$dtdir/logs/decktricks-update.log"
-
-[[ -f "$logfile" ]] && mv "$logfile"{,.bak}
-: > "$logfile"
-echo "[INFO] Decktricks update starting at $(date)..." &>> "$logfile"
-
-if [[ -f "$decktricks_xz_hash_filename" ]]; then
-    local_decktricks_xz_hash=$(cat "$decktricks_xz_hash_filename" | sed -E 's/(^\s*)//' | sed -E 's/\s*$//')
-else
-    local_decktricks_xz_hash="xXx_NO_LOCAL_HASH_FOUND_xXx"
+# Simple connectivity check, borrowed from Decky:
+http_status=$(curl -L -o /dev/null -s -w "%{http_code}\n" https://github.com)
+if [[ "$http_status" != "200" ]]; then
+    connectivity_message="[WARN] Could not connect to github! Are you connected to the Internet? Will attempt to continue anyway..."
+    final_message="${final_message}
+${connectivity_message}"
 fi
 
-desired_decktricks_hash=$(curl -f -L --progress-bar --retry 8 --connect-timeout 60 \
-    'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz.xxh64sum' \
-        2>> "$logfile" \
-        | sed -E 's/(^\s*)//' | sed -E 's/\s*$//')
+updates_paused_msg=$(curl -f -L --retry 7 --connect-timeout 60 "$remote_updates_paused_link" || echo "")
 
-if [[ "$desired_decktricks_hash" == "$local_decktricks_xz_hash" ]]; then
-    echo "[INFO] Local version of Decktricks is up-to-date, will not attempt an update..." &>> "$logfile"
-    exit 0
+if [[ "$updates_paused_msg" != "" ]]; then
+    echo "[WARN] Updates are paused! Check here for more info: $news_link"
+    echo "Pause message: \"$updates_paused_msg\""
+    exit 1
 fi
 
-if [[ "$desired_decktricks_hash" == "updates_paused" ]]; then
-    echo "[WARN] Updates are paused from the server side! Not continuing..." &>> "$logfile"
-    exit 0
+checksums_enabled=true
+curl -f -L --retry 7 --connect-timeout 60 -o "$temp_hash_filename" "$remote_hash_filename" \
+    || checksums_enabled=false
+
+if [[ ! -s "$temp_hash_filename" ]]; then
+    empty_checksum_file_warning="[WARN] Checksum file was empty! This is a serious bug, please report it at $issues_link"
+    echo "$empty_checksum_file_warning"
+    final_message="${final_message}
+${empty_checksum_file_warning}"
+    checksums_enabled=false
 fi
 
-hash_retried=false
-while true; do
-    # Plop our decktricks.tar.xz into "$tmp_update"
-    curl -f -L -O --progress-bar --retry 7 --connect-timeout 60 \
-        --output-dir "$tmp_update" \
-        "https://github.com/MrAwesome/decktricks/releases/download/stable/$tar_filename_only" \
-        &>> "$logfile"
-
-
-    # Grab the hash of the newly-downloaded file
-    downloaded_hash=$(xxh64sum "$tar_full_filename" | awk -F'  ' '{ print $1 }')
-
-    # Check the hash, and retry once if it doesn't match
-    if [[ "$downloaded_hash" != "$desired_decktricks_hash" ]]; then
-        if [[ "$hash_retried" == false ]]; then
-            echo "[WARN] Hash mismatch! Will download again." \
-                &>> "$logfile"
-            hash_retried=true
-            continue
-        else
-            echo "[ERROR] !!! Hashes were mismatched multiple times for Decktricks update tar! Either you have a very very bad Internet connection, or this is a serious error that should be reported at: https://github.com/MrAwesome/decktricks/issues" &>> "$logfile"
-            exit 0
-        fi
+if "$checksums_enabled"; then
+    # This is where we actually check "should we even update?", assuming everything has gone well
+    if cmp "$installed_hash_filename" "$temp_hash_filename"; then
+        echo "[INFO] Local version of Decktricks is up-to-date, will not attempt an update..."
+        exit 0
     fi
+else
+    checksum_warning="[WARN] Did not get a valid hash from the server! Will disable hash checking. This means decktricks will attempt to update every time it is run. This is likely a bug, please report it at: $issues_link"
+    echo "$checksum_warning"
+    final_message="${final_message}
+${checksum_warning}"
+fi
 
-    break
+failed_hash_check=true
+num_retries=2
+for i in $(seq "$num_retries" -1 0); do
+    # If checksums are enabled, we will ignore any curl errors and try again
+    curl -f -L --retry 7 --connect-timeout 60 -o "$tar_full_filename" "$remote_tar_filename" \
+        || "$checksums_enabled"
+
+    pushd "$tmp_update"
+    if xxh64sum -q -c "$temp_hash_filename"; then
+        echo "[INFO] Downloaded updated decktricks successfully! Continuing with update..."
+        failed_hash_check=false
+        break
+    fi
+    popd
+
+    echo "[WARN] Hash mismatch! Retries remaining: $i"
 done
+
+if "$checksums_enabled" && "$failed_hash_check"; then
+    hash_mismatch_warning="[WARN] !!! Hashes were mismatched multiple times for Decktricks update tar! Either you have a very very bad Internet connection, or this is a serious error that should be reported at: ${issues_link}
+[WARN] Will continue with update, but there may be breakages."
+    echo "$hash_mismatch_warning"
+    final_message="${final_message}
+${hash_mismatch_warning}"
+fi
+
 
 ################################################################################
 # Some notes:
@@ -106,15 +150,22 @@ done
 #       platforms, you may need to check for it and do something else
 #       if it is not present
 ################################################################################
-echo "[INFO] Beginning extraction..." &>> "$logfile"
-tar -xJf "$tar_full_filename" -C "$tar_output_dir" &>> "$logfile"
-    
+echo "[INFO] Beginning extraction..."
+tar -xJf "$tar_full_filename" -C "$tar_output_dir"
 
-echo "[INFO] Extraction complete, swapping in files..." &>> "$logfile"
-rsync -a --delay-updates "${tar_output_dir}/" "${dtdir}/" &>> "$logfile"
+echo "[INFO] Extraction complete, swapping in files..."
+rsync -a --delay-updates "${tar_output_dir}/" "${dtdir}/"
 
-echo "[INFO] All files updated! Cleaning up..." &>> "$logfile"
-rm -rf "$tmp_update"
+echo "[INFO] All files updated! Cleaning up..."
 
-echo "[INFO] Decktricks has been updated! Version:" &>> "$logfile"
-"$dtdir"/decktricks --version
+# This is fine - all files in the root directory should be executable.
+# Anything we don't want to be executable will live in a subdir.
+chmod +x "$dtdir"/*
+
+# If we've made it to this point, thanks to -e we can be quite sure we're safe
+# to mark this update as completed and update our hashfile
+if "$checksums_enabled" && ! "$failed_hash_check"; then
+    cp "$temp_hash_filename" "$installed_hash_filename"
+fi
+
+echo "[INFO] Decktricks has been updated! Version: $("$dtdir"/decktricks version)"

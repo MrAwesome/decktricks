@@ -95,7 +95,11 @@ impl ExecutionContext {
     #[must_use]
     pub fn internal_get_for_logging(current_log_level: LogType, logger: LoggerRc) -> Self {
         let runner = Arc::new(Runner::new());
-        Self::General(GeneralExecutionContext::new(runner, current_log_level, logger))
+        Self::General(GeneralExecutionContext::new(
+            runner,
+            current_log_level,
+            logger,
+        ))
     }
 }
 
@@ -103,7 +107,11 @@ impl ExecutionContext {
 #[cfg(test)]
 impl ExecutionContext {
     pub(crate) fn general_for_test_with(runner: RunnerRc) -> Self {
-        Self::General(GeneralExecutionContext::new(runner, LogType::Warn, Arc::new(DecktricksConsoleLogger::new())))
+        Self::General(GeneralExecutionContext::new(
+            runner,
+            LogType::Warn,
+            Arc::new(DecktricksConsoleLogger::new()),
+        ))
     }
 
     pub(crate) fn general_for_test() -> Self {
@@ -238,7 +246,12 @@ impl ExecCtx for SpecificExecutionContext {
 
 impl SpecificExecutionContext {
     #[must_use]
-    pub fn new(trick: Trick, runner: RunnerRc, current_log_level: LogType, logger: LoggerRc) -> Self {
+    pub fn new(
+        trick: Trick,
+        runner: RunnerRc,
+        current_log_level: LogType,
+        logger: LoggerRc,
+    ) -> Self {
         Self {
             log_channel: LogChannel::TrickID(trick.id.clone()),
             current_log_level,
@@ -340,7 +353,13 @@ impl Executor {
             }
         };
 
-        Ok(Self::with(mode, loader, full_ctx, runner, current_log_level))
+        Ok(Self::with(
+            mode,
+            loader,
+            full_ctx,
+            runner,
+            current_log_level,
+        ))
     }
 
     #[must_use]
@@ -368,7 +387,11 @@ impl Executor {
     ///
     /// Almost any `KnownError` can happen by this point, as this is the entry point to most of our
     /// program logic.
-    pub fn execute(&self, command: &DecktricksCommand, logger: LoggerRc) -> Vec<DeckResult<ActionSuccess>> {
+    pub fn execute(
+        &self,
+        command: &DecktricksCommand,
+        logger: LoggerRc,
+    ) -> Vec<DeckResult<ActionSuccess>> {
         let typed_action = TypedAction::from(&command.action);
         let current_log_level = command.log_level.unwrap_or(self.current_log_level);
         typed_action.do_with(self, current_log_level, logger)
@@ -413,7 +436,13 @@ mod tests {
         let ctx = ExecutionContext::general_for_test_with(runner.clone());
         let full_ctx = FullSystemContext::gather_with(&ctx)?;
 
-        let executor = Executor::with(ExecutorMode::OnceOff, loader, full_ctx, runner, LogType::Warn);
+        let executor = Executor::with(
+            ExecutorMode::OnceOff,
+            loader,
+            full_ctx,
+            runner,
+            LogType::Warn,
+        );
         Ok(executor)
     }
 
@@ -514,6 +543,21 @@ mod tests {
             .lines()
             .any(|l| l == "lutris"));
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_version() -> DeckResult<()> {
+        let command = DecktricksCommand::new(Action::Version);
+
+        let executor = get_executor(None)?;
+        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
+        let results = executor.execute(&command, logger);
+
+        assert_eq!(
+            results[0].as_ref().unwrap().get_message().unwrap(),
+            env!("CARGO_PKG_VERSION")
+        );
         Ok(())
     }
 }

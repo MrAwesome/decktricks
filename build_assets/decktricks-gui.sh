@@ -1,6 +1,11 @@
 #!/bin/bash
 
 set -euxo pipefail
+if [ "$(id -u)" -eq 0 ]; then
+    echo "[WARN] This script should never be run as root! Exiting now..."
+    exit 1
+fi
+
 cd "$(dirname "$0")"
 
 LOGS_DIR="$HOME/.local/share/decktricks/logs/"
@@ -13,6 +18,8 @@ if [[ -f "$TMP_INIT_FILE" ]] && rm -f "$TMP_INIT_FILE"; then
     exit 0
 fi
 
-# NOTE: any "critical background updates" code can be spawned off here using the cli, if desired
+( [[ -f "$LOGS_DIR"/decktricks-update.log ]] && mv "$LOGS_DIR/decktricks-update.log"{,.bak} ) || true &
+( nice -n 5 -- /bin/bash decktricks-update.sh &> "$LOGS_DIR"/decktricks-update.log ) || true &
 
-./decktricks-gui "$@" 2>&1 > >(tee "$LOGS_DIR/stdout.log") 2> >(tee "$LOGS_DIR/stderr.log")
+( [[ -f "$LOGS_DIR"/decktricks-gui.log ]] && mv "$LOGS_DIR/decktricks-gui.log"{,.bak} ) || true &
+./decktricks-gui "$@" &> "$LOGS_DIR/decktricks-gui.log"

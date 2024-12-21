@@ -28,7 +28,6 @@ pub struct DecktricksCommand {
     // Will default to the current_log_level of the executor
     #[clap(short, long)]
     pub log_level: Option<LogType>,
-
 }
 
 impl DecktricksCommand {
@@ -136,6 +135,7 @@ pub enum Action {
         gui: GuiType,
     },
     GetConfig,
+    Version,
 
 
     // Internal use:

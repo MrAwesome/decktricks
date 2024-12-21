@@ -4,6 +4,11 @@
 # []: tell user if failure happens in writing files (usually because it was run as root) and how to fix ('sudo rm -rf ~/.local/share/decktricks/')
 
 set -euxo pipefail
+if [ "$(id -u)" -eq 0 ]; then
+    echo "[WARN] This script should never be run as root! Exiting now..."
+    exit 1
+fi
+
 ERROR=0
 
 restart_to_game_mode_manual() {
@@ -11,6 +16,12 @@ restart_to_game_mode_manual() {
 }
 
 xdotool getwindowfocus windowstate --add ABOVE || true
+
+if ! curl -Is https://github.com | head -1 | grep 200 > /dev/null; then
+    echo "[ERROR] Could not connect to GitHub! Are you connected to the Internet?"
+    read -r
+    exit 1
+fi
 
 curl -f -L -O --progress-bar --retry 7 --connect-timeout 60 \
     --output-dir "/tmp" \
@@ -21,6 +32,7 @@ mkdir -p "$DTDIR"
 cd "$DTDIR"
 
 tar xvf /tmp/decktricks.tar.xz
+chmod +x ./*
 ln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
 
 set +x 
