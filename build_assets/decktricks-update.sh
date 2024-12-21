@@ -76,16 +76,29 @@ if [[ "$updates_paused_msg" != "" ]]; then
 fi
 
 checksums_enabled=true
-curl -f -L --retry 7 --connect-timeout 60 -o "$temp_hash_filename" "$remote_hash_filename" \
-    || checksums_enabled=false
+if ! curl -f -L --retry 7 --connect-timeout 60 -o "$temp_hash_filename" "$remote_hash_filename"; then
+    checksums_enabled=false
+fi
 
-if [[ ! -s "$temp_hash_filename" ]]; then
-    empty_checksum_file_warning="[WARN] Checksum file was empty! This is a serious bug, please report it at $issues_link"
+if [[ ! -s "$temp_hash_filename" || ! -s "$installed_hash_filename" ]]; then
+    empty_checksum_file_warning="[WARN] Checksum file was empty/missing! This is a serious bug, please report it at $issues_link
+
+Downloaded hash file:
+
+$(cat "$temp_hash_filename" || echo "Not found.")
+
+Installed hash file:
+
+$(cat "$installed_hash_filename" || echo "Not found.")
+
+"
     echo "$empty_checksum_file_warning"
     final_message="${final_message}
 ${empty_checksum_file_warning}"
     checksums_enabled=false
 fi
+
+
 
 if "$checksums_enabled"; then
     # This is where we actually check "should we even update?", assuming everything has gone well
@@ -152,6 +165,9 @@ fi
 ################################################################################
 echo "[INFO] Beginning extraction..."
 tar -xJf "$tar_full_filename" -C "$tar_output_dir"
+
+echo "[INFO] Sanity testing core files..."
+# TODO
 
 echo "[INFO] Extraction complete, swapping in files..."
 rsync -a --delay-updates "${tar_output_dir}/" "${dtdir}/"
