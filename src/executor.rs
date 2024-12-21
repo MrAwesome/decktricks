@@ -548,7 +548,7 @@ mod tests {
 
     #[test]
     fn test_version() -> DeckResult<()> {
-        let command = DecktricksCommand::new(Action::Version);
+        let command = DecktricksCommand::new(Action::Version { verbose: false });
 
         let executor = get_executor(None)?;
         let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
