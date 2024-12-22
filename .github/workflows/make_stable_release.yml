@@ -23,6 +23,7 @@ jobs:
         run: |
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks-install.desktop
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks-install.sh
+          curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks-update.sh
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/decktricks.tar.xz
           curl -S -s -L -O --output-dir /tmp/artifacts --connect-timeout 60 https://github.com/MrAwesome/decktricks/releases/download/latest/DECKTRICKS_TARBALL_XXH64SUM
 
@@ -39,4 +40,5 @@ jobs:
             /tmp/artifacts/decktricks.tar.xz
             /tmp/artifacts/decktricks-install.desktop
             /tmp/artifacts/decktricks-install.sh
+            /tmp/artifacts/decktricks-update.sh
             /tmp/artifacts/DECKTRICKS_TARBALL_XXH64SUM
