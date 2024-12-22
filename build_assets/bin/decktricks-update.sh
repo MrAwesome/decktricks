@@ -54,7 +54,7 @@ fi' EXIT
 
 hash_filename_only="DECKTRICKS_TARBALL_XXH64SUM"
 installed_hash_filename="$dtdir/$hash_filename_only"
-temp_hash_filename="$tmp_update/$hash_filename_only"
+downloaded_hash_filename="$tmp_update/$hash_filename_only"
 remote_hash_filename="$releases_link/$hash_filename_only"
 
 tar_filename_only="decktricks.tar.xz"
@@ -80,39 +80,37 @@ if [[ "$updates_paused_msg" != "" ]]; then
 fi
 
 checksums_enabled=true
-if ! curl -f -L --retry 7 --connect-timeout 60 -o "$temp_hash_filename" "$remote_hash_filename"; then
+if ! curl -f -L --retry 7 --connect-timeout 60 -o "$downloaded_hash_filename" "$remote_hash_filename"; then
     checksums_enabled=false
 fi
 
-if [[ ! -s "$temp_hash_filename" || ! -s "$installed_hash_filename" ]]; then
-    empty_checksum_file_warning="[WARN] Checksum file was empty/missing! This is a serious bug, please report it at $issues_link
-
+if [[ ! -s "$downloaded_hash_filename" ]]; then
+    empty_downloaded_checksum_file_warning="[WARN] Remote checksum file was empty/missing! This is a serious bug, please report it at $issues_link
 Downloaded hash file:
-
-$(cat "$temp_hash_filename" || echo "Not found.")
-
-Installed hash file:
-
-$(cat "$installed_hash_filename" || echo "Not found.")
-
+$(cat "$downloaded_hash_filename" || echo "Not found.")
 "
-    echo "$empty_checksum_file_warning"
+    echo "$empty_downloaded_checksum_file_warning"
     final_message="${final_message}
-${empty_checksum_file_warning}"
+${empty_downloaded_checksum_file_warning}"
+
+    # If the fetched hash file is empty or missing, we do not want to try to check checksums
+    checksums_enabled=false
+fi
+
+local_hashfile_found=true
+if [[ ! -s "$installed_hash_filename" ]]; then
+    echo "[WARN] Local checksum file was empty/missing! This is probably fine, as we will replace it below."
+
+    local_hashfile_found=false
     checksums_enabled=false
 fi
 
 if "$checksums_enabled"; then
     # This is where we actually check "should we even update?", assuming everything has gone well
-    if cmp "$installed_hash_filename" "$temp_hash_filename"; then
+    if cmp "$installed_hash_filename" "$downloaded_hash_filename"; then
         echo "[INFO] Local version of Decktricks is up-to-date, will not attempt an update..."
         exit 0
     fi
-else
-    checksum_warning="[WARN] Did not get a valid hash from the server! Will disable hash checking. This means decktricks will attempt to update every time it is run. This is likely a bug, please report it at: $issues_link"
-    echo "$checksum_warning"
-    final_message="${final_message}
-${checksum_warning}"
 fi
 
 failed_hash_check=true
@@ -126,8 +124,13 @@ for i in $(seq "$num_retries" -1 0); do
         fi
     fi
 
+    if [[ ! "$checksums_enabled" ]]; then
+        echo "[INFO] Checksums are not enabled, continuing without checking..."
+        break
+    fi
+
     pushd "$tmp_update"
-    if xxh64sum -q -c "$temp_hash_filename"; then
+    if xxh64sum -q -c "$downloaded_hash_filename"; then
         echo "[INFO] Downloaded updated decktricks successfully! Continuing with update..."
         failed_hash_check=false
         popd
@@ -185,8 +188,10 @@ echo "[INFO] All files updated! Cleaning up..."
 
 # If we've made it to this point, thanks to -e we can be quite sure we're safe
 # to mark this update as completed and update our hashfile
-if "$checksums_enabled" && ! "$failed_hash_check"; then
-    cp "$temp_hash_filename" "$installed_hash_filename"
+#
+# If there was no local hashfile found, plop ours into place
+if ( "$checksums_enabled" && ! "$failed_hash_check" ) || ( ! "$local_hashfile_found" ); then
+    cp "$downloaded_hash_filename" "$installed_hash_filename"
 fi
 
 set +x

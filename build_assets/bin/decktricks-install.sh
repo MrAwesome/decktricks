@@ -32,8 +32,19 @@ cd "$dtdir"
 bin_dir="$dtdir/bin"
 
 tar xvf /tmp/decktricks.tar.xz
+
+pushd /tmp
+xxh64sum decktricks.tar.xz | tee "$dtdir"/DECKTRICKS_TARBALL_XXH64SUM
+popd
+
 chmod +x "$bin_dir"/*
+
 [[ -d "$HOME"/Desktop/ ]] && ln -sf "$bin_dir"/decktricks.desktop "$HOME"/Desktop/
+
+if [[ "${DECKTRICKS_INSTALL_EXIT_EARLY_INTERNAL:-false}" == "true" ]]; then
+    echo "[INFO] Exiting early..."
+    exit 0
+fi
 
 set +x 
 added_to_steam=1
