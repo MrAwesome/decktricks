@@ -58,9 +58,10 @@ jobs:
       - run: ./ci_scripts/gui.sh
 
       - run: ./ci_scripts/compress.sh
-      - run: |
-        cd ./build
-        xxh64sum decktricks.tar.xz > DECKTRICKS_TARBALL_XXH64SUM
+      - name: Create tarball checksum file
+        run: |
+          cd ./build
+          xxh64sum decktricks.tar.xz > DECKTRICKS_TARBALL_XXH64SUM
 
       # These are separate so that if-no-files-found actually errors if just one is missing {{{
       - name: Upload tarball
