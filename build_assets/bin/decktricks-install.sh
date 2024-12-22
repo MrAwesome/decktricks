@@ -9,7 +9,7 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-ERROR=0
+error=0
 
 restart_to_game_mode_manual() {
     qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
@@ -17,35 +17,35 @@ restart_to_game_mode_manual() {
 
 xdotool getwindowfocus windowstate --add ABOVE || true
 
-if ! curl -Is https://github.com | head -1 | grep 200 > /dev/null; then
-    echo "[ERROR] Could not connect to GitHub! Are you connected to the Internet?"
-    read -r
-    exit 1
+http_status=$(curl -L -o /dev/null -s -w "%{http_code}\n" https://github.com)
+if [[ "$http_status" != "200" ]]; then
+    echo "[WARN] Could not connect to GitHub! Are you connected to the Internet? Will attempt to continue anyway..."
 fi
 
 curl -f -L -O --progress-bar --retry 7 --connect-timeout 60 \
     --output-dir "/tmp" \
     'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz'
 
-DTDIR="$HOME/.local/share/decktricks" 
-mkdir -p "$DTDIR"
-cd "$DTDIR"
+dtdir="$HOME/.local/share/decktricks" 
+mkdir -p "$dtdir"
+cd "$dtdir"
+bin_dir="$dtdir/bin"
 
 tar xvf /tmp/decktricks.tar.xz
-chmod +x ./*
-ln -sf "$DTDIR"/decktricks.desktop "$HOME"/Desktop/
+chmod +x "$bin_dir"/*
+ln -sf "$bin_dir"/decktricks.desktop "$HOME"/Desktop/
 
 set +x 
-ADDED_TO_STEAM=1
-echo "+ ./decktricks add-decktricks-to-steam"
-./decktricks add-decktricks-to-steam || {
-    ADDED_TO_STEAM=0
-    ERROR=1
+added_to_steam=1
+echo "+ ./bin/decktricks add-decktricks-to-steam"
+"$bin_dir"/decktricks add-decktricks-to-steam || {
+    added_to_steam=0
+    error=1
 }
 set -x
 
 # TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam` and use those here
-if [[ "$ADDED_TO_STEAM" == "1" ]]; then
+if [[ "$added_to_steam" == "1" ]]; then
     if pgrep -x steam > /dev/null; then
         set +x
         echo
@@ -67,9 +67,9 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
         set -x
     fi
 
-    DECKTRICKS_FULL_APPID=$(cat /tmp/decktricks_newest_full_steam_appid)
+    decktricks_full_appid=$(cat /tmp/decktricks_newest_full_steam_appid)
 
-    nohup steam "steam://rungameid/$DECKTRICKS_FULL_APPID" &> /dev/null &
+    nohup steam "steam://rungameid/$decktricks_full_appid" &> /dev/null &
 
     rm -f /tmp/decktricks_only_init
     touch /tmp/decktricks_only_init
@@ -86,8 +86,8 @@ if [[ "$ADDED_TO_STEAM" == "1" ]]; then
     done
 fi
 
-if [[ "$ERROR" == "1" ]]; then
-    if [[ "$ADDED_TO_STEAM" != "1" ]]; then
+if [[ "$error" == "1" ]]; then
+    if [[ "$added_to_steam" != "1" ]]; then
         cat <<EOF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Failed to add Decktricks to Steam! This is most likely because
@@ -122,8 +122,8 @@ EOF
     # TODO: run the qdbus command also if CMD fails
     set -x
     if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
-        CMD=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
-        $CMD || restart_to_game_mode_manual
+        cmd=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
+        $cmd || restart_to_game_mode_manual
     else
         restart_to_game_mode_manual
     fi

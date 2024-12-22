@@ -5,11 +5,9 @@ cd "$(dirname "$0")"
 . lib.sh
 cd "$REPOBUILD"
 
+find .
 cd inside_tar/
-tar cJf decktricks.tar.xz -- *
-cd ..
-
-cp inside_tar/decktricks.tar.xz .
+XZ_OPT='--x86 --lzma2' tar -cJf decktricks.tar.xz -- *
 
 rm -rf inside_tar
 

@@ -211,9 +211,9 @@ fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
     let app_name = "Decktricks";
     let homedir = get_homedir();
     // TODO: wrap in double quotes always?
-    let dtdir_path = format!("{homedir}/.local/share/decktricks");
-    let exe = format!("{dtdir_path}/decktricks-gui.sh");
-    let start_dir = dtdir_path;
+    let bindir_path = format!("{homedir}/.local/share/decktricks/bin");
+    let exe = format!("{bindir_path}/decktricks-gui.sh");
+    let start_dir = bindir_path;
     let icon = "";
     // Is there any advantage to setting this?
     let shortcut_path = "";

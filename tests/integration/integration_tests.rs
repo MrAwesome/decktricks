@@ -269,8 +269,8 @@ fn add_decktricks_to_steam() -> Result<(), DynamicError> {
     let dt = &multi_dae_shortcuts[1];
 
     assert_eq!(dt.app_name, "Decktricks");
-    assert!(dt.exe.ends_with(".local/share/decktricks/decktricks-gui.sh"));
-    assert!(dt.start_dir.ends_with(".local/share/decktricks"));
+    assert!(dt.exe.ends_with(".local/share/decktricks/bin/decktricks-gui.sh"));
+    assert!(dt.start_dir.ends_with(".local/share/decktricks/bin"));
     assert!(dt.tags.contains(&"decktricks"));
 
     file.close()?;

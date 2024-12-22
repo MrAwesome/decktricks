@@ -1,7 +1,7 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
 Name=Decktricks
-Exec=bash -xc '$HOME/.local/share/decktricks/decktricks-gui.sh'
+Exec=bash -xc '$HOME/.local/share/decktricks/bin/decktricks-gui.sh'
 Icon=steamdeck-gaming-return
 Type=Application
 Terminal=false

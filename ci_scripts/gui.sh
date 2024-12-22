@@ -32,7 +32,7 @@ popd
 pushd gui/godot/
 test -x build/decktricks-gui
 test -f build/libdecktricks_godot_gui.so
-cp build/decktricks-gui "$REPOBUILD"/inside_tar
-cp build/libdecktricks_godot_gui.so "$REPOBUILD"/inside_tar
+cp build/decktricks-gui "$REPOBUILD"/inside_tar/bin/
+cp build/libdecktricks_godot_gui.so "$REPOBUILD"/inside_tar/bin/
 popd
 # }}}

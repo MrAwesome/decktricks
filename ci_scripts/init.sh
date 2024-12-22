@@ -10,4 +10,4 @@ git -c safe.directory='*' log -1 --pretty=%s > /tmp/.decktricks_git_title
 
 rm -rf "$REPOBUILD"
 mkdir -p "$REPOBUILD"
-mkdir -p "$REPOBUILD"/inside_tar
+mkdir -p "$REPOBUILD"/inside_tar/bin

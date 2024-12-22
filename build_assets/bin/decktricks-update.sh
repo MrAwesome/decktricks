@@ -5,8 +5,7 @@
 
 set -euxo pipefail
 if [ "$(id -u)" -eq 0 ]; then
-    echo "[WARN] This script should never be run as root! Exiting now..."
-    exit 1
+    echo "[WARN] This script should never be run as root! Exiting now..." exit 1
 fi
 
 echo "[INFO] Decktricks update starting at $(date)..."
@@ -49,7 +48,7 @@ mkdir -p "$tmp_update"
 trap 'rm -rf "$tmp_update"
 set +x
 if [[ "$final_message" != "" ]]; then
-    echo -e "\n\n!!!!!!!!!!!!!!!!"
+    echo -e "\n\n!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "$final_message"
 fi' EXIT
 
@@ -67,7 +66,7 @@ mkdir -p "$tar_output_dir"
 # Simple connectivity check, borrowed from Decky:
 http_status=$(curl -L -o /dev/null -s -w "%{http_code}\n" https://github.com)
 if [[ "$http_status" != "200" ]]; then
-    connectivity_message="[WARN] Could not connect to github! Are you connected to the Internet? Will attempt to continue anyway..."
+    connectivity_message="[WARN] Could not connect to GitHub! Are you connected to the Internet? Will attempt to continue anyway..."
     final_message="${final_message}
 ${connectivity_message}"
 fi
@@ -103,8 +102,6 @@ ${empty_checksum_file_warning}"
     checksums_enabled=false
 fi
 
-
-
 if "$checksums_enabled"; then
     # This is where we actually check "should we even update?", assuming everything has gone well
     if cmp "$installed_hash_filename" "$temp_hash_filename"; then
@@ -121,14 +118,19 @@ fi
 failed_hash_check=true
 num_retries=2
 for i in $(seq "$num_retries" -1 0); do
-    # If checksums are enabled, we will ignore any curl errors and try again
-    curl -f -L --retry 7 --connect-timeout 60 -o "$tar_full_filename" "$remote_tar_filename" \
-        || "$checksums_enabled"
+    if ! curl -f -L --retry 7 --connect-timeout 60 -o "$tar_full_filename" "$remote_tar_filename"; then
+        # If checksums are enabled, we will ignore any curl errors and try again
+        if ! "$checksums_enabled"; then
+            echo "[ERROR] Failed to download tarball and checksums are enabled. Exiting."
+            exit 1
+        fi
+    fi
 
     pushd "$tmp_update"
     if xxh64sum -q -c "$temp_hash_filename"; then
         echo "[INFO] Downloaded updated decktricks successfully! Continuing with update..."
         failed_hash_check=false
+        popd
         break
     fi
     popd
@@ -171,15 +173,19 @@ echo "[INFO] Beginning extraction..."
 tar -xJf "$tar_full_filename" -C "$tar_output_dir"
 
 echo "[INFO] Sanity testing core files..."
+if ! [[ -d "$tar_output_dir"/bin ]]; then
+    echo "[ERROR] bin directory missing from tarfile! This is an extremely serious error, please report it at: $issues_link"
+    exit 1
+fi
+
+# This is fine - all files in the root directory should be executable.
+# Anything we don't want to be executable will live in a different dir.
+chmod +x "$tar_output_dir"/bin/*
 
 echo "[INFO] Extraction complete, swapping in files..."
 rsync -a --delay-updates "${tar_output_dir}/" "${dtdir}/"
 
 echo "[INFO] All files updated! Cleaning up..."
-
-# This is fine - all files in the root directory should be executable.
-# Anything we don't want to be executable will live in a subdir.
-chmod +x "$dtdir"/*
 
 # If we've made it to this point, thanks to -e we can be quite sure we're safe
 # to mark this update as completed and update our hashfile
@@ -190,4 +196,4 @@ fi
 set +x
 echo -e "\n\n\n"
 echo "[INFO] Decktricks has been updated successfully! Version info:
-$("$dtdir"/decktricks version --verbose || echo "UNKNOWN")"
+$("$dtdir"/bin/decktricks version --verbose || echo "UNKNOWN")"
