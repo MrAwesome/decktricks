@@ -33,7 +33,7 @@ bin_dir="$dtdir/bin"
 
 tar xvf /tmp/decktricks.tar.xz
 chmod +x "$bin_dir"/*
-ln -sf "$bin_dir"/decktricks.desktop "$HOME"/Desktop/
+[[ -d "$HOME"/Desktop/ ]] && ln -sf "$bin_dir"/decktricks.desktop "$HOME"/Desktop/
 
 set +x 
 added_to_steam=1

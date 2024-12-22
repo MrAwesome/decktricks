@@ -58,9 +58,12 @@ jobs:
       - run: ./ci_scripts/gui.sh
 
       - run: ./ci_scripts/compress.sh
+      - run: |
+        cd ./build
+        xxh64sum decktricks.tar.xz > DECKTRICKS_TARBALL_XXH64SUM
 
       # These are separate so that if-no-files-found actually errors if just one is missing {{{
-      - name: Upload tar
+      - name: Upload tarball
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-tar
@@ -79,6 +82,13 @@ jobs:
         with:
           name: verified-gui-installer-script
           path: ./build/decktricks-install.sh
+          if-no-files-found: error
+
+      - name: Upload tarball checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-gui-tar-checksum
+          path: ./build/DECKTRICKS_TARBALL_XXH64SUM
           if-no-files-found: error
       # }}}
 
