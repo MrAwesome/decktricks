@@ -172,11 +172,7 @@ fi
 echo "[INFO] Beginning extraction..."
 tar -xJf "$tar_full_filename" -C "$tar_output_dir"
 
-echo "[INFO] Sanity testing core files..."
-if ! [[ -d "$tar_output_dir"/bin ]]; then
-    echo "[ERROR] bin directory missing from tarfile! This is an extremely serious error, please report it at: $issues_link"
-    exit 1
-fi
+# TODO: double-check that we're not going to write an empty decktricks-update.sh or decktricks-gui.sh or etc?
 
 # This is fine - all files in the root directory should be executable.
 # Anything we don't want to be executable will live in a different dir.

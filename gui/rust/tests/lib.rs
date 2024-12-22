@@ -144,7 +144,8 @@ fn test_dispatcher_e2e() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
 
-    println!("{}", stdout);
+    println!("STDOUT: {}", stdout);
+    println!("STDERR: {}", stderr);
     assert!(!stdout.contains("ERROR"));
     assert!(!stderr.contains("ERROR"));
     assert!(stdout.contains("THISISMYTESTSTRINGYES"));
