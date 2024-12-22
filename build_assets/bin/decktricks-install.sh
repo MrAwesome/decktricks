@@ -9,7 +9,12 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-error=0
+steam_shutdown_wait_secs=60
+steam_restart_wait_secs=60
+dtdir="$HOME/.local/share/decktricks" 
+mkdir -p "$dtdir"
+cd "$dtdir"
+bin_dir="$dtdir/bin"
 
 restart_to_game_mode_manual() {
     qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
@@ -22,14 +27,8 @@ if [[ "$http_status" != "200" ]]; then
     echo "[WARN] Could not connect to GitHub! Are you connected to the Internet? Will attempt to continue anyway..."
 fi
 
-curl -f -L -O --progress-bar --retry 7 --connect-timeout 60 \
-    --output-dir "/tmp" \
+curl -f -L --progress-bar --retry 7 --connect-timeout 60 -o "/tmp/decktricks-update.sh" \
     'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks-update.sh'
-
-dtdir="$HOME/.local/share/decktricks" 
-mkdir -p "$dtdir"
-cd "$dtdir"
-bin_dir="$dtdir/bin"
 
 # Use the update script to actually fetch and untar, since it contains all of our logic for
 # checking checksums and retrying.
@@ -37,22 +36,20 @@ bash /tmp/decktricks-update.sh
 
 [[ -d "$HOME"/Desktop/ ]] && ln -sf "$bin_dir"/decktricks.desktop "$HOME"/Desktop/
 
-if [[ "${DECKTRICKS_INSTALL_EXIT_EARLY_INTERNAL:-false}" == "true" ]]; then
+added_to_steam="true"
+if ! "$bin_dir"/decktricks add-decktricks-to-steam; then
+    added_to_steam="false"
+fi
+
+decktricks_full_appid=$(cat /tmp/decktricks_newest_full_steam_appid || echo "")
+
+if [[ "${DECKTRICKS_INSTALL_DO_NOT_RESTART_STEAM:-false}" == "true" ]]; then
     echo "[INFO] Exiting early..."
     exit 0
 fi
 
-set +x 
-added_to_steam=1
-echo "+ ./bin/decktricks add-decktricks-to-steam"
-"$bin_dir"/decktricks add-decktricks-to-steam || {
-    added_to_steam=0
-    error=1
-}
-set -x
-
 # TODO: just add a `decktricks restart-steam` and `decktricks run-via-steam` and use those here
-if [[ "$added_to_steam" == "1" ]]; then
+if "$added_to_steam" && [[ "$decktricks_full_appid" != "" ]]; then
     if pgrep -x steam > /dev/null; then
         set +x
         echo
@@ -64,8 +61,8 @@ if [[ "$added_to_steam" == "1" ]]; then
         steam -shutdown &> /dev/null || true
 
         set +x
-        for ((i=0; i<60; i++)); do
-            echo "($i/60) Waiting for Steam to shut down..."
+        for ((i=0; i<$steam_shutdown_wait_secs; i++)); do
+            echo "($i/$steam_shutdown_wait_secs) Waiting for Steam to shut down..."
             sleep 1
             if ! pgrep -x steam > /dev/null; then
                 break
@@ -74,28 +71,31 @@ if [[ "$added_to_steam" == "1" ]]; then
         set -x
     fi
 
-    decktricks_full_appid=$(cat /tmp/decktricks_newest_full_steam_appid)
-
     nohup steam "steam://rungameid/$decktricks_full_appid" &> /dev/null &
 
     rm -f /tmp/decktricks_only_init
     touch /tmp/decktricks_only_init
 
     set +x
-    for ((i=0; i<60; i++)); do
+    for ((i=0; i<$steam_restart_wait_secs; i++)); do
         if [[ ! -f /tmp/decktricks_only_init ]]; then
             break
         fi
         # We're not actually installing anymore, just waiting on Decktricks to be
         # placed first in the most recent games list
-        echo "($i/60) Waiting for Steam to finish installing Decktricks..."
+        echo "($i/$steam_restart_wait_secs) Waiting for Steam to finish installing Decktricks..."
         sleep 1
     done
+    set -x
+
+
 fi
 
-if [[ "$error" == "1" ]]; then
-    if [[ "$added_to_steam" != "1" ]]; then
-        cat <<EOF
+# TODO: Check if on SteamOS and improve these messages
+
+set +x
+if ! "$added_to_steam"; then
+    cat <<EOF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Failed to add Decktricks to Steam! This is most likely because
 you aren't logged in to Steam on this system.
@@ -108,8 +108,15 @@ In SteamOS (Steam Deck), you can add Decktricks to Steam easily:
 2) Select "Add to Steam"
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 EOF
-    fi
-else
+fi
+
+if [[ "$decktricks_full_appid" == "" ]]; then
+    cat <<EOF
+
+[NOTE]: Did not find an appid for Decktricks. This is a bug, please report it at: https://github.com/MrAwesome/decktricks/issues
+
+EOF
+fi
 
 cat << EOF
 =====================
@@ -121,19 +128,20 @@ Will restart to Game Mode in 10 seconds unless you close this window.
 To return to Game Mode yourself, just double-click
 the "Return to Gaming Mode" icon on the desktop.
 
+You should see Decktricks first in your list of games. If not, it will
+be under "Non-Steam Games".
+
 =====================
 EOF
 
-    sleep 10
-    # Try to use the desktop file, and run a (possibly old) return to game mode command if it's not present
-    # TODO: run the qdbus command also if CMD fails
-    set -x
-    if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
-        cmd=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | sed 's/^Exec=//')
-        $cmd || restart_to_game_mode_manual
-    else
-        restart_to_game_mode_manual
-    fi
-fi
+# TODO: read instead, and say "press A to restart to Game Mode"?
+sleep 10
 
+# Try to use the desktop file, and run a (possibly old) return to game mode command if it's not present
 set -x
+if [[ -f "$HOME"/Desktop/Return.desktop ]]; then
+    cmd=$(grep '^Exec=' "$HOME"/Desktop/Return.desktop | head -n 1 | sed 's/^Exec=//')
+    $cmd || restart_to_game_mode_manual || true
+else
+    restart_to_game_mode_manual || true
+fi

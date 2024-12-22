@@ -11,14 +11,14 @@ if [[ ! -x /bin/time ]]; then
 fi
 
 export DECKTRICKS_GUI_EXIT_IMMEDIATELY=true
-FULL_OUTPUT=$(/bin/time --format="%e / %P" "${DECKTRICKS_TEST_COMMAND[@]}" 2>&1)
+full_output=$(/bin/time --format="%e / %P" "${DECKTRICKS_TEST_COMMAND[@]}" 2>&1)
 
-TIME_OUTPUT=$(echo "$FULL_OUTPUT" | tail -n 1)
+time_output=$(echo "$full_output" | tail -n 1)
 
 cd "$DECKTRICKS_REPO_ROOT"
 if [[ "$DECKTRICKS_TEST_TYPE" == "built_binary" ]]; then
-    OUTPUT_FILE=misc/gui_benchmarks_built.txt
+    output_file=misc/gui_benchmarks_built.txt
 else
-    OUTPUT_FILE=misc/gui_benchmarks_debug.txt
+    output_file=misc/gui_benchmarks_debug.txt
 fi
-echo "$(date +%s) :: $TIME_OUTPUT" >> "$OUTPUT_FILE"
+echo "$(date +%s) :: $time_output" >> "$output_file"
