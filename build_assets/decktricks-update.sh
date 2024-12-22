@@ -46,7 +46,12 @@ find . -maxdepth 1 -type d -name 'tmp_update_*' -exec rm -rf {} +
 # This *MUST* be in the same filesystem as our decktricks dir, so we just make it a subdir.
 tmp_update="$dtdir/tmp_update_$(date +%s)_$$"
 mkdir -p "$tmp_update"
-trap 'set +x; echo -e "\n\n!!!!!!!!!"; echo "$final_message"; rm -rf "$tmp_update"' EXIT
+trap 'rm -rf "$tmp_update"
+set +x
+if [[ "$final_message" != "" ]]; then
+    echo -e "\n\n!!!!!!!!!!!!!!!!"
+    echo "$final_message"
+fi' EXIT
 
 hash_filename_only="DECKTRICKS_TARBALL_XXH64SUM"
 installed_hash_filename="$dtdir/$hash_filename_only"
@@ -139,7 +144,6 @@ if "$checksums_enabled" && "$failed_hash_check"; then
 ${hash_mismatch_warning}"
 fi
 
-
 ################################################################################
 # Some notes:
 #  1) --delay-updates helps us preserve atomicity
@@ -167,7 +171,6 @@ echo "[INFO] Beginning extraction..."
 tar -xJf "$tar_full_filename" -C "$tar_output_dir"
 
 echo "[INFO] Sanity testing core files..."
-# TODO
 
 echo "[INFO] Extraction complete, swapping in files..."
 rsync -a --delay-updates "${tar_output_dir}/" "${dtdir}/"
