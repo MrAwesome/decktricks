@@ -63,13 +63,13 @@ remote_tar_filename="$releases_link/$tar_filename_only"
 tar_output_dir="$tmp_update/extracted"
 mkdir -p "$tar_output_dir"
 
-# Simple connectivity check, borrowed from Decky:
-http_status=$(curl -L -o /dev/null -s -w "%{http_code}\n" https://github.com)
-if [[ "$http_status" != "200" ]]; then
-    connectivity_message="[WARN] Could not connect to GitHub! Are you connected to the Internet? Will attempt to continue anyway..."
-    final_message="${final_message}
-${connectivity_message}"
-fi
+# Simple connectivity check:
+# http_status=$(curl -L -o /dev/null -s -w "%{http_code}\n" https://github.com)
+# if [[ "$http_status" != "200" ]]; then
+#     connectivity_message="[WARN] Could not connect to GitHub! Are you connected to the Internet? Will attempt to continue anyway..."
+#     final_message="${final_message}
+# ${connectivity_message}"
+# fi
 
 updates_paused_msg=$(curl -f -L --retry 7 --connect-timeout 60 "$remote_updates_paused_link" || echo "")
 
@@ -102,10 +102,9 @@ if [[ ! -s "$installed_hash_filename" ]]; then
     echo "[WARN] Local checksum file was empty/missing! This is probably fine, as we will replace it below."
 
     local_hashfile_found=false
-    checksums_enabled=false
 fi
 
-if "$checksums_enabled"; then
+if "$checksums_enabled" && "$local_hashfile_found"; then
     # This is where we actually check "should we even update?", assuming everything has gone well
     if cmp "$installed_hash_filename" "$downloaded_hash_filename"; then
         echo "[INFO] Local version of Decktricks is up-to-date, will not attempt an update..."
