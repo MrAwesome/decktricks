@@ -14,6 +14,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
 const UI_REFRESH_DELAY_MILLIS: u64 = 200;
+const NUM_EXECUTOR_READ_RETRIES: u8 = 3;
 
 // TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =
@@ -95,7 +96,18 @@ impl DecktricksDispatcher {
     }
 
     fn get_executor() -> Option<Arc<Option<Executor>>> {
-        let read_result = EXECUTOR_GUARD.try_read();
+        let mut read_result = EXECUTOR_GUARD.try_read();
+        let mut delay_ms = 1;
+        for _ in 0..NUM_EXECUTOR_READ_RETRIES {
+            if read_result.is_err() {
+                std::thread::sleep(Duration::from_millis(delay_ms));
+                delay_ms *= 2;
+
+                read_result = EXECUTOR_GUARD.try_read();
+            } else {
+                break;
+            }
+        }
         match read_result {
             Ok(guard) => Some((*guard).clone()),
             Err(err) => {

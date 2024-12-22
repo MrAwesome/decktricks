@@ -24,20 +24,16 @@ fi
 
 curl -f -L -O --progress-bar --retry 7 --connect-timeout 60 \
     --output-dir "/tmp" \
-    'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks.tar.xz'
+    'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks-update.sh'
 
 dtdir="$HOME/.local/share/decktricks" 
 mkdir -p "$dtdir"
 cd "$dtdir"
 bin_dir="$dtdir/bin"
 
-tar xvf /tmp/decktricks.tar.xz
-
-pushd /tmp
-xxh64sum decktricks.tar.xz | tee "$dtdir"/DECKTRICKS_TARBALL_XXH64SUM
-popd
-
-chmod +x "$bin_dir"/*
+# Use the update script to actually fetch and untar, since it contains all of our logic for
+# checking checksums and retrying.
+bash /tmp/decktricks-update.sh
 
 [[ -d "$HOME"/Desktop/ ]] && ln -sf "$bin_dir"/decktricks.desktop "$HOME"/Desktop/
 
