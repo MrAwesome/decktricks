@@ -1,11 +1,22 @@
 #!/bin/bash
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !! IMPORTANT: This file should always be run *before* any Rust or Godot code, from pure Bash.
+# !!            Doing this allows us to still push updates, even if there are catastrophic failures sent out
+# !!            in rs/gd code. This also means that this file is the single most important point of failure
+# !!            in all of decktricks (along with decktricks-gui.sh, which calls it). We can always push out
+# !!            another version of the GUI or lib if we bork them badly enough. But if a broken version of
+# !!            this file pushes out to users, we're out of luck and every user in the world will have to 
+# !!            go into Desktop Mode and re-run the installer for themselves - which most will never do.
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # NOTE: curl, tar, sed, rsync, and xxh64sum should always be present on SteamOS.
 # NOTE: this file prints directly to stdout, as we will redirect output to a log file when running it.
 
 set -euxo pipefail
 if [ "$(id -u)" -eq 0 ]; then
-    echo "[WARN] This script should never be run as root! Exiting now..." exit 1
+    echo "[WARN] This script should never be run as root! Exiting now..."
+    exit 1
 fi
 
 echo "[INFO] Decktricks update starting at $(date)..."
@@ -123,7 +134,7 @@ for i in $(seq "$num_retries" -1 0); do
         fi
     fi
 
-    if [[ ! "$checksums_enabled" ]]; then
+    if ! "$checksums_enabled"; then
         echo "[INFO] Checksums are not enabled, continuing without checking..."
         break
     fi
