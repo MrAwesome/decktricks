@@ -135,3 +135,4 @@ jobs:
             /tmp/artifacts/verified-gui-tar/decktricks.tar.xz
             /tmp/artifacts/verified-gui-installer-desktop/decktricks-install.desktop
             /tmp/artifacts/verified-gui-installer-script/decktricks-install.sh
+            /tmp/artifacts/verified-gui-tar-checksum/DECKTRICKS_TARBALL_XXH64SUM
