@@ -12,4 +12,5 @@ cp -r build_assets/bin/* "$REPOBUILD"/inside_tar/bin/
 # Installer is separate for ease of download
 cp build_assets/bin/decktricks-install.desktop "$REPOBUILD"
 cp build_assets/bin/decktricks-install.sh "$REPOBUILD"
+cp build_assets/bin/decktricks-update.sh "$REPOBUILD"
 # }}}
