@@ -128,9 +128,13 @@ for i in $(seq "$num_retries" -1 0); do
         break
     fi
 
+    echo "[INFO] Running hash check..."
     pushd "$tmp_update"
     if xxh64sum -q -c "$downloaded_hash_filename"; then
+        echo "[INFO] Hash check passed!"
+        echo
         echo "[INFO] Downloaded updated decktricks successfully! Continuing with update..."
+
         failed_hash_check=false
         popd
         break
