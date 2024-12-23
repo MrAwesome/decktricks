@@ -120,6 +120,7 @@ impl Trick {
                 command: Default::default(),
                 args: Default::default(),
                 execution_dir: Default::default(),
+                spawn_detached: Default::default(),
             }),
             display_name: Default::default(),
             description: Default::default(),
@@ -151,11 +152,6 @@ impl std::fmt::Display for ProviderConfig {
     }
 }
 
-// custom can be something like:
-// match provider_id {
-//    "decky" => { blah },
-//}
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Flatpak {
     pub id: String,
@@ -166,6 +162,11 @@ pub struct SimpleCommand {
     pub command: String,
     pub args: Option<Vec<String>>,
     pub execution_dir: Option<String>,
+
+    // Spawn off without waiting or getting any input back.
+    // We will be blind to the process, but it will outlive the decktricks process
+    // (meaning it won't cause decktricks to hang at close)
+    pub spawn_detached: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

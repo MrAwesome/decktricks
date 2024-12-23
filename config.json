@@ -6,7 +6,8 @@
             "id": "nested-desktop",
             "provider_config": {
                 "type": "simple-command",
-                "command": "steamos-nested-desktop"
+                "command": "steamos-nested-desktop",
+                "spawn_detached": true
             },
             "tags": [
                 "system",

@@ -54,6 +54,7 @@ impl DynTrickProvider {
                     simple_command.args.clone().unwrap_or_default(),
                     ctx.clone(),
                     running_instances,
+                    simple_command.spawn_detached.unwrap_or(false),
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => DynTrickProvider(Box::new(

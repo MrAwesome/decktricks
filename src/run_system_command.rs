@@ -1,10 +1,12 @@
+use std::io::Read;
 use crate::prelude::*;
 use std::sync::Arc;
 
-// TODO: prevent Command module-wide
-
-#[cfg(test)]
 use std::os::unix::process::ExitStatusExt;
+
+// TODO: prevent Command module-wide
+// TODO: unit/integration test spawn vs output
+// TODO: better indication that a process was spawned vs output?
 
 // Export for unit tests in Godot
 #[cfg(any(test, feature = "test"))]
@@ -26,6 +28,7 @@ pub struct SysCommand {
     pub cmd: String,
     pub args: Vec<String>,
     pub desired_env_vars: Vec<(String, String)>,
+    pub spawn_detached: bool,
 }
 
 impl PartialEq for SysCommand {
@@ -49,6 +52,7 @@ impl SysCommand {
             cmd: cmd.to_string(),
             args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
+            spawn_detached: false,
         }
     }
 
@@ -61,7 +65,9 @@ pub(crate) trait SysCommandRunner {
     fn get_cmd(&self) -> &SysCommand;
     fn get_ctx(&self) -> &ExecutionContext;
 
-    fn env(&mut self, varname: &str, value: &str) -> &Self;
+    fn env(&mut self, varname: &str, value: &str) -> &mut Self;
+
+    fn spawn_detached(&mut self, spawn_detached: bool) -> &mut Self;
 
     fn run(&self) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
@@ -78,7 +84,12 @@ impl SysCommandRunner for SysCommand {
         self
     }
 
-    fn env(&mut self, varname: &str, value: &str) -> &Self {
+    fn spawn_detached(&mut self, spawn_detached: bool) -> &mut Self {
+        self.spawn_detached = spawn_detached;
+        self
+    }
+
+    fn env(&mut self, varname: &str, value: &str) -> &mut Self {
         self.desired_env_vars.push((varname.into(), value.into()));
         self
     }
@@ -249,9 +260,12 @@ impl ActualRunner for LiveActualRunner {
 
     #[cfg(not(test))]
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult> {
+        use std::time::Duration;
+
         let cmd = &sys_command.cmd;
         let args = &sys_command.args;
 
+        // Here is where we finally create the actual Command to be run.
         let mut command = std::process::Command::new(cmd);
         command.args(args);
 
@@ -259,12 +273,39 @@ impl ActualRunner for LiveActualRunner {
             command.env(var, val);
         }
 
-        let output = command.output().map_err(|e| {
-            KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                cmd: sys_command.clone(),
-                error: e,
-            }))
-        })?;
+        let output = if sys_command.spawn_detached {
+            // TODO: try to allow for capturing stdout/stderr in GUI mode, but not CLI mode
+            command.stdout(std::process::Stdio::piped());
+            command.stderr(std::process::Stdio::piped());
+            let mut child = command.spawn().map_err(|e| {
+                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
+                    cmd: sys_command.clone(),
+                    error: e,
+                }))
+            })?;
+//
+//            std::thread::sleep(Duration::from_secs(10));
+//
+//            let mut buf = vec![];
+//            child.stderr.take().unwrap().read_to_end(&mut buf).unwrap();
+//            println!("{}", String::from_utf8_lossy(&buf));
+
+            info!(&sys_command.ctx, "Spawned detached process: {:?}", sys_command);
+
+            // TODO: handle less jank-ily?
+            std::process::Output {
+                status: std::process::ExitStatus::from_raw(0),
+                stdout: vec![],
+                stderr: vec![],
+            }
+        } else {
+            command.output().map_err(|e| {
+                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
+                    cmd: sys_command.clone(),
+                    error: e,
+                }))
+            })?
+        };
 
         info!(
             sys_command.get_ctx(),
@@ -275,15 +316,3 @@ impl ActualRunner for LiveActualRunner {
         Ok(SysCommandResult::new(sys_command.clone(), output))
     }
 }
-
-// For now, return nothing.
-// TODO: run in a thread and report back (for gui), run and wait (for CLI)
-// TODO: return child process info, store it with provider?
-// TODO: pass Result back to calling functions
-//
-// https://doc.rust-lang.org/std/process/struct.Child.html#method.try_wait
-//pub(crate) fn spawn_system_command(cmdname: &str, args: Vec<&str>) {
-//    Command::new(cmdname)
-//        .args(args)
-//        .spawn();
-//}
