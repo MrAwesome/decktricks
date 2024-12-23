@@ -31,6 +31,7 @@ impl From<&Action> for TypedAction {
             Action::Gui { gui } => Self::General(GeneralAction::Gui { gui }),
             Action::GetConfig => Self::General(GeneralAction::GetConfig),
             Action::Version { verbose } => Self::General(GeneralAction::Version { verbose }),
+            Action::Steam { steam_subcommand } => Self::General(GeneralAction::Steam { steam_subcommand }),
 
             // Internal use:
             Action::GetActionDisplayNameMapping => {

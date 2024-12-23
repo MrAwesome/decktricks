@@ -20,5 +20,6 @@ pub mod logging;
 pub mod run_system_command;
 pub mod tricks_config;
 pub mod utils;
+pub mod steam;
 
 pub use rayon;

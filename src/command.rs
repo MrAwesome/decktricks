@@ -1,3 +1,4 @@
+use crate::steam::SteamSubcommand;
 use clap::ValueEnum;
 use serde::Serialize;
 use crate::gui::GuiType;
@@ -138,6 +139,10 @@ pub enum Action {
     Version {
         #[clap(long)]
         verbose: bool,
+    },
+    Steam {
+        #[clap(subcommand)]
+        steam_subcommand: SteamSubcommand,
     },
 
 

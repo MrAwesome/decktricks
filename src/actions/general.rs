@@ -1,3 +1,4 @@
+use crate::steam::SteamSubcommand;
 use crate::add_to_steam::debug_steam_shortcuts;
 use crate::gui::GuiType;
 use crate::prelude::*;
@@ -20,6 +21,7 @@ pub(crate) enum GeneralAction {
     UpdateAll,
     GetConfig,
     Version { verbose: bool },
+    Steam { steam_subcommand: SteamSubcommand },
 
     // Internal use:
     GetActionDisplayNameMapping,
@@ -111,6 +113,11 @@ impl GeneralAction {
                 };
                 vec![success!(msg)]
             }
+            Self::Steam { steam_subcommand } => {
+                // TODO
+                vec![]
+            }
+
             Self::GetActionDisplayNameMapping => {
                 let display_mapping = SpecificActionID::get_display_name_mapping();
                 let maybe_json_display_mapping =
