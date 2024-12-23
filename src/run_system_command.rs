@@ -1,5 +1,5 @@
-use std::io::Read;
 use crate::prelude::*;
+use std::io::Read;
 use std::sync::Arc;
 
 use std::os::unix::process::ExitStatusExt;
@@ -273,24 +273,29 @@ impl ActualRunner for LiveActualRunner {
             command.env(var, val);
         }
 
-        let output = if sys_command.spawn_detached {
+        let output = if sys_command.spawn_detached
+            || std::env::var("DECKTRICKS_ALWAYS_SPAWN_DETACHED").is_ok_and(|val| !val.is_empty())
+        {
             // TODO: try to allow for capturing stdout/stderr in GUI mode, but not CLI mode
-            command.stdout(std::process::Stdio::piped());
-            command.stderr(std::process::Stdio::piped());
+            //command.stdout(std::process::Stdio::piped());
+            //command.stderr(std::process::Stdio::piped());
             let mut child = command.spawn().map_err(|e| {
                 KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
                     cmd: sys_command.clone(),
                     error: e,
                 }))
             })?;
-//
-//            std::thread::sleep(Duration::from_secs(10));
-//
-//            let mut buf = vec![];
-//            child.stderr.take().unwrap().read_to_end(&mut buf).unwrap();
-//            println!("{}", String::from_utf8_lossy(&buf));
+            //
+            //            std::thread::sleep(Duration::from_secs(10));
+            //
+            //            let mut buf = vec![];
+            //            child.stderr.take().unwrap().read_to_end(&mut buf).unwrap();
+            //            println!("{}", String::from_utf8_lossy(&buf));
 
-            info!(&sys_command.ctx, "Spawned detached process: {:?}", sys_command);
+            info!(
+                &sys_command.ctx,
+                "Spawned detached process: {:?}", sys_command
+            );
 
             // TODO: handle less jank-ily?
             std::process::Output {
