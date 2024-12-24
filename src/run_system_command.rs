@@ -299,7 +299,12 @@ impl ActualRunner for LiveActualRunner {
 
             // TODO: handle less jank-ily?
             std::process::Output {
-                status: std::process::ExitStatus::from_raw(0),
+                status: child.wait().map_err(|e| {
+                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
+                    cmd: sys_command.clone(),
+                    error: e,
+                }))
+            })?,
                 stdout: vec![],
                 stderr: vec![],
             }
