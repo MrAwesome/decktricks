@@ -120,6 +120,7 @@ if "$checksums_enabled" && "$local_hashfile_found"; then
     # This is where we actually check "should we even update?", assuming everything has gone well
     if cmp "$installed_hash_filename" "$downloaded_hash_filename"; then
         echo "[INFO] Local version of Decktricks is up-to-date, will not attempt an update..."
+        echo "[INFO] Channel: $channel"
         exit 0
     fi
 fi
@@ -213,3 +214,4 @@ set +x
 echo -e "\n\n\n"
 echo "[INFO] Decktricks has been updated successfully! Version info:
 $("$dtdir"/bin/decktricks version --verbose || echo "UNKNOWN")"
+echo "[INFO] Channel: $channel"
