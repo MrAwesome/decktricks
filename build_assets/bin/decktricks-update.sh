@@ -47,7 +47,8 @@ fi
 repo_link="https://github.com/MrAwesome/decktricks"
 issues_link="$repo_link/issues"
 news_link="$repo_link"
-releases_link="$repo_link/releases/download/stable"
+channel="${DECKTRICKS_CHANNEL:-stable}"
+releases_link="$repo_link/releases/download/${channel}"
 remote_updates_paused_link="$releases_link/UPDATES_PAUSED"
 
 # Clean up any old tmp_update dirs we may have left behind, just in case:

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# []: todo: if run in Game Mode, don't do the steam restart
 # []: todo: check hashes and redownload if needed? once only, don't loop
 # []: tell user if failure happens in writing files (usually because it was run as root) and how to fix ('sudo rm -rf ~/.local/share/decktricks/')
 
@@ -9,6 +10,7 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
+channel="${DECKTRICKS_CHANNEL:-stable}"
 steam_shutdown_wait_secs=60
 steam_restart_wait_secs=60
 dtdir="$HOME/.local/share/decktricks" 
@@ -28,7 +30,7 @@ if [[ "$http_status" != "200" ]]; then
 fi
 
 curl -f -L --progress-bar --retry 7 --connect-timeout 60 -o "/tmp/decktricks-update.sh" \
-    'https://github.com/MrAwesome/decktricks/releases/download/stable/decktricks-update.sh'
+    "https://github.com/MrAwesome/decktricks/releases/download/${channel}/decktricks-update.sh"
 
 # Use the update script to actually fetch and untar, since it contains all of our logic for
 # checking checksums and retrying.

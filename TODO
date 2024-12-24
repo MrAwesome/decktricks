@@ -28,8 +28,10 @@ Logging overhaul:
 
 Add to steam:
     [] make reboot to game mode only happen in SteamOS (or double-check that it works correctly on Chimera etc, or offer a cmdline flag)
+    [] look at /usr/bin/steamos-add-to-steam for clues on how to add to steam without needing to restart steam
 
 General:
+    [] make the /tmp/decktricks_only_init check fail when not in desktop mode? or handle it better, some way of only having it happen on that very first steam launch? env var plus the file?
     [] switch all variables in bash scripts to lowercase
     [] try profile lto
     [] sort tricks alphabetically, make categories
