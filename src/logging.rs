@@ -151,7 +151,7 @@ macro_rules! inner_print {
                     filename,
                     ::std::line!(),
                     ::std::column!(),
-                    ::std::format!($fmt, $($args)*)
+                    ::std::format!($fmt $(, $args)*)
                 )
             )
         }

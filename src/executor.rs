@@ -346,10 +346,10 @@ impl Executor {
                 if do_not_gather {
                     FullSystemContext::default()
                 } else {
-                    FullSystemContext::gather_with(&gather_execution_ctx)?
+                    FullSystemContext::gather_with(&gather_execution_ctx, &loader)?
                 }
             } else {
-                FullSystemContext::gather_with(&gather_execution_ctx)?
+                FullSystemContext::gather_with(&gather_execution_ctx, &loader)?
             }
         };
 
@@ -434,7 +434,7 @@ mod tests {
         let runner = Arc::new(mock);
 
         let ctx = ExecutionContext::general_for_test_with(runner.clone());
-        let full_ctx = FullSystemContext::gather_with(&ctx)?;
+        let full_ctx = FullSystemContext::gather_with(&ctx, &loader)?;
 
         let executor = Executor::with(
             ExecutorMode::OnceOff,

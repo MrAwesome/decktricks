@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::providers::emudeck_installer::EmuDeckSystemContext;
+use crate::providers::systemd_run::SystemdRunUnitsContext;
 use crate::utils::running_in_ci_container;
 use decky_installer::DeckySystemContext;
 use flatpak::FlatpakSystemContext;
@@ -12,25 +13,55 @@ pub struct FullSystemContext {
     pub decky_ctx: DeckySystemContext,
     pub emudeck_ctx: EmuDeckSystemContext,
     pub procs_ctx: RunningProgramSystemContext,
+    pub systemd_run_ctx: SystemdRunUnitsContext,
 }
 
+// TODO: gather optimistically, don't fail the whole gather if some particular error is encountered
+// [] just log gather errors with error! and continue
 impl FullSystemContext {
     /// # Errors
     ///
     /// Can return system errors from trying to gather system information
-    pub fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
-        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx) = join_all!(
-            || DeckySystemContext::gather_with(&ctx.clone()),
-            || FlatpakSystemContext::gather_with(&ctx.clone()),
-            || RunningProgramSystemContext::gather_with(&ctx.clone()),
+    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> DeckResult<Self> {
+        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, systemd_run_ctx) = join_all!(
+            || DeckySystemContext::gather_with(&ctx.clone())
+                .map_err(|e| {
+                    error!(ctx, "Error gathering Decky context: {}", e);
+                    e
+                })
+                .unwrap_or_default(),
+            || FlatpakSystemContext::gather_with(&ctx.clone())
+                .map_err(|e| {
+                    error!(ctx, "Error gathering Flatpak context: {}", e);
+                    e
+                })
+                .unwrap_or_default(),
+            || RunningProgramSystemContext::gather_with(&ctx.clone())
+                .map_err(|e| {
+                    error!(ctx, "Error gathering running program context: {}", e);
+                    e
+                })
+                .unwrap_or_default(),
             || EmuDeckSystemContext::gather_with(&ctx.clone())
+                .map_err(|e| {
+                    error!(ctx, "Error gathering EmuDeck context: {}", e);
+                    e
+                })
+                .unwrap_or_default(),
+            || SystemdRunUnitsContext::gather_with(&ctx.clone(), tricks_loader)
+                .map_err(|e| {
+                    error!(ctx, "Error gathering systemd-run context: {}", e);
+                    e
+                })
+                .unwrap_or_default()
         );
 
         Ok(Self {
-            decky_ctx: decky_ctx?,
-            flatpak_ctx: flatpak_ctx?,
-            procs_ctx: procs_ctx?,
-            emudeck_ctx: emudeck_ctx?,
+            flatpak_ctx,
+            decky_ctx,
+            emudeck_ctx,
+            procs_ctx,
+            systemd_run_ctx,
         })
     }
 }

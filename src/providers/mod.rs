@@ -1,3 +1,4 @@
+use crate::providers::systemd_run::SystemdRunProvider;
 use std::ops::DerefMut;
 use std::ops::Deref;
 use crate::prelude::*;
@@ -13,6 +14,7 @@ pub mod emudeck_installer;
 pub mod flatpak;
 mod flatpak_helpers;
 pub mod simple_command;
+pub mod systemd_run;
 pub mod system_context;
 
 pub(super) const fn not_possible(reason: &'static str) -> DeckResult<ActionSuccess> {
@@ -54,7 +56,14 @@ impl DynTrickProvider {
                     simple_command.args.clone().unwrap_or_default(),
                     ctx.clone(),
                     running_instances,
-                    simple_command.spawn_detached.unwrap_or(false),
+                )))
+            }
+            ProviderConfig::SystemdRun(systemd_run) => {
+                DynTrickProvider(Box::new(SystemdRunProvider::new(
+                    trick_id,
+                    ctx.clone(),
+                    full_ctx.systemd_run_ctx.running_unit_ids.contains(&systemd_run.unit_id),
+                    systemd_run.clone(),
                 )))
             }
             ProviderConfig::DeckyInstaller(_decky_installer) => DynTrickProvider(Box::new(

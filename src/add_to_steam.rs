@@ -132,6 +132,28 @@ impl TryFrom<&Trick> for AddToSteamContext {
                     launch_options,
                 }
             },
+            ProviderConfig::SystemdRun(d) => {
+                let exe_unwrapped = which(&d.command)?;
+
+                let exe = format!("\"{exe_unwrapped}\"");
+
+                let start_dir = d.execution_dir.unwrap_or_else(|| "/usr/bin".into());
+
+                let launch_options = match d.args {
+                    Some(args) => args.join(" "),
+                    None => String::default(),
+                };
+
+                AddToSteamContext {
+                    trick_id,
+                    app_name,
+                    exe,
+                    start_dir,
+                    icon,
+                    shortcut_path,
+                    launch_options,
+                }
+            },
         };
         Ok(ctx)
     }

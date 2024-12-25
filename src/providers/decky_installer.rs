@@ -14,14 +14,8 @@ pub struct DeckyInstallerProvider {
 
 impl DeckyInstallerProvider {
     #[must_use]
-    pub(super) fn new(
-        ctx: SpecificExecutionContext,
-        decky_ctx: DeckySystemContext,
-    ) -> Self {
-        Self {
-            ctx,
-            decky_ctx,
-        }
+    pub(super) fn new(ctx: SpecificExecutionContext, decky_ctx: DeckySystemContext) -> Self {
+        Self { ctx, decky_ctx }
     }
 }
 
@@ -34,15 +28,19 @@ pub struct DeckySystemContext {
 impl DeckySystemContext {
     pub(crate) fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         let (is_installed, is_running) = join_all!(
+            // We can rely on SysCommand to log if we encounter any errors during gather, and just
+            // default to false if anything goes wrong.
             || SysCommand::new(ctx, "/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
-                .run(),
+                .run()
+                .is_ok_and(|res| res.ran_successfully()),
             || SysCommand::new(ctx, "/usr/bin/systemctl", ["is-active", "plugin_loader"])
                 .run()
+                .is_ok_and(|res| res.ran_successfully())
         );
 
         Ok(Self {
-            is_installed: is_installed?.ran_successfully(),
-            is_running: is_running?.ran_successfully(),
+            is_installed,
+            is_running,
         })
     }
 }
@@ -95,11 +93,7 @@ impl ProviderActions for DeckyInstallerProvider {
 
     fn install(&self) -> DeckResult<ActionSuccess> {
         let _ = SysCommand::new(&self.ctx, "xhost", vec!["+"]).run();
-        run_remote_script(
-            &self.ctx,
-            DECKY_DOWNLOAD_URL,
-            DECKY_INSTALLER_TEMP_FILENAME,
-        )?;
+        run_remote_script(&self.ctx, DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)?;
         success!("Decky installed successfully!")
     }
 

@@ -1,8 +1,7 @@
-use crate::prelude::*;
-use std::io::Read;
-use std::sync::Arc;
-
+#[cfg(test)]
 use std::os::unix::process::ExitStatusExt;
+use crate::prelude::*;
+use std::sync::Arc;
 
 // TODO: prevent Command module-wide
 // TODO: unit/integration test spawn vs output
@@ -28,7 +27,6 @@ pub struct SysCommand {
     pub cmd: String,
     pub args: Vec<String>,
     pub desired_env_vars: Vec<(String, String)>,
-    pub spawn_detached: bool,
 }
 
 impl PartialEq for SysCommand {
@@ -52,7 +50,6 @@ impl SysCommand {
             cmd: cmd.to_string(),
             args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
-            spawn_detached: false,
         }
     }
 
@@ -67,8 +64,6 @@ pub(crate) trait SysCommandRunner {
 
     fn env(&mut self, varname: &str, value: &str) -> &mut Self;
 
-    fn spawn_detached(&mut self, spawn_detached: bool) -> &mut Self;
-
     fn run(&self) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
         self.get_ctx().get_runner().run(sys_command)
@@ -81,11 +76,6 @@ impl SysCommandRunner for SysCommand {
     }
 
     fn get_cmd(&self) -> &SysCommand {
-        self
-    }
-
-    fn spawn_detached(&mut self, spawn_detached: bool) -> &mut Self {
-        self.spawn_detached = spawn_detached;
         self
     }
 
@@ -260,8 +250,6 @@ impl ActualRunner for LiveActualRunner {
 
     #[cfg(not(test))]
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult> {
-        use std::time::Duration;
-
         let cmd = &sys_command.cmd;
         let args = &sys_command.args;
 
@@ -273,49 +261,14 @@ impl ActualRunner for LiveActualRunner {
             command.env(var, val);
         }
 
-        let output = if sys_command.spawn_detached
-            || std::env::var("DECKTRICKS_ALWAYS_SPAWN_DETACHED").is_ok_and(|val| !val.is_empty())
-        {
-            // TODO: try to allow for capturing stdout/stderr in GUI mode, but not CLI mode
-            //command.stdout(std::process::Stdio::piped());
-            //command.stderr(std::process::Stdio::piped());
-            let mut child = command.spawn().map_err(|e| {
-                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                    cmd: sys_command.clone(),
-                    error: e,
-                }))
-            })?;
-            //
-            //            std::thread::sleep(Duration::from_secs(10));
-            //
-            //            let mut buf = vec![];
-            //            child.stderr.take().unwrap().read_to_end(&mut buf).unwrap();
-            //            println!("{}", String::from_utf8_lossy(&buf));
-
-            info!(
-                &sys_command.ctx,
-                "Spawned detached process: {:?}", sys_command
-            );
-
-            // TODO: handle less jank-ily?
-            std::process::Output {
-                status: child.wait().map_err(|e| {
-                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                    cmd: sys_command.clone(),
-                    error: e,
-                }))
-            })?,
-                stdout: vec![],
-                stderr: vec![],
-            }
-        } else {
-            command.output().map_err(|e| {
-                KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                    cmd: sys_command.clone(),
-                    error: e,
-                }))
-            })?
-        };
+        let output = command.output().map_err(|e| {
+            let args = sys_command.args.join(" ");
+            error!(sys_command.get_ctx(), "Error running command \"{} {}\": {e:?}", sys_command.cmd, args);
+            KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
+                cmd: sys_command.clone(),
+                error: e,
+            }))
+        })?;
 
         info!(
             sys_command.get_ctx(),

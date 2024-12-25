@@ -13,7 +13,7 @@ pub const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
 
 #[derive(Debug, Deserialize)]
 pub struct TricksConfig {
-    tricks: Vec<Trick>,
+    pub tricks: Vec<Trick>,
 }
 
 impl TryFrom<&str> for TricksConfig {
@@ -120,7 +120,6 @@ impl Trick {
                 command: Default::default(),
                 args: Default::default(),
                 execution_dir: Default::default(),
-                spawn_detached: Default::default(),
             }),
             display_name: Default::default(),
             description: Default::default(),
@@ -138,6 +137,7 @@ pub enum ProviderConfig {
     DeckyInstaller(DeckyInstaller),
     EmuDeckInstaller(EmuDeckInstaller),
     SimpleCommand(SimpleCommand),
+    SystemdRun(SystemdRun),
     //SystemPackage(SystemPackage)
 }
 
@@ -148,6 +148,7 @@ impl std::fmt::Display for ProviderConfig {
             ProviderConfig::DeckyInstaller(_) => write!(f, "DeckyInstaller"),
             ProviderConfig::EmuDeckInstaller(_) => write!(f, "EmuDeckInstaller"),
             ProviderConfig::SimpleCommand(_) => write!(f, "SimpleCommand"),
+            ProviderConfig::SystemdRun(_) => write!(f, "SystemdRun"),
         }
     }
 }
@@ -162,11 +163,38 @@ pub struct SimpleCommand {
     pub command: String,
     pub args: Option<Vec<String>>,
     pub execution_dir: Option<String>,
+}
 
-    // Spawn off without waiting or getting any input back.
-    // We will be blind to the process, but it will outlive the decktricks process
-    // (meaning it won't cause decktricks to hang at close)
-    pub spawn_detached: Option<bool>,
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SystemdRun {
+    pub unit_id: String,
+    pub command: String,
+    pub args: Option<Vec<String>>,
+    pub execution_dir: Option<String>,
+    pub is_system: Option<bool>,
+}
+
+impl SystemdRun {
+    pub(crate) fn get_as_args(&self) -> Vec<String> {
+        let mut args = vec!["--user", "--collect"]
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>();
+
+        if let Some(ex) = &self.execution_dir {
+            let dir_arg = format!("--working-directory={}", ex);
+            args.push(dir_arg)
+        };
+
+        args.push(format!("--unit={}", self.unit_id));
+        args.push(self.command.clone());
+
+        if let Some(cmd_args) = &self.args {
+            args.extend_from_slice(cmd_args);
+        };
+
+        args
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -8,7 +8,6 @@ pub struct SimpleCommandProvider {
     pub args: Vec<String>,
     pub ctx: SpecificExecutionContext,
     pub running_instances: Vec<ProcessID>,
-    pub spawn_detached: bool,
 }
 
 impl SimpleCommandProvider {
@@ -18,7 +17,6 @@ impl SimpleCommandProvider {
         args: Vec<S>,
         ctx: SpecificExecutionContext,
         running_instances: Vec<ProcessID>,
-        spawn_detached: bool,
     ) -> Self {
         Self {
             trick_id,
@@ -26,7 +24,6 @@ impl SimpleCommandProvider {
             args: args.into_iter().map(Into::into).collect(),
             ctx,
             running_instances,
-            spawn_detached,
         }
     }
 }
@@ -34,15 +31,14 @@ impl SimpleCommandProvider {
 impl TrickProvider for SimpleCommandProvider {}
 
 impl ProviderChecks for SimpleCommandProvider {
+    // These are meant to be simple system commands which are always known to be installed in
+    // SteamOS. You can gather `which` data in FullSystemContext, if this becomes necessary.
     fn is_installable(&self) -> bool {
-        // These are meant to be simple system commands which are always known to be installed
         false
     }
     fn is_uninstallable(&self) -> bool {
         false
     }
-    // Can use which in gather system context for each known simplecommandprovider,
-    // but it's probably better to rely on always_present_on_steamdeck in most cases instead
     fn is_installed(&self) -> bool {
         true
     }
@@ -76,7 +72,6 @@ impl ProviderActions for SimpleCommandProvider {
     fn run(&self) -> DeckResult<ActionSuccess> {
         SysCommand::new(&self.ctx, &self.command, self.args.iter())
             .env(PID_ENV_STRING, &self.trick_id)
-            .spawn_detached(self.spawn_detached)
             .run()?
             .as_success()
     }
@@ -86,7 +81,7 @@ impl ProviderActions for SimpleCommandProvider {
     }
 
     fn update(&self) -> DeckResult<ActionSuccess> {
-        not_possible("Simple commands cannot be installed!")
+        not_possible("Simple commands cannot be updated!")
     }
 
     fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
@@ -113,7 +108,7 @@ mod tests {
         let ctx = SpecificExecutionContext::test(Trick::test());
 
         let sc =
-            SimpleCommandProvider::new("echo-lol".into(), "echo", vec!["lol"], ctx, Vec::default(), false);
+            SimpleCommandProvider::new("echo-lol".into(), "echo", vec!["lol"], ctx, Vec::default());
         assert!(!sc.is_installable());
         assert!(sc.is_installed());
         assert!(sc.is_runnable());
@@ -138,7 +133,7 @@ mod tests {
 
         let trick = Trick::test();
         let ctx = SpecificExecutionContext::test_with_runner(trick, std::sync::Arc::new(mock));
-        let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, ctx, Vec::default(), false);
+        let sc = SimpleCommandProvider::new("echo-lol".into(), cmd, args, ctx, Vec::default());
         // TODO: generalize these to be default implementations?
 
         assert!(matches!(sc.run(), Ok(ActionSuccess { .. })));
