@@ -37,12 +37,24 @@ func focus_button(button: Button, action, trick_id):
 	# Store the focused button to be re-focused on refresh
 	focused_trick_and_action = [trick_id, action]
 
-func create_action_button(action: String, trick_id: String):
+func create_action_button(action: String, trick_id: String, ongoing: bool):
 	var button: Button = ACTION_BUTTON.instantiate()
 	button.name = action
-	button.text = display_name_mapping[action]
-	button.pressed.connect(take_action.bind(action, trick_id))
+	if ongoing and action == "install":
+		button.text = "Installing..."
+	else:
+		button.text = display_name_mapping[action]
 	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
+
+	if ongoing:
+		var tween = create_tween().set_loops()
+		var trans = Tween.TRANS_QUAD
+		tween.tween_property(button, "modulate", Color.GREEN, 1).set_ease(Tween.EASE_IN_OUT).set_trans(trans)
+		tween.tween_property(button, "modulate", Color.FOREST_GREEN, 1).set_ease(Tween.EASE_OUT_IN).set_trans(trans)
+	else:
+		# If the action is ongoing, don't let the user click it again
+		button.pressed.connect(take_action.bind(action, trick_id))
+
 	return button
 
 func popup_info_window(root: Window, info: Dictionary):
@@ -74,7 +86,7 @@ func take_action(action: String, trick_id: String):
 	else:
 		dd.async_run_with_decktricks(args)
 
-func create_actions_row(trick_id: String, available_actions: Array, _display_name: String, _icon_path: String):
+func create_actions_row(trick_id: String, available_actions: Array, _display_name: String, _icon_path: String, is_installing: bool):
 	var actions_row_outer = ACTIONS_ROW.instantiate()
 	var actions_row = actions_row_outer.get_child(0).get_child(0)
 
@@ -82,7 +94,10 @@ func create_actions_row(trick_id: String, available_actions: Array, _display_nam
 
 	for action in available_actions:
 		# Fix this to take display names etc from the config
-		var button = create_action_button(action, trick_id)
+
+		var ongoing: bool = is_installing and action == "install"
+
+		var button = create_action_button(action, trick_id, ongoing)
 		actions_row.add_child(button)
 
 		if should_focus and action == focused_trick_and_action[1]:
@@ -153,7 +168,9 @@ func refresh_ui_inner(actions_json_string: String):
 
 		# Error checking should never be needed for this access, since we
 		# check on the Rust side that we're only generating valid actions
-		var available_actions: Array = actions[trick_id]
+		var action_context: Dictionary = actions[trick_id]
+		var available_actions: Array = action_context["available_actions"]
+		var is_installing: bool = action_context["is_installing"]
 
 		# TODO: show tooltext when it's selected
 
@@ -164,7 +181,7 @@ func refresh_ui_inner(actions_json_string: String):
 		# These ended up being spammy and buggy and too big
 		# label_box.tooltip_text = description
 
-		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path)
+		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path, is_installing)
 
 		if initializing and not marked_first:
 			first_button = trick_row.get_child(0).get_child(0).get_child(0)

@@ -31,6 +31,10 @@ impl SimpleCommandProvider {
 impl TrickProvider for SimpleCommandProvider {}
 
 impl ProviderChecks for SimpleCommandProvider {
+    fn get_execution_context(&self) -> &SpecificExecutionContext {
+        &self.ctx
+    }
+
     // These are meant to be simple system commands which are always known to be installed in
     // SteamOS. You can gather `which` data in FullSystemContext, if this becomes necessary.
     fn is_installable(&self) -> bool {
@@ -43,7 +47,7 @@ impl ProviderChecks for SimpleCommandProvider {
         true
     }
     fn is_runnable(&self) -> bool {
-        true
+        !self.is_running()
     }
     fn is_running(&self) -> bool {
         !self.running_instances.is_empty()

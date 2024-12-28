@@ -1,5 +1,5 @@
-use crate::utils::get_running_pids_exact;
 use crate::prelude::*;
+use crate::utils::get_running_pids_exact;
 use crate::utils::kill_pids;
 use crate::utils::{exists_and_executable, get_homedir, run_remote_script};
 
@@ -24,21 +24,15 @@ pub struct EmuDeckInstallerProvider {
 
 impl EmuDeckInstallerProvider {
     #[must_use]
-    pub(super) fn new(
-        ctx: SpecificExecutionContext,
-        emu_ctx: EmuDeckSystemContext,
-    ) -> Self {
-        Self {
-            ctx,
-            emu_ctx,
-        }
+    pub(super) fn new(ctx: SpecificExecutionContext, emu_ctx: EmuDeckSystemContext) -> Self {
+        Self { ctx, emu_ctx }
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct EmuDeckSystemContext {
     is_installed: bool,
-    running_pids: Vec<String>
+    running_pids: Vec<String>,
 }
 
 impl EmuDeckSystemContext {
@@ -47,22 +41,28 @@ impl EmuDeckSystemContext {
     ///
     /// Returns errors relating to running pgrep and checking file existence/permissions.
     pub fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
-        let (is_installed, running_main_pids, running_supplementary_pids) = 
-            join_all!(
-                || exists_and_executable(ctx, &get_emudeck_binary_path()),
-                || get_running_pids_exact(ctx, EMUDECK_BINARY_NAME).unwrap_or_default(),
-                || get_running_pids_exact(ctx, "emudeck").unwrap_or_default()
-                );
+        let (is_installed, running_main_pids, running_supplementary_pids) = join_all!(
+            || exists_and_executable(ctx, &get_emudeck_binary_path()),
+            || get_running_pids_exact(ctx, EMUDECK_BINARY_NAME).unwrap_or_default(),
+            || get_running_pids_exact(ctx, "emudeck").unwrap_or_default()
+        );
 
         let running_pids = [running_main_pids, running_supplementary_pids].concat();
 
-        Ok(Self { is_installed, running_pids })
+        Ok(Self {
+            is_installed,
+            running_pids,
+        })
     }
 }
 
 impl TrickProvider for EmuDeckInstallerProvider {}
 
 impl ProviderChecks for EmuDeckInstallerProvider {
+    fn get_execution_context(&self) -> &SpecificExecutionContext {
+        &self.ctx
+    }
+
     fn is_installable(&self) -> bool {
         !self.is_installed()
     }
@@ -85,7 +85,7 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_runnable(&self) -> bool {
-        self.is_installed()
+        self.is_installed() && !self.is_running()
     }
 
     fn is_running(&self) -> bool {

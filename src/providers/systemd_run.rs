@@ -32,6 +32,10 @@ impl SystemdRunProvider {
 impl TrickProvider for SystemdRunProvider {}
 
 impl ProviderChecks for SystemdRunProvider {
+    fn get_execution_context(&self) -> &SpecificExecutionContext {
+        &self.ctx
+    }
+
     // These are meant to be simple system commands which are always known to be installed in
     // SteamOS. You can gather `which` data in FullSystemContext, if this becomes necessary.
     fn is_installable(&self) -> bool {

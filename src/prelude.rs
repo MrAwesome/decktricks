@@ -22,6 +22,7 @@ pub use crate::providers::*;
 pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
 pub const DEFAULT_USER: &str = "deck";
 pub const PID_ENV_STRING: &str = "DECKTRICKS_TRICK_ID";
+pub const INSTALLING_ENV_STRING: &str = "DECKTRICKS_IS_INSTALLING";
 
 pub type ProcessID = String;
 pub type TrickID = String;

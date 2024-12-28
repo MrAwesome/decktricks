@@ -19,6 +19,9 @@ if [[ -f "$tmp_init_file" ]] && rm -f "$tmp_init_file"; then
     exit 0
 fi
 
+# NOTE: these files are created in src/actions/specific.rs
+trap 'rm -f /tmp/decktricks-install-*' EXIT
+
 ( [[ -f "$logs_dir/decktricks-update.log" ]] && mv "$logs_dir/decktricks-update.log"{,.bak} ) || true &
 ( nice -n 5 -- /bin/bash "$bin_dir/decktricks-update.sh" &> "$logs_dir/decktricks-update.log" ) || true &
 

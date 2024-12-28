@@ -16,20 +16,11 @@ pub struct FullSystemContext {
     pub systemd_run_ctx: SystemdRunUnitsContext,
 }
 
-// TODO: gather optimistically, don't fail the whole gather if some particular error is encountered
-// [] just log gather errors with error! and continue
+// NOTE: we gather optimistically, don't fail the whole gather if some particular error is encountered.
 impl FullSystemContext {
-    /// # Errors
-    ///
-    /// Can return system errors from trying to gather system information
-    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> Self {
         let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, systemd_run_ctx) = join_all!(
-            || DeckySystemContext::gather_with(&ctx.clone())
-                .map_err(|e| {
-                    error!(ctx, "Error gathering Decky context: {}", e);
-                    e
-                })
-                .unwrap_or_default(),
+            || DeckySystemContext::gather_with(&ctx.clone()),
             || FlatpakSystemContext::gather_with(&ctx.clone())
                 .map_err(|e| {
                     error!(ctx, "Error gathering Flatpak context: {}", e);
@@ -56,19 +47,20 @@ impl FullSystemContext {
                 .unwrap_or_default()
         );
 
-        Ok(Self {
+        Self {
             flatpak_ctx,
             decky_ctx,
             emudeck_ctx,
             procs_ctx,
             systemd_run_ctx,
-        })
+        }
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct RunningProgramSystemContext {
     pub tricks_to_running_pids: HashMap<TrickID, Vec<ProcessID>>,
+    pub tricks_to_installing_pids: HashMap<TrickID, Vec<ProcessID>>,
 }
 
 impl RunningProgramSystemContext {
@@ -78,35 +70,42 @@ impl RunningProgramSystemContext {
     pub fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         // This can be stored in an "initial system context" if needed
 
-        let desired_string = format!("{PID_ENV_STRING}=");
+        let running_prefix = format!("{PID_ENV_STRING}=");
+        let installing_prefix = format!("{INSTALLING_ENV_STRING}=");
         let res = get_procs_with_env(ctx);
 
         let mut tricks_to_running_pids: HashMap<TrickID, Vec<ProcessID>> = HashMap::new();
+        let mut tricks_to_installing_pids: HashMap<TrickID, Vec<ProcessID>> = HashMap::new();
         if let Some(output) = res {
             for line in output.lines() {
-                if line.contains(&desired_string) {
-                    let maybe_trick_id = line
-                        .split_whitespace()
-                        .find_map(|s| s.strip_prefix(&desired_string).map(ToString::to_string));
+                for (prefix, map) in [
+                    (&running_prefix, &mut tricks_to_running_pids),
+                    (&installing_prefix, &mut tricks_to_installing_pids),
+                ] {
+                    if line.contains(prefix) {
+                        let maybe_trick_id = line
+                            .split_whitespace()
+                            .find_map(|s| s.strip_prefix(prefix).map(ToString::to_string));
 
-                    let maybe_pid = line.split_whitespace().next();
-                    if let Some(trick_id) = maybe_trick_id {
-                        if let Some(pid) = maybe_pid {
-                            tricks_to_running_pids
-                                .entry(trick_id)
-                                .or_default()
-                                .push(pid.into());
-                        } else {
-                            error!(
+                        let maybe_pid = line.split_whitespace().next();
+                        if let Some(trick_id) = maybe_trick_id {
+                            if let Some(pid) = maybe_pid {
+                                map
+                                    .entry(trick_id)
+                                    .or_default()
+                                    .push(pid.into());
+                            } else {
+                                error!(
                                 ctx,
                                 "Expected pid, but did not find one. Command line: '''{line}'''"
                             );
-                        }
-                    } else {
-                        error!(
+                            }
+                        } else {
+                            error!(
                             ctx,
                             "Expected trick ID, but did not find one. Command line: '''{line}'''"
                         );
+                        }
                     }
                 }
             }
@@ -114,6 +113,7 @@ impl RunningProgramSystemContext {
 
         Ok(Self {
             tricks_to_running_pids,
+            tricks_to_installing_pids,
         })
     }
 }

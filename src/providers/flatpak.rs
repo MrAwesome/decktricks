@@ -70,15 +70,24 @@ impl FlatpakProvider {
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["install", "-y", &self.id])
-            .run()?
-            .as_success()
+        SysCommand::new(
+            &self.ctx,
+            FLATPAK_SYSTEM_COMMAND,
+            ["install", "--user", "-y", &self.id],
+        )
+        .env("DECKTRICKS_IS_INSTALLING", self.ctx.trick.id.as_ref())
+        .run()?
+        .as_success()
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["uninstall", "-y", &self.id])
-            .run()?
-            .as_success()
+        SysCommand::new(
+            &self.ctx,
+            FLATPAK_SYSTEM_COMMAND,
+            ["uninstall", "-y", &self.id],
+        )
+        .run()?
+        .as_success()
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
@@ -97,6 +106,10 @@ impl FlatpakProvider {
 // TODO: remove all test blocks for checks
 
 impl ProviderChecks for FlatpakProvider {
+    fn get_execution_context(&self) -> &SpecificExecutionContext {
+        &self.ctx
+    }
+
     fn is_installable(&self) -> bool {
         !self.is_installed()
     }
@@ -110,7 +123,7 @@ impl ProviderChecks for FlatpakProvider {
     }
 
     fn is_runnable(&self) -> bool {
-        self.is_installed()
+        self.is_installed() && !self.is_running()
     }
 
     fn is_running(&self) -> bool {
@@ -260,12 +273,20 @@ mod tests {
     #[test]
     fn test_can_install_pkg() {
         let cmd = FLATPAK_SYSTEM_COMMAND;
-        let args = vec!["install", "-y", "RANDOM_PACKAGE"];
+        let args = vec!["install", "--user", "-y", "RANDOM_PACKAGE"];
         let returned_args = args.clone();
         let mut mock = MockTestActualRunner::new();
+
+        let mut expected_sys_command = SysCommand::new(
+            &ExecutionContext::specific_for_test(),
+            FLATPAK_SYSTEM_COMMAND,
+            args,
+        );
+        expected_sys_command.env(INSTALLING_ENV_STRING, "trick_for_test");
+
         mock.expect_run()
             .times(1)
-            .with(predicate::eq(SysCommand::new(&ExecutionContext::general_for_test(), cmd, args)))
+            .with(predicate::eq(expected_sys_command))
             .returning(move |_| {
                 Ok(SysCommandResult::fake_for_test(
                     cmd,
@@ -276,7 +297,8 @@ mod tests {
                 ))
             });
 
-        let ctx = SpecificExecutionContext::test_with_runner(Trick::test(), std::sync::Arc::new(mock));
+        let ctx =
+            SpecificExecutionContext::test_with_runner(Trick::test(), std::sync::Arc::new(mock));
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {
             Ok(action_success) => assert_eq!(
@@ -290,21 +312,24 @@ mod tests {
     #[test]
     fn test_failed_to_install_pkg() {
         let cmd = FLATPAK_SYSTEM_COMMAND;
-        let args = vec!["install", "-y", "RANDOM_PACKAGE"];
-        let failure = SysCommandResult::fake_for_test(cmd, args, 1, "FAILED LOL", "");
+        let args = vec!["install", "--user", "-y", "RANDOM_PACKAGE"];
+        let failure = SysCommandResult::fake_for_test(cmd, args.clone(), 1, "FAILED LOL", "");
         let expected_failure = failure.clone();
+        let mut expected_sys_command = SysCommand::new(
+            &ExecutionContext::specific_for_test(),
+            FLATPAK_SYSTEM_COMMAND,
+            args,
+        );
+        expected_sys_command.env(INSTALLING_ENV_STRING, "trick_for_test");
 
         let mut mock = MockTestActualRunner::new();
         mock.expect_run()
             .times(1)
-            .with(predicate::eq(SysCommand::new(
-                &ExecutionContext::general_for_test(),
-                FLATPAK_SYSTEM_COMMAND,
-                ["install", "-y", "RANDOM_PACKAGE"],
-            )))
+            .with(predicate::eq(expected_sys_command))
             .returning(move |_| Ok(failure.clone()));
 
-        let ctx = SpecificExecutionContext::test_with_runner(Trick::test(), std::sync::Arc::new(mock));
+        let ctx =
+            SpecificExecutionContext::test_with_runner(Trick::test(), std::sync::Arc::new(mock));
 
         let provider = fpak_prov("RANDOM_PACKAGE", ctx);
         match provider.install() {

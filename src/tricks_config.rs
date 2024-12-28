@@ -115,7 +115,7 @@ pub struct Trick {
 impl Trick {
     pub(crate) fn test() -> Self {
         Self {
-            id: Default::default(),
+            id: "trick_for_test".into(),
             provider_config: ProviderConfig::SimpleCommand(SimpleCommand {
                 command: Default::default(),
                 args: Default::default(),

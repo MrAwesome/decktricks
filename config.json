@@ -5,8 +5,7 @@
         {
             "id": "nested-desktop",
             "provider_config": {
-                "type": "systemd-run",
-                "unit_id": "decktricks-nested-desktop",
+                "type": "simple-command",
                 "command": "steamos-nested-desktop"
             },
             "tags": [

@@ -117,6 +117,10 @@ impl ExecutionContext {
     pub(crate) fn general_for_test() -> Self {
         Self::General(GeneralExecutionContext::test())
     }
+
+    pub(crate) fn specific_for_test() -> Self {
+        Self::Specific(SpecificExecutionContext::test(Trick::test()))
+    }
 }
 
 impl From<SpecificExecutionContext> for ExecutionContext {
@@ -153,6 +157,7 @@ pub struct SpecificExecutionContext {
     pub runner: RunnerRc,
     pub trick: Trick,
     pub logger: LoggerRc,
+    pub is_installing: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -251,6 +256,7 @@ impl SpecificExecutionContext {
         runner: RunnerRc,
         current_log_level: LogType,
         logger: LoggerRc,
+        is_installing: bool,
     ) -> Self {
         Self {
             log_channel: LogChannel::TrickID(trick.id.clone()),
@@ -258,6 +264,7 @@ impl SpecificExecutionContext {
             runner,
             trick,
             logger,
+            is_installing,
         }
     }
 
@@ -269,6 +276,7 @@ impl SpecificExecutionContext {
             runner: Arc::new(MockTestActualRunner::new()),
             trick,
             logger: Arc::new(DecktricksConsoleLogger::new()),
+            is_installing: false,
         }
     }
 
@@ -280,6 +288,7 @@ impl SpecificExecutionContext {
             runner,
             trick,
             logger: Arc::new(DecktricksConsoleLogger::new()),
+            is_installing: false,
         }
     }
 }
@@ -346,10 +355,10 @@ impl Executor {
                 if do_not_gather {
                     FullSystemContext::default()
                 } else {
-                    FullSystemContext::gather_with(&gather_execution_ctx, &loader)?
+                    FullSystemContext::gather_with(&gather_execution_ctx, &loader)
                 }
             } else {
-                FullSystemContext::gather_with(&gather_execution_ctx, &loader)?
+                FullSystemContext::gather_with(&gather_execution_ctx, &loader)
             }
         };
 
@@ -434,7 +443,7 @@ mod tests {
         let runner = Arc::new(mock);
 
         let ctx = ExecutionContext::general_for_test_with(runner.clone());
-        let full_ctx = FullSystemContext::gather_with(&ctx, &loader)?;
+        let full_ctx = FullSystemContext::gather_with(&ctx, &loader);
 
         let executor = Executor::with(
             ExecutorMode::OnceOff,

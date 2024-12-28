@@ -26,7 +26,7 @@ pub struct DeckySystemContext {
 }
 
 impl DeckySystemContext {
-    pub(crate) fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
+    pub(crate) fn gather_with(ctx: &impl ExecCtx) -> Self {
         let (is_installed, is_running) = join_all!(
             // We can rely on SysCommand to log if we encounter any errors during gather, and just
             // default to false if anything goes wrong.
@@ -38,16 +38,20 @@ impl DeckySystemContext {
                 .is_ok_and(|res| res.ran_successfully())
         );
 
-        Ok(Self {
+        Self {
             is_installed,
             is_running,
-        })
+        }
     }
 }
 
 impl TrickProvider for DeckyInstallerProvider {}
 
 impl ProviderChecks for DeckyInstallerProvider {
+    fn get_execution_context(&self) -> &SpecificExecutionContext {
+        &self.ctx
+    }
+
     fn is_installable(&self) -> bool {
         !self.is_installed()
     }

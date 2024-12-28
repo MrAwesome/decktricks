@@ -115,12 +115,25 @@ impl SpecificAction {
         }
     }
 
-    pub(crate) fn do_with(self, executor: &Executor, current_log_level: LogType, logger: LoggerRc) -> DeckResult<ActionSuccess> {
+    pub(crate) fn do_with(
+        self,
+        executor: &Executor,
+        current_log_level: LogType,
+        logger: LoggerRc,
+    ) -> DeckResult<ActionSuccess> {
         let (loader, full_ctx, runner) = executor.get_pieces();
 
         let trick_id = self.id();
         let trick = loader.get_trick(trick_id.as_ref())?;
-        let ctx = SpecificExecutionContext::new(trick.clone(), runner.clone(), current_log_level, logger);
+        let ctx = SpecificExecutionContext::new(
+            trick.clone(),
+            runner.clone(),
+            current_log_level,
+            logger,
+            // In the context of actually taking an action, we don't care if we're installing,
+            // since at the moment is_installing is purely for cosmetic purposes
+            false,
+        );
         let provider = DynTrickProvider::new(&ctx, full_ctx);
 
         if provider.can(&self) {

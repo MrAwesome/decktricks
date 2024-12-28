@@ -1,21 +1,21 @@
-use crate::providers::systemd_run::SystemdRunProvider;
-use std::ops::DerefMut;
-use std::ops::Deref;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerProvider;
 use crate::providers::emudeck_installer::EmuDeckInstallerProvider;
 use crate::providers::flatpak::FlatpakProvider;
 use crate::providers::simple_command::SimpleCommandProvider;
 use crate::providers::system_context::FullSystemContext;
+use crate::providers::systemd_run::SystemdRunProvider;
 use std::fmt::Debug;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 pub mod decky_installer;
 pub mod emudeck_installer;
 pub mod flatpak;
 mod flatpak_helpers;
 pub mod simple_command;
-pub mod systemd_run;
 pub mod system_context;
+pub mod systemd_run;
 
 pub(super) const fn not_possible(reason: &'static str) -> DeckResult<ActionSuccess> {
     Err(KnownError::ActionNotPossible(reason))
@@ -29,10 +29,7 @@ pub(super) const fn not_implemented(reason: &'static str) -> DeckResult<ActionSu
 pub struct DynTrickProvider(Box<dyn TrickProvider>);
 impl DynTrickProvider {
     #[must_use]
-    pub fn new(
-        ctx: &SpecificExecutionContext,
-        full_ctx: &FullSystemContext,
-    ) -> Self {
+    pub fn new(ctx: &SpecificExecutionContext, full_ctx: &FullSystemContext) -> Self {
         let trick = &ctx.trick;
         let running_instances = full_ctx
             .procs_ctx
@@ -62,7 +59,10 @@ impl DynTrickProvider {
                 DynTrickProvider(Box::new(SystemdRunProvider::new(
                     trick_id,
                     ctx.clone(),
-                    full_ctx.systemd_run_ctx.running_unit_ids.contains(&systemd_run.unit_id),
+                    full_ctx
+                        .systemd_run_ctx
+                        .running_unit_ids
+                        .contains(&systemd_run.unit_id),
                     systemd_run.clone(),
                 )))
             }
@@ -109,6 +109,8 @@ pub trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {
 }
 
 pub trait ProviderChecks {
+    fn get_execution_context(&self) -> &SpecificExecutionContext;
+
     fn can(&self, action: &SpecificAction) -> bool {
         match action {
             SpecificAction::Run { .. } => self.is_runnable(),
@@ -135,8 +137,10 @@ pub trait ProviderChecks {
 
     fn is_installable(&self) -> bool;
     fn is_uninstallable(&self) -> bool;
-
     fn is_installed(&self) -> bool;
+    fn is_installing(&self) -> bool {
+        self.get_execution_context().is_installing
+    }
 
     fn is_runnable(&self) -> bool;
     fn is_running(&self) -> bool;
@@ -175,9 +179,11 @@ mod tests {
 
         }
         impl ProviderChecks for ProviderImpl {
+            fn get_execution_context(&self) -> &SpecificExecutionContext;
             fn is_installable(&self) -> bool;
             fn is_uninstallable(&self) -> bool;
             fn is_installed(&self) -> bool;
+            fn is_installing(&self) -> bool;
             fn is_runnable(&self) -> bool;
             fn is_running(&self) -> bool;
             fn is_killable(&self) -> bool;

@@ -142,7 +142,7 @@ pub enum Action {
     },
     Steam {
         #[clap(subcommand)]
-        steam_subcommand: SteamSubcommand,
+        _steam_subcommand: SteamSubcommand,
     },
 
 
