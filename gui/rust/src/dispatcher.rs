@@ -14,7 +14,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
 const UI_REFRESH_DELAY_MILLIS: u64 = 200;
-const NUM_EXECUTOR_READ_RETRIES: u8 = 3;
+const NUM_EXECUTOR_READ_RETRIES: u8 = 10;
 
 // TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<Arc<RwLock<Arc<Option<Executor>>>>> =

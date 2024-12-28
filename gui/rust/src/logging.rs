@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::{mpsc, Arc, LazyLock, RwLock};
@@ -9,6 +10,7 @@ use godot::prelude::*;
 
 // NOTE: the logic in this file is not godot-specific, and could easily be reused in another gui
 
+const NUM_LOG_STORAGE_READ_RETRIES: u8 = 10;
 const DEFAULT_GODOT_LOG_LEVEL: LogType = LogType::Info;
 type LogsWithTimestamps = HashMap<LogChannel, Vec<StoredLogEntry>>;
 
@@ -70,6 +72,18 @@ impl DecktricksGodotLogger {
 
     #[allow(clippy::unused_self)]
     pub fn get_logs(&self) -> ParsedLogs {
+        let mut read_result = LOG_STORAGE.try_read();
+        let mut delay_ms = 1;
+        for _ in 0..NUM_LOG_STORAGE_READ_RETRIES {
+            if read_result.is_err() {
+                std::thread::sleep(Duration::from_millis(delay_ms));
+                delay_ms *= 2;
+
+                read_result = LOG_STORAGE.try_read();
+            } else {
+                break;
+            }
+        }
         let unprepped_logs = match LOG_STORAGE.try_read() {
             Ok(unprepped) => (*unprepped).clone(),
             Err(err) => {

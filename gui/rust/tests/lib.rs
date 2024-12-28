@@ -74,6 +74,7 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 
 fn get_godot_cmd() -> Command {
     let path = &*GODOT_BINARY_PATH;
+    println!("Path: {}", path.to_str().unwrap());
     let mut cmd = Command::new(path);
     cmd.arg("--headless").current_dir(GODOT_BASE_DIR);
     cmd
