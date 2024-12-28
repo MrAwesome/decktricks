@@ -47,7 +47,7 @@ impl ProviderChecks for SimpleCommandProvider {
         true
     }
     fn is_runnable(&self) -> bool {
-        !self.is_running()
+        true
     }
     fn is_running(&self) -> bool {
         !self.running_instances.is_empty()

@@ -85,7 +85,7 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     }
 
     fn is_runnable(&self) -> bool {
-        self.is_installed() && !self.is_running()
+        self.is_installed()
     }
 
     fn is_running(&self) -> bool {

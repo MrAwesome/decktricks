@@ -166,6 +166,7 @@ impl GeneralAction {
 struct SpecificActionContext {
     trick_id: String,
     is_installing: bool,
+    is_running: bool,
     available_actions: Vec<String>,
 }
 
@@ -211,7 +212,9 @@ fn get_action_context_for_trick(
     );
     let provider = DynTrickProvider::new(&ctx, full_ctx);
 
+    // TODO: unit/integration test that this all works as expected
     let is_installing = provider.is_installing();
+    let is_running = provider.is_running();
     let available_actions = provider
         .get_available_actions()
         .iter()
@@ -220,6 +223,7 @@ fn get_action_context_for_trick(
     SpecificActionContext {
         trick_id: trick.id.clone(),
         is_installing,
+        is_running,
         available_actions,
     }
 }

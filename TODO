@@ -31,6 +31,8 @@ Add to steam:
     [] look at /usr/bin/steamos-add-to-steam for clues on how to add to steam without needing to restart steam
 
 General:
+    [] implement general updates and make a button
+    [] add 2px margin for logs
     [] make the /tmp/decktricks_only_init check fail when not in desktop mode? or handle it better, some way of only having it happen on that very first steam launch? env var?
     [] switch all variables in bash scripts to lowercase
     [] try profile lto
