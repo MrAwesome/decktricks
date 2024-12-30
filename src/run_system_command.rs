@@ -58,7 +58,7 @@ impl SysCommand {
     }
 }
 
-pub(crate) trait SysCommandRunner {
+pub trait SysCommandRunner {
     fn get_cmd(&self) -> &SysCommand;
     fn get_ctx(&self) -> &ExecutionContext;
 
@@ -213,7 +213,7 @@ impl SysCommandResultChecker for SysCommandResult {
     }
 }
 
-pub(crate) trait ActualRunner {
+pub trait ActualRunner {
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult>;
 }
 

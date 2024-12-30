@@ -22,6 +22,8 @@ var did_focus = false
 var last_actions_string = "THROWAWAY_VALUE"
 var focused_trick_and_action = [null, null]
 
+signal restart_steam_hint
+
 @onready var display_name_mapping: Dictionary = dd.get_display_name_mapping()
 @onready var config: Dictionary = get_config()
 
@@ -72,6 +74,10 @@ func popup_info_window(root: Window, info: Dictionary):
 
 func take_action(action: String, trick_id: String):
 	var args: Array[String] = [action, trick_id]
+	
+	if action == "add-to-steam":
+		emit_signal("restart_steam_hint")
+	
 	if action == "info":
 		var output = dd.sync_run_with_decktricks(args)
 		if output == "":

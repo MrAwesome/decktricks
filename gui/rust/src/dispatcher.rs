@@ -1,5 +1,7 @@
 #![allow(clippy::needless_pass_by_value)]
 
+use decktricks::run_system_command::SysCommandRunner;
+use decktricks::run_system_command::SysCommand;
 use crate::logging::get_log_level;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use std::time::Duration;
@@ -183,6 +185,14 @@ impl DecktricksDispatcher {
         //       use "get-config" with an executor
         DEFAULT_CONFIG_CONTENTS.into()
     }
+
+    #[func]
+    fn restart_steam() {
+        // TODO: move this into a CLI command
+        // TODO: if in Desktop mode, actually restart steam
+        let _ = SysCommand::new(early_log_ctx(), "steam", ["-shutdown"]).run();
+    }
+
 
     #[func]
     fn log(log_level: u8, message: GString) {
