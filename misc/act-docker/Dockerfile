@@ -45,22 +45,9 @@ RUN cargo build --release
 RUN cargo test
 RUN cargo test --release
 WORKDIR /work/decktricks/gui/rust
-RUN cargo build
-RUN cargo build --release
-RUN cargo test
+# This handles actually building and placing the gui binary:
 RUN cargo test --release
-
-# Everything below this is just to make sure that we're putting out a working image
-WORKDIR /work/decktricks/gui/godot
-# Deps used by decktricks/godot:
-RUN rm -rf build
-RUN mkdir -p build
-RUN rm -rf .godot
-RUN cp /work/decktricks/gui/rust/target/release/libdecktricks_godot_gui.so build/
-RUN godot --headless --import
-RUN godot --headless --verbose --export-release "Linux"
 WORKDIR /work/decktricks
-RUN ./scripts/tests/test_gui_simple_e2e.sh
 
 # Don't forget to run `docker container prune` followed by `docker image prune`
 # to reclaim disk space if you've been testing here!

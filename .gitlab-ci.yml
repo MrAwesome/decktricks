@@ -1,0 +1,126 @@
+stages:
+  - build_and_test
+  - compress
+  - tag
+  - release
+
+variables:
+  CARGO_TERM_COLOR: "always"
+  LATEST_TAG: "evaluation"
+
+# Stage 1: CLI Testing
+cli_test:
+  stage: build_and_test
+  image: gleesus/decktricks
+  script:
+    - echo "Running CLI tests"
+    - cargo test
+#  artifacts:
+#    expire_in: 1 week
+#    paths:
+#      - target/debug/
+
+cli_test_release:
+  stage: build_and_test
+  image: gleesus/decktricks
+  script:
+    - echo "Running CLI tests in release mode"
+    - cargo test --release
+#  artifacts:
+#    expire_in: 1 week
+#    paths:
+#      - target/release/
+
+cli_build_release:
+  stage: build_and_test
+  image: gleesus/decktricks
+  script:
+    - echo "Building CLI"
+    - cargo test --release
+    - ./ci_scripts/init.sh
+    - ./ci_scripts/cli.sh
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - build/
+
+# Stage 2: GUI Build and Test
+gui_build_and_test:
+  stage: build_and_test
+  image: gleesus/decktricks
+  script:
+    - echo "Initializing environment"
+    - ./ci_scripts/init.sh
+    - ./ci_scripts/gui.sh
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - build/
+
+
+create_tar:
+  image: archlinux
+  stage: compress
+  script:
+    - pacman -Sy --noconfirm xxhash
+    - ./ci_scripts/place_build_assets.sh
+    - ./ci_scripts/compress.sh
+    - pushd ./build
+    - xxh64sum decktricks.tar.xz > DECKTRICKS_TARBALL_XXH64SUM
+    - popd
+    - find build/
+  dependencies:
+    - gui_build_and_test
+    - cli_build_release
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - build/
+
+### Stage 3: Tag the Latest Release
+#tag_evaluation:
+#  stage: tag
+#  # NOTE: could be smaller image with git installed
+#  image: archlinux
+#  script:
+#    - echo "Tagging latest release"
+#    - pacman -Sy --noconfirm git
+#    - git tag -f "$LATEST_TAG"
+#    - git push --force origin "$LATEST_TAG"
+
+add_evaluation_artifacts:
+  stage: release
+  script:
+    - mkdir -p public/
+    - rm -rf public/evaluation/
+    - mv build/ public/evaluation/
+  pages: true
+  artifacts:
+    paths:
+      - public
+
+# Stage 4: Create Release for Latest Tag
+#create_release:
+#  stage: release
+#  image: registry.gitlab.com/gitlab-org/release-cli:latest
+#  #dependencies:
+#    #- tag_latest
+#  script:
+#    - echo "Creating GitLab Release"
+#  release:
+#    name: "Testing RC"
+#    tag_name: testing
+#    description: >
+#      A release candidate for pushing out. This has passed all automated tests and should be safe to use, but has not yet received human verification.
+#    assets:
+#      links:
+#        - name: "Decktricks Tarball"
+#          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_REF_NAME}/raw/build/decktricks.tar.xz?job=gui_build_and_test"
+#        - name: "Decktricks Installer Desktop"
+#          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_REF_NAME}/raw/build/decktricks-install.desktop?job=gui_build_and_test"
+#        - name: "Decktricks Installer Script"
+#          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_REF_NAME}/raw/build/decktricks-install.sh?job=gui_build_and_test"
+#        - name: "Decktricks Update Script"
+#          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_REF_NAME}/raw/build/decktricks-update.sh?job=gui_build_and_test"
+#        - name: "Decktricks Tarball Checksum"
+#          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_REF_NAME}/raw/build/DECKTRICKS_TARBALL_XXH64SUM?job=gui_build_and_test"

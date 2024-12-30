@@ -4,9 +4,7 @@ Go to **([decktricks.com](https://decktricks.com))** in Desktop Mode!
 The installer will handle everything else for you.
 
 > [!IMPORTANT]
-> Decktricks is still in a pre-alpha state! It is open to testing, but 
-> <ins>**the auto-updating code is not written yet**</ins> so you will be stuck with an old version unless you
-> remember to run the installer again later. Auto-updates should be done by Christmas 2024. :)
+> Decktricks is still in a pre-alpha state! It is well-tested, but not all of the bugs are fully solved.
 
 ## About Decktricks
 Decktricks is a controller-friendly installer and launcher for Game Mode on SteamOS (Steam Deck).

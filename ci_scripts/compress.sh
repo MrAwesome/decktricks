@@ -6,9 +6,9 @@ cd "$(dirname "$0")"
 cd "$REPOBUILD"
 
 find .
-cd inside_tar/
+pushd inside_tar/
 XZ_OPT='--x86 --lzma2' tar -cJf decktricks.tar.xz -- *
-cd "$REPOBUILD"
+popd
 mv inside_tar/decktricks.tar.xz .
 
 rm -rf inside_tar

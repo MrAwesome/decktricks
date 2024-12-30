@@ -82,6 +82,7 @@ fn get_godot_cmd() -> Command {
 
 #[test]
 fn test_run_godot() {
+    std::thread::sleep(Duration::from_secs(1));
     let mut cmd = get_godot_cmd();
     cmd.env("DECKTRICKS_GUI_EXIT_IMMEDIATELY", "true")
         .output()
@@ -118,6 +119,7 @@ fn test_gui_timeout() {
 
 #[test]
 fn test_gui_startup_speed() {
+    std::thread::sleep(Duration::from_secs(2));
     let mut cmd = get_godot_cmd();
     let start = Instant::now();
     cmd.env("DECKTRICKS_GUI_EXIT_IMMEDIATELY", "true")
@@ -135,6 +137,7 @@ fn test_gui_startup_speed() {
 // parsed, run, and returned successfully
 #[test]
 fn test_dispatcher_e2e() {
+    std::thread::sleep(Duration::from_secs(3));
     let mut cmd = get_godot_cmd();
     let output = cmd
         .env("DECKTRICKS_GUI_EXIT_IMMEDIATELY", "true")
