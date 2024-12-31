@@ -30,7 +30,7 @@ signal restart_steam_hint
 func focus_button(button: Button, action, trick_id):
 	# On button focus, make sure that at least one row above can be focused
 	#    (to fix scrolling up inside tabcontainer)
-	var row = button.find_parent("MarginContainer").get_parent()
+	var row = button.find_parent("RowOuterMargin").get_parent()
 	var idx = row.get_index()
 	var desired_idx = max(0, idx-1)
 	var desired_row = row.get_parent().get_child(desired_idx)
@@ -99,7 +99,7 @@ func take_action(action: String, trick_id: String):
 
 func create_actions_row(trick_id: String, available_actions: Array, _display_name: String, _icon_path: String, is_running: bool, is_installing: bool):
 	var actions_row_outer = ACTIONS_ROW.instantiate()
-	var actions_row = actions_row_outer.get_child(0).get_child(0)
+	var actions_row = actions_row_outer.get_child(1).get_child(0)
 
 	var should_focus = focused_trick_and_action[0] == trick_id
 
@@ -186,7 +186,7 @@ func refresh_ui_inner(actions_json_string: String):
 		# TODO: show tooltext when it's selected
 
 		var label_box = LABEL_OUTER.instantiate()
-		var label = label_box.get_child(0)
+		var label = label_box.get_child(1)
 		label.text = display_name
 
 		# These ended up being spammy and buggy and too big
@@ -195,11 +195,11 @@ func refresh_ui_inner(actions_json_string: String):
 		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path, is_running, is_installing)
 
 		if initializing and not marked_first:
-			first_button = trick_row.get_child(0).get_child(0).get_child(0)
+			first_button = trick_row.get_child(1).get_child(0).get_child(0)
 			marked_first = true
 
 		var row_outer_here = ROW_OUTER.instantiate()
-		var row_inner = row_outer_here.get_child(0).get_child(0)
+		var row_inner = row_outer_here.get_child(1).get_child(0)
 		row_inner.add_child(label_box)
 		row_inner.add_child(trick_row)
 		games.add_child(row_outer_here)

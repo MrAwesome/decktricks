@@ -1,10 +1,16 @@
-[gd_scene format=3 uid="uid://c5ggddfyxs87y"]
+[gd_scene load_steps=2 format=3 uid="uid://c5ggddfyxs87y"]
+
+[ext_resource type="PackedScene" uid="uid://be0s6mdnsfnbv" path="res://scenes/background_colorrect.tscn" id="1_4bede"]
 
 [node name="LabelOuter" type="PanelContainer"]
-offset_left = -244.0
-offset_top = 15.0
-offset_right = -212.0
-offset_bottom = 110.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackgroundColorRect" parent="." instance=ExtResource("1_4bede")]
+layout_mode = 2
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 2

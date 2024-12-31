@@ -1,11 +1,19 @@
-[gd_scene format=3 uid="uid://eq2clc3u0ctc"]
+[gd_scene load_steps=2 format=3 uid="uid://eq2clc3u0ctc"]
+
+[ext_resource type="PackedScene" uid="uid://be0s6mdnsfnbv" path="res://scenes/background_colorrect.tscn" id="1_imsww"]
 
 [node name="RowOuter" type="PanelContainer"]
 offset_right = 10.0
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="BackgroundColorRect" parent="." instance=ExtResource("1_imsww")]
+layout_mode = 2
+
+[node name="RowOuterMargin" type="MarginContainer" parent="."]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="RowOuterMargin"]
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="."]
 layout_mode = 2

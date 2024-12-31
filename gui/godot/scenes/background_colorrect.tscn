@@ -1,0 +1,4 @@
+[gd_scene format=3 uid="uid://be0s6mdnsfnbv"]
+
+[node name="BackgroundColorRect" type="ColorRect"]
+color = Color(0, 0, 0, 1)
