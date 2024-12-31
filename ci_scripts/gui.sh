@@ -19,6 +19,7 @@ pushd gui/rust/
 # `cargo test --release` contains our canonical build flow,
 # and builds/places/tests the production versions of
 # both the .so and the binary:
+cargo build --release
 cargo test --release | tee /tmp/decktricks_tests_ran
 
 # Ensure we see the output of at least one expected test (to make sure

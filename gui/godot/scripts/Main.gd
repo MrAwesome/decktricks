@@ -252,7 +252,7 @@ func _ready():
 		test_cmd_args.assign(should_test.split("|DELIM|"))
 		dd.sync_run_with_decktricks(test_cmd_args)
 	
-	%Logs.populate_logs()
+	%LogContainer.populate_logs()
 
 	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])
 	dd.log(2, "Version info:\n" + version_info)
@@ -273,15 +273,12 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
-	# var screen_size: Vector2i = DisplayServer.screen_get_size()
-	# print(screen_size.x)
-# TODO: come up with reasonable values for these timers
 
 func _on_ui_refresh_timer_timeout() -> void:
 	dd.async_executor_refresh()
 
 func _on_log_refresh_timer_timeout() -> void:
-	%Logs.populate_logs()
+	%LogContainer.populate_logs()
 
 func _on_exit_tab_focus_entered() -> void:
 	print("Would exit")

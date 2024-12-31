@@ -46,10 +46,10 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 
     fs::create_dir_all(path).unwrap();
 
-    let tmp_path = Path::new("/tmp/libdecktricks_godot_gui.so");
+    let tmp_path = Path::join(path, Path::new("libdecktricks_godot_gui.so.new"));
     fs::copy(
         "target/release/libdecktricks_godot_gui.so",
-        tmp_path,
+        &tmp_path,
     )
     .unwrap();
 
