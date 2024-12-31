@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=10 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
 [ext_resource type="PackedScene" uid="uid://do4v7dct1d2rl" path="res://scenes/tricks_list.tscn" id="3_0bbpv"]
+[ext_resource type="PackedScene" uid="uid://be0s6mdnsfnbv" path="res://scenes/background_colorrect.tscn" id="3_q8u5g"]
 [ext_resource type="Script" path="res://scripts/exit_button.gd" id="4_c01mt"]
 [ext_resource type="Script" path="res://scripts/steam_restart_warning.gd" id="4_jlsqs"]
 [ext_resource type="PackedScene" uid="uid://4xc2w5wvrdl8" path="res://scenes/settings.tscn" id="4_rarhs"]
@@ -33,11 +34,11 @@ layout_mode = 0
 offset_right = 1280.0
 offset_bottom = 800.0
 theme_override_font_sizes/font_size = 60
-current_tab = 0
+current_tab = 1
 
-[node name="Home" type="ColorRect" parent="TabContainer"]
+[node name="Home" parent="TabContainer" instance=ExtResource("3_q8u5g")]
+visible = false
 layout_mode = 2
-color = Color(0, 0, 0, 1)
 metadata/_tab_index = 0
 
 [node name="ScrollContainer" type="ScrollContainer" parent="TabContainer/Home"]
@@ -54,18 +55,22 @@ layout_mode = 2
 
 [node name="Logs" type="Logs" parent="TabContainer"]
 unique_name_in_owner = true
-visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 metadata/_tab_index = 1
 
-[node name="Exit" type="PanelContainer" parent="TabContainer"]
+[node name="Exit" parent="TabContainer" instance=ExtResource("3_q8u5g")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
 [node name="CenterContainer" type="CenterContainer" parent="TabContainer/Exit"]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Exit/CenterContainer"]
 layout_mode = 2
