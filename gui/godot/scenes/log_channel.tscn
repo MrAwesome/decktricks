@@ -2,10 +2,33 @@
 
 [ext_resource type="FontFile" uid="uid://cjh33lioglnym" path="res://assets/ibm_plex_mono/IBMPlexMono-Regular.ttf" id="1_8p05q"]
 
-[node name="LogChannel" type="ScrollContainer"]
+[node name="LogChannel" type="ColorRect"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color(0, 0, 0, 1)
 metadata/_tab_index = 0
 
-[node name="TextEdit" type="RichTextLabel" parent="."]
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 3
+
+[node name="TextEdit" type="RichTextLabel" parent="ScrollContainer/MarginContainer"]
+custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

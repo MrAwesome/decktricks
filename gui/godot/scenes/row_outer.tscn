@@ -1,10 +1,7 @@
 [gd_scene format=3 uid="uid://eq2clc3u0ctc"]
 
 [node name="RowOuter" type="PanelContainer"]
-offset_left = -213.0
-offset_top = 106.0
-offset_right = -173.0
-offset_bottom = 146.0
+offset_right = 10.0
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2

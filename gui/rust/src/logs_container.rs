@@ -1,11 +1,11 @@
-use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
+use godot::classes::ColorRect;
 use crate::early_log_ctx;
+use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::prelude::*;
-use godot::classes::ScrollContainer;
 use std::fmt::Display;
 
-use godot::classes::TabContainer;
 use godot::classes::RichTextLabel;
+use godot::classes::TabContainer;
 use godot::prelude::*;
 
 #[derive(Debug)]
@@ -41,23 +41,11 @@ impl Logs {
         let log_channel_scene: Gd<PackedScene> =
             try_load::<PackedScene>("res://scenes/log_channel.tscn")?;
 
-        self.make_or_update_log_channel(
-            &log_channel_scene,
-            "all".into(),
-            parsed.all,
-        )?;
-        self.make_or_update_log_channel(
-            &log_channel_scene,
-            "general".into(),
-            parsed.general,
-        )?;
+        self.make_or_update_log_channel(&log_channel_scene, "all".into(), parsed.all)?;
+        self.make_or_update_log_channel(&log_channel_scene, "general".into(), parsed.general)?;
 
         for (trick_id, trick_logtext) in parsed.tricks {
-            self.make_or_update_log_channel(
-                &log_channel_scene,
-                trick_id,
-                trick_logtext,
-            )?;
+            self.make_or_update_log_channel(&log_channel_scene, trick_id, trick_logtext)?;
         }
 
         Ok(())
@@ -68,33 +56,36 @@ impl Logs {
         scene: &Gd<PackedScene>,
         name: String,
         text: String,
-    ) -> Result<Gd<ScrollContainer>, Box<dyn std::error::Error>> {
+    ) -> Result<Gd<ColorRect>, Box<dyn std::error::Error>> {
         // find_child() didn't seem to work, so do it by hand:
-        let found_child: Option<Gd<Node>> = self.base().get_children().iter_shared().find(|c| c.get_name() == name.clone().into());
+        let found_child: Option<Gd<Node>> = self
+            .base()
+            .get_children()
+            .iter_shared()
+            .find(|c| c.get_name() == name.clone().into());
 
         let scroll = match found_child {
-            Some(node_child) => match node_child.try_cast::<ScrollContainer>() {
+            Some(node_child) => match node_child.try_cast::<ColorRect>() {
                 Ok(scroll_child) => scroll_child,
                 Err(err) => Err(Box::new(LogLoadingError(format!(
-                                "Failed to cast to ScrollContainer: {err}"
+                    "Failed to cast to ColorRect: {err}"
                 ))))?,
-            }
-            None => {
-                match scene.try_instantiate_as::<ScrollContainer>() {
-                    Some(mut scroll) => {
-                        scroll.set_name(&name);
-                        self.base_mut().add_child(&scroll);
-                        scroll
-                    },
-                    None => Err(Box::new(LogLoadingError(
-                                "Failure instantiating log channel scene!".into(),
-                    )))?,
+            },
+            None => match scene.try_instantiate_as::<ColorRect>() {
+                Some(mut scroll) => {
+                    scroll.set_name(&name);
+                    self.base_mut().add_child(&scroll);
+                    scroll
                 }
-            }
+                None => Err(Box::new(LogLoadingError(
+                    "Failure instantiating log channel scene!".into(),
+                )))?,
+            },
         };
 
-
-        match scroll.get_child(0) {
+        match scroll.get_child(0).and_then(
+            |color_rect| color_rect.get_child(0)).and_then(
+            |margin_container| margin_container.get_child(0)) {
             Some(child) => match child.try_cast::<RichTextLabel>() {
                 Ok(mut textedit) => {
                     // Given that logs are always appends, just checking length should be enough always:
@@ -105,11 +96,11 @@ impl Logs {
                     }
                 }
                 Err(err) => Err(Box::new(LogLoadingError(format!(
-                                "Failed to cast to RichTextLabel: {err}"
+                    "Failed to cast to RichTextLabel: {err}"
                 ))))?,
             },
             None => Err(Box::new(LogLoadingError(
-                        "Failed to get child of ScrollContainer!".into(),
+                "Failed to get child of ScrollContainer!".into(),
             )))?,
         };
         Ok(scroll)

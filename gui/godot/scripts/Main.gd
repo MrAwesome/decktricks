@@ -51,10 +51,13 @@ func create_action_button(action: String, trick_id: String, ongoing: bool):
 	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
 
 	if ongoing:
-		var tween = create_tween().set_loops()
+		var tween = create_tween()
+		tween.set_loops()
+		tween.tween_interval(0.1)
 		var trans = Tween.TRANS_QUAD
 		tween.tween_property(button, "modulate", Color.GREEN, 2).set_ease(Tween.EASE_IN_OUT).set_trans(trans)
 		tween.tween_property(button, "modulate", Color.FOREST_GREEN, 2).set_ease(Tween.EASE_IN_OUT).set_trans(trans)
+		tween.bind_node(button)
 	else:
 		# If the action is ongoing, don't let the user click it again
 		button.pressed.connect(take_action.bind(action, trick_id))

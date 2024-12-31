@@ -20,6 +20,8 @@ window/size/viewport_width=1280
 window/size/viewport_height=800
 window/stretch/mode="canvas_items"
 window/stretch/aspect="ignore"
+window/defaults/default_clear_color=Color(0, 0, 0, 1)
+window/defaults/default_environment="res://themes/kennyUI/kenneyUI-blue.tres"
 
 [gui]
 
@@ -45,9 +47,12 @@ ui_exit_decktricks={
 "events": []
 }
 
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0, 0, 0, 1)
-quality/driver/driver_name="GLES3"

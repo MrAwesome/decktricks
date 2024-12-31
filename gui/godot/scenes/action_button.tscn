@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://c562jfnhhmdwt"]
+[gd_scene format=3 uid="uid://c562jfnhhmdwt"]
 
 [node name="ActionButton" type="Button"]
 offset_left = -100.0
