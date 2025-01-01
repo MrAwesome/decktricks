@@ -3,7 +3,10 @@
 [ext_resource type="PackedScene" uid="uid://be0s6mdnsfnbv" path="res://scenes/background_colorrect.tscn" id="1_imsww"]
 
 [node name="RowOuter" type="PanelContainer"]
-offset_right = 10.0
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+size_flags_horizontal = 3
 
 [node name="BackgroundColorRect" parent="." instance=ExtResource("1_imsww")]
 layout_mode = 2

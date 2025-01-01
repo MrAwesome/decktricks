@@ -1,11 +1,16 @@
 extends Control
 
-# TODO: some kind of error display system (emit signal and handle it by displaying an AcceptDialog with the text and a report link/QR, and have a timeout for how many errors can be shown at a time (or how quickly)), and have an exit program option from errors
-# TODO: fix going up from info sometimes going to tabs instead of previous trick's buttons
-# TODO: only re/populate new nodes on refresh (requires keeping full track of previous state)
+# TODO: some kind of error display system (emit signal and handle it by 
+# 		displaying an AcceptDialog with the text and a report link/QR,
+# 		and have a timeout for how many errors can be shown at a time
+# 		(or how quickly)), and have an exit program option from errors
+# TODO: fix going up from info sometimes going to tabs 
+# 		instead of previous trick's buttons
+# TODO: only re/populate new nodes on refresh (requires keeping
+# 		full track of previous state)
 # TODO: does selecting a node keep it from being cleaned up?
 # TODO: handle 720p since that's a common resolution on TVs?
-# TODO: use this to set the STEAM_ID as needed for gamescope? https://docs.godotengine.org/en/stable/classes/class_window.html#class-window-method-set-flag
+# TODO: use this to set the STEAM_ID as needed for gamescope? Window.set_flag
 
 const DEFAULT_MAX_FPS = 30
 var dd = DecktricksDispatcher
@@ -55,8 +60,10 @@ func create_action_button(action: String, trick_id: String, ongoing: bool):
 		tween.set_loops()
 		tween.tween_interval(0.1)
 		var trans = Tween.TRANS_QUAD
-		tween.tween_property(button, "modulate", Color.GREEN, 2).set_ease(Tween.EASE_IN_OUT).set_trans(trans)
-		tween.tween_property(button, "modulate", Color.FOREST_GREEN, 2).set_ease(Tween.EASE_IN_OUT).set_trans(trans)
+		tween.tween_property(button, "modulate", Color.GREEN, 2) \
+			.set_ease(Tween.EASE_IN_OUT).set_trans(trans)
+		tween.tween_property(button, "modulate", Color.FOREST_GREEN, 2) \
+			.set_ease(Tween.EASE_IN_OUT).set_trans(trans)
 		tween.bind_node(button)
 	else:
 		# If the action is ongoing, don't let the user click it again
@@ -97,7 +104,14 @@ func take_action(action: String, trick_id: String):
 	else:
 		dd.async_run_with_decktricks(args)
 
-func create_actions_row(trick_id: String, available_actions: Array, _display_name: String, _icon_path: String, is_running: bool, is_installing: bool):
+func create_actions_row(
+		trick_id: String,
+		available_actions: Array,
+		_display_name: String,
+		_icon_path: String,
+		is_running: bool,
+		is_installing: bool
+	):
 	var actions_row_outer = ACTIONS_ROW.instantiate()
 	var actions_row = actions_row_outer.get_child(1).get_child(0)
 
@@ -105,7 +119,8 @@ func create_actions_row(trick_id: String, available_actions: Array, _display_nam
 
 	for action in available_actions:
 		# TODO: clean up
-		var ongoing: bool = (is_installing and action == "install") or (is_running and action == "run")
+		var ongoing: bool = (is_installing and action == "install") \
+			or (is_running and action == "run")
 
 		var button = create_action_button(action, trick_id, ongoing)
 		actions_row.add_child(button)
@@ -120,7 +135,8 @@ func create_actions_row(trick_id: String, available_actions: Array, _display_nam
 	return actions_row_outer
 
 func get_actions_text_sync():
-	# NOTE: we should not need to check validity of this output if it returns successfully,
+	# NOTE: we should not need to check validity of this output 
+	# 		if it returns successfully,
 	# 		thanks to robust error-checking on the Rust side
 	var args: Array[String] = ["actions", "--json"]
 	var actions_text = dd.sync_run_with_decktricks(args)
@@ -137,8 +153,8 @@ func parse_actions(actions_text: String):
 		return {}
 
 func get_config():
-	# NOTE: we should not need to check validity of this output if it returns successfully,
-	# 		thanks to robust error-checking on the Rust side
+	# NOTE: we should not need to check validity of this output if it returns
+	# 		successfully, thanks to robust error-checking on the Rust side
 	#var args: Array[String] = ["get-config"]
 	#var config_data = dd.sync_run_with_decktricks(args)
 	var config_data = dd.get_config_text()
@@ -173,7 +189,8 @@ func refresh_ui_inner(actions_json_string: String):
 	for trick in tricks:
 		var trick_id = trick.get("id")
 		var display_name = trick.get("display_name")
-		var icon_path = trick.get("icon") # TODO: either make this mandatory or remove it
+		# TODO: either make this mandatory or remove it:
+		var icon_path = trick.get("icon") 
 		#var description = trick.get("description")
 
 		# Error checking should never be needed for this access, since we
@@ -183,8 +200,6 @@ func refresh_ui_inner(actions_json_string: String):
 		var is_running: bool = action_context["is_running"]
 		var is_installing: bool = action_context["is_installing"]
 
-		# TODO: show tooltext when it's selected
-
 		var label_box = LABEL_OUTER.instantiate()
 		var label = label_box.get_child(1)
 		label.text = display_name
@@ -192,7 +207,14 @@ func refresh_ui_inner(actions_json_string: String):
 		# These ended up being spammy and buggy and too big
 		# label_box.tooltip_text = description
 
-		var trick_row = create_actions_row(trick_id, available_actions, display_name, icon_path, is_running, is_installing)
+		var trick_row = create_actions_row(
+			trick_id,
+			available_actions,
+			display_name,
+			icon_path,
+			is_running,
+			is_installing
+		)
 
 		if initializing and not marked_first:
 			first_button = trick_row.get_child(1).get_child(0).get_child(0)
@@ -233,7 +255,8 @@ func _init():
 func _ready():
 	dd.get_time_passed_ms("ready")
 
-	# IMPORTANT: Do not try to run any commands with the executor before this has finished:
+	# IMPORTANT: Do not try to run any commands with the executor
+	#            before this has finished:
 	dd.wait_for_executor();
 	dd.get_time_passed_ms("executor_ready")
 
@@ -279,6 +302,3 @@ func _on_ui_refresh_timer_timeout() -> void:
 
 func _on_log_refresh_timer_timeout() -> void:
 	%LogContainer.populate_logs()
-
-func _on_exit_tab_focus_entered() -> void:
-	print("Would exit")
