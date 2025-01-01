@@ -184,6 +184,8 @@ func refresh_ui_inner(actions_json_string: String):
 	var games = TRICKS_LIST.instantiate()
 
 	var tricks = config.get("tricks", [])
+	# TODO: sort and parse on the Rust side?
+	tricks.sort_custom(func (a, b): return a.display_name < b.display_name)
 
 	var marked_first = false
 	for trick in tricks:

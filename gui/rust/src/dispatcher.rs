@@ -188,7 +188,7 @@ impl DecktricksDispatcher {
 
     #[func]
     fn restart_steam() {
-        // TODO: move this into a CLI command
+        // TODO: move this into Command on the rust side
         // TODO: if in Desktop mode, actually restart steam
         let _ = SysCommand::new(early_log_ctx(), "steam", ["-shutdown"]).run();
     }
