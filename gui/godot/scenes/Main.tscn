@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=11 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/steam_restart_warning.gd" id="4_jlsqs"]
 [ext_resource type="PackedScene" uid="uid://4xc2w5wvrdl8" path="res://scenes/settings.tscn" id="4_rarhs"]
 [ext_resource type="Script" path="res://scripts/restart_steam_and_exit_button.gd" id="5_jlsqs"]
+[ext_resource type="Script" path="res://scripts/log_container.gd" id="5_lhr70"]
 [ext_resource type="Script" path="res://scripts/fps_buttons.gd" id="5_vcsgt"]
 
 [node name="Decktricks" type="Control"]
@@ -28,7 +29,8 @@ autostart = true
 wait_time = 0.5
 autostart = true
 
-[node name="TabContainer" type="TabContainer" parent="."]
+[node name="MainTabs" type="TabContainer" parent="."]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(1280, 800)
 layout_mode = 0
 offset_right = 1280.0
@@ -36,11 +38,11 @@ offset_bottom = 800.0
 theme_override_font_sizes/font_size = 60
 current_tab = 0
 
-[node name="Home" parent="TabContainer" instance=ExtResource("3_q8u5g")]
+[node name="Home" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="ScrollContainer" type="ScrollContainer" parent="TabContainer/Home"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MainTabs/Home"]
 unique_name_in_owner = true
 layout_mode = 2
 offset_right = 1280.0
@@ -48,16 +50,16 @@ offset_bottom = 732.0
 theme = ExtResource("1_0bbpv")
 follow_focus = true
 
-[node name="TricksList" parent="TabContainer/Home/ScrollContainer" instance=ExtResource("3_0bbpv")]
+[node name="TricksList" parent="MainTabs/Home/ScrollContainer" instance=ExtResource("3_0bbpv")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Logs" parent="TabContainer" instance=ExtResource("3_q8u5g")]
+[node name="Logs" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="LogContainer" type="Logs" parent="TabContainer/Logs"]
+[node name="LogContainer" type="Logs" parent="MainTabs/Logs"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -66,13 +68,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 40
+script = ExtResource("5_lhr70")
 
-[node name="Exit" parent="TabContainer" instance=ExtResource("3_q8u5g")]
+[node name="Exit" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="CenterContainer" type="CenterContainer" parent="TabContainer/Exit"]
+[node name="CenterContainer" type="CenterContainer" parent="MainTabs/Exit"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -80,11 +83,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TabContainer/Exit/CenterContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MainTabs/Exit/CenterContainer"]
 layout_mode = 2
 theme_override_constants/separation = 50
 
-[node name="SteamRestartWarning" type="RichTextLabel" parent="TabContainer/Exit/CenterContainer/VBoxContainer"]
+[node name="SteamRestartWarning" type="RichTextLabel" parent="MainTabs/Exit/CenterContainer/VBoxContainer"]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/normal_font_size = 45
@@ -92,7 +95,7 @@ text = "You added a shortcut to Steam, so you will need to restart Steam before 
 fit_content = true
 script = ExtResource("4_jlsqs")
 
-[node name="RestartSteamButton" type="Button" parent="TabContainer/Exit/CenterContainer/VBoxContainer"]
+[node name="RestartSteamButton" type="Button" parent="MainTabs/Exit/CenterContainer/VBoxContainer"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -101,7 +104,7 @@ theme_override_font_sizes/font_size = 56
 text = "Restart Steam & Exit"
 script = ExtResource("5_jlsqs")
 
-[node name="ExitButton" type="Button" parent="TabContainer/Exit/CenterContainer/VBoxContainer"]
+[node name="ExitButton" type="Button" parent="MainTabs/Exit/CenterContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/align_to_largest_stylebox = 1
 theme_override_font_sizes/font_size = 56
@@ -147,13 +150,13 @@ theme_override_constants/margin_bottom = 5
 visible = false
 layout_mode = 2
 
-[connection signal="restart_steam_hint" from="." to="TabContainer/Exit/CenterContainer/VBoxContainer/SteamRestartWarning" method="_on_decktricks_restart_steam_hint"]
-[connection signal="restart_steam_hint" from="." to="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_decktricks_restart_steam_hint"]
+[connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/SteamRestartWarning" method="_on_decktricks_restart_steam_hint"]
+[connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_decktricks_restart_steam_hint"]
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
 [connection signal="timeout" from="LogRefreshTimer" to="." method="_on_log_refresh_timer_timeout"]
-[connection signal="focus_entered" from="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_focus_entered"]
-[connection signal="pressed" from="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_pressed"]
-[connection signal="visibility_changed" from="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="TabContainer/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_visibility_changed"]
-[connection signal="focus_entered" from="TabContainer/Exit/CenterContainer/VBoxContainer/ExitButton" to="TabContainer/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_focus_entered"]
-[connection signal="pressed" from="TabContainer/Exit/CenterContainer/VBoxContainer/ExitButton" to="TabContainer/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_pressed"]
-[connection signal="visibility_changed" from="TabContainer/Exit/CenterContainer/VBoxContainer/ExitButton" to="TabContainer/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_visibility_changed"]
+[connection signal="focus_entered" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_focus_entered"]
+[connection signal="pressed" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_pressed"]
+[connection signal="visibility_changed" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_visibility_changed"]
+[connection signal="focus_entered" from="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_focus_entered"]
+[connection signal="pressed" from="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_pressed"]
+[connection signal="visibility_changed" from="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_visibility_changed"]

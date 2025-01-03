@@ -298,7 +298,11 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
-
+	if event.is_action_pressed("ui_next_main_tab"):
+		%MainTabs.select_next_available()
+	if event.is_action_pressed("ui_prev_main_tab"):
+		%MainTabs.select_previous_available()
+		
 func _on_ui_refresh_timer_timeout() -> void:
 	dd.async_executor_refresh()
 
