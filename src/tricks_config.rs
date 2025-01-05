@@ -1,8 +1,8 @@
 use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::collections::hash_map::Iter;
-use std::collections::HashMap;
+use std::collections::btree_map::Iter;
+use std::collections::BTreeMap;
 use std::fs;
 
 // TODO: unit test error messages for incorrect configs
@@ -31,15 +31,20 @@ impl From<serde_json::Error> for KnownError {
 
 #[derive(Debug, Clone)]
 pub struct TricksLoader {
-    tricks: HashMap<TrickID, Trick>,
+    tricks: BTreeMap<TrickID, Trick>,
 }
 
 impl TryFrom<&str> for TricksLoader {
     type Error = KnownError;
 
     fn try_from(text: &str) -> DeckResult<Self> {
-        let config = TricksConfig::try_from(text)?;
-        let mut tricks = HashMap::new();
+        let mut config = TricksConfig::try_from(text)?;
+        
+        // Since we will almost always be sorting by display name
+        // in the GUI, go ahead and sort here.
+        config.tricks.sort_by_key(|t| t.display_name.clone());
+
+        let mut tricks = BTreeMap::new();
         for trick in config.tricks {
             tricks.insert(trick.id.clone(), trick);
         }
@@ -85,7 +90,7 @@ impl TricksLoader {
     }
 
     #[must_use]
-    pub fn get_hashmap(&self) -> &HashMap<TrickID, Trick> {
+    pub fn get_btreemap(&self) -> &BTreeMap<TrickID, Trick> {
         &self.tricks
     }
 }

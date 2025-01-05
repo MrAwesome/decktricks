@@ -176,7 +176,7 @@ fn get_action_context_for_all_tricks(
     logger: &LoggerRc,
 ) -> Vec<(TrickID, SpecificActionContext)> {
     let (loader, _full_ctx, _runner) = executor.get_pieces();
-    let tricks = loader.get_hashmap();
+    let tricks = loader.get_all_tricks();
 
     let mut name_to_action_context = vec![];
     for (id, trick) in tricks {

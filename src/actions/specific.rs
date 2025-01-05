@@ -10,9 +10,10 @@ pub enum SpecificAction {
     Kill { id: String },
     Uninstall { id: String },
     AddToSteam { id: String },
-    // TODO: move Info to General, since it doesn't actually require a provider. Or should it?
-    Info { id: String },
     Update { id: String },
+    // NOTE: Info does not actually require a provider or anything else,
+    // it just reads from the config.
+    Info { id: String },
 }
 
 // TODO: Ensure these names are the same as elsewhere
@@ -27,8 +28,8 @@ enum_with_all_variants!(
         //  The order here determines the order for how these actions
         //  are displayed in the GUI!
         // XXX IMPORTANT! XXX
-        Run,
         Install,
+        Run,
         AddToSteam,
         Update,
         Uninstall,

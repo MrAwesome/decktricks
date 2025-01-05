@@ -193,6 +193,14 @@ impl DecktricksDispatcher {
         let _ = SysCommand::new(early_log_ctx(), "steam", ["-shutdown"]).run();
     }
 
+    get_actions_mapping() {
+        get_full_gui_actions_map(
+            executor,
+            get_log_level(),
+            CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
+        )
+    }
+
 
     #[func]
     fn log(log_level: u8, message: GString) {

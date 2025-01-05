@@ -302,7 +302,7 @@ func _input(event: InputEvent) -> void:
 		%MainTabs.select_next_available()
 	if event.is_action_pressed("ui_prev_main_tab"):
 		%MainTabs.select_previous_available()
-		
+
 func _on_ui_refresh_timer_timeout() -> void:
 	dd.async_executor_refresh()
 

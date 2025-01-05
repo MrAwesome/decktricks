@@ -106,6 +106,11 @@ pub trait TrickProvider: ProviderChecks + ProviderActions + Debug + Sync {
 
         allowed_actions
     }
+
+    // NOTE: in the future, this could return other actions for particular providers
+    fn get_all_actions(&self) -> Vec<SpecificActionID> {
+        SpecificActionID::all_variants()
+    }
 }
 
 pub trait ProviderChecks {

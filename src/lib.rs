@@ -19,6 +19,7 @@ pub mod gui;
 pub mod logging;
 pub mod run_system_command;
 pub mod tricks_config;
+pub mod tricks_status;
 pub mod utils;
 pub mod steam;
 
