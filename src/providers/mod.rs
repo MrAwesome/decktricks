@@ -26,7 +26,11 @@ pub(super) const fn not_implemented(reason: &'static str) -> DeckResult<ActionSu
 }
 
 #[derive(Debug)]
-pub struct DynTrickProvider(Box<dyn TrickProvider>);
+pub struct DynTrickProvider {
+    prov: Box<dyn TrickProvider>,
+    ctx: SpecificExecutionContext,
+    full_ctx: FullSystemContext,
+}
 impl DynTrickProvider {
     #[must_use]
     pub fn new(ctx: &SpecificExecutionContext, full_ctx: &FullSystemContext) -> Self {
@@ -41,22 +45,28 @@ impl DynTrickProvider {
         let trick_id = trick.id.clone();
 
         match &trick.provider_config {
-            ProviderConfig::Flatpak(flatpak) => DynTrickProvider(Box::new(FlatpakProvider::new(
-                flatpak,
-                full_ctx.flatpak_ctx.clone(),
-                ctx.clone(),
-            ))),
-            ProviderConfig::SimpleCommand(simple_command) => {
-                DynTrickProvider(Box::new(SimpleCommandProvider::new(
+            ProviderConfig::Flatpak(flatpak) => DynTrickProvider {
+                prov: Box::new(FlatpakProvider::new(
+                    flatpak,
+                    full_ctx.flatpak_ctx.clone(),
+                    ctx.clone(),
+                )),
+                ctx: ctx.clone(),
+                full_ctx: full_ctx.clone(),
+            },
+            ProviderConfig::SimpleCommand(simple_command) => DynTrickProvider {
+                prov: Box::new(SimpleCommandProvider::new(
                     trick_id,
                     simple_command.command.clone(),
                     simple_command.args.clone().unwrap_or_default(),
                     ctx.clone(),
                     running_instances,
-                )))
-            }
-            ProviderConfig::SystemdRun(systemd_run) => {
-                DynTrickProvider(Box::new(SystemdRunProvider::new(
+                )),
+                ctx: ctx.clone(),
+                full_ctx: full_ctx.clone(),
+            },
+            ProviderConfig::SystemdRun(systemd_run) => DynTrickProvider {
+                prov: Box::new(SystemdRunProvider::new(
                     trick_id,
                     ctx.clone(),
                     full_ctx
@@ -64,15 +74,39 @@ impl DynTrickProvider {
                         .running_unit_ids
                         .contains(&systemd_run.unit_id),
                     systemd_run.clone(),
-                )))
-            }
-            ProviderConfig::DeckyInstaller(_decky_installer) => DynTrickProvider(Box::new(
-                DeckyInstallerProvider::new(ctx.clone(), full_ctx.decky_ctx.clone()),
-            )),
-            ProviderConfig::EmuDeckInstaller(_emudeck_installer) => DynTrickProvider(Box::new(
-                EmuDeckInstallerProvider::new(ctx.clone(), full_ctx.emudeck_ctx.clone()),
-            )),
+                )),
+                ctx: ctx.clone(),
+                full_ctx: full_ctx.clone(),
+            },
+            ProviderConfig::DeckyInstaller(_decky_installer) => DynTrickProvider {
+                prov: Box::new(DeckyInstallerProvider::new(
+                    ctx.clone(),
+                    full_ctx.decky_ctx.clone(),
+                )),
+                ctx: ctx.clone(),
+                full_ctx: full_ctx.clone(),
+            },
+            ProviderConfig::EmuDeckInstaller(_emudeck_installer) => DynTrickProvider {
+                prov: Box::new(EmuDeckInstallerProvider::new(
+                    ctx.clone(),
+                    full_ctx.emudeck_ctx.clone(),
+                )),
+                ctx: ctx.clone(),
+                full_ctx: full_ctx.clone(),
+            },
         }
+    }
+
+    pub fn get_ctx(&self) -> &SpecificExecutionContext {
+        &self.ctx
+    }
+
+    pub fn get_full_ctx(&self) -> &FullSystemContext {
+        &self.full_ctx
+    }
+
+    pub fn get_trick(&self) -> &Trick {
+        &self.get_ctx().trick
     }
 }
 
@@ -80,14 +114,14 @@ impl Deref for DynTrickProvider {
     type Target = Box<dyn TrickProvider + 'static>;
 
     fn deref<'a>(&'a self) -> &'a Box<dyn TrickProvider + 'static> {
-        let DynTrickProvider(ref v) = *self;
+        let DynTrickProvider { prov: ref v, .. } = *self;
         v
     }
 }
 
 impl DerefMut for DynTrickProvider {
     fn deref_mut<'a>(&'a mut self) -> &'a mut Box<dyn TrickProvider + 'static> {
-        let DynTrickProvider(ref mut v) = *self;
+        let DynTrickProvider { prov: ref mut v, .. } = *self;
         v
     }
 }

@@ -1,4 +1,5 @@
 {
+    "known_categories": ["poop", "butt"],
     "tricks": [
         {
             "id": "print-HARBLGARBL",
@@ -9,6 +10,7 @@
             },
             "icon": "XXX",
             "tags": ["harblgarbl"],
+            "categories": ["poop", "butt"],
             "display_name": "HARBLGARBLWHARBLGARBL",
             "description": "HARBLWHARBLGARBLLLLL"
         },
@@ -21,6 +23,7 @@
             },
             "icon": "XXX",
             "tags": ["harblgarbl2"],
+            "categories": ["poop"],
             "display_name": "HARBLGARBLWHARBLGARBL2",
             "description": "HARBLWHARBLGARBLLLLL2"
         },
@@ -30,6 +33,7 @@
                 "type": "flatpak",
                 "id": "io.github.erkin.ponysay"
             },
+            "categories": ["butt"],
             "icon": "XXX",
             "hidden": true,
             "display_name": "Test Package (Ignore)",

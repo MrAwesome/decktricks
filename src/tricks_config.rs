@@ -13,6 +13,7 @@ pub const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
 
 #[derive(Debug, Deserialize)]
 pub struct TricksConfig {
+    pub known_categories: Vec<String>,
     pub tricks: Vec<Trick>,
 }
 
@@ -39,7 +40,7 @@ impl TryFrom<&str> for TricksLoader {
 
     fn try_from(text: &str) -> DeckResult<Self> {
         let mut config = TricksConfig::try_from(text)?;
-        
+
         // Since we will almost always be sorting by display name
         // in the GUI, go ahead and sort here.
         config.tricks.sort_by_key(|t| t.display_name.clone());
@@ -110,6 +111,7 @@ pub struct Trick {
     pub description: String,
     pub always_present_on_steamdeck: Option<bool>,
     pub icon: Option<String>,
+    pub categories: Vec<String>,
     //download: Option<String>,
     //command_before: Option<String>,
     //command_after: Option<String>,
@@ -126,6 +128,7 @@ impl Trick {
                 args: Default::default(),
                 execution_dir: Default::default(),
             }),
+            categories: Default::default(),
             display_name: Default::default(),
             description: Default::default(),
             always_present_on_steamdeck: Default::default(),
@@ -222,6 +225,7 @@ fn reconvert_providerconfig() -> DeckResult<()> {
         id: id.into(),
         provider_config: ProviderConfig::Flatpak(Flatpak { id: id.into() }),
         description: "lol".into(),
+        categories: vec![],
         display_name: "ProtonUp-Qt".into(),
         always_present_on_steamdeck: None,
         icon: None,
@@ -252,4 +256,16 @@ fn integration_check_default_config() -> DeckResult<()> {
             "Unexpected data received for lutris config: {other:#?}"
         ))),
     }
+}
+
+#[test]
+fn integration_check_categories() -> DeckResult<()> {
+    let config = TricksConfig::try_from(DEFAULT_CONFIG_CONTENTS)?;
+    for trick in config.tricks {
+        assert!(!trick.categories.is_empty());
+        for category in trick.categories {
+            assert!(config.known_categories.contains(&category));
+        }
+    }
+    Ok(())
 }

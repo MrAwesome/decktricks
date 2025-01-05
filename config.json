@@ -1,6 +1,15 @@
 {
     "NOTE": "Changes to this file will not be reflected in the CLI or the GUI until you've run `cargo build` or `cargo build --release`, depending on mode.",
 
+    "known_categories": [
+        "games",
+        "recommended",
+        "social-entertainment",
+        "streaming",
+        "system",
+        "utilities"
+    ],
+
     "tricks": [
         {
             "id": "nested-desktop",
@@ -12,6 +21,10 @@
                 "system",
                 "desktop",
                 "nested"
+            ],
+            "categories": [
+                "system",
+                "recommended"
             ],
             "icon": "XXX",
             "display_name": "Nested Desktop Mode",
@@ -30,6 +43,9 @@
                 "minecraft",
                 "prism"
             ],
+            "categories": [
+                "games"
+            ],
             "display_name": "Minecraft (Prism Launcher)",
             "description": "A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
         },
@@ -47,6 +63,10 @@
                 "mame",
                 "n64"
             ],
+            "categories": [
+                "recommended",
+                "games"
+            ],
             "icon": "XXX",
             "display_name": "EmuDeck",
             "description": "Easy setup tool for emulation. Has many, many different emulators available."
@@ -58,6 +78,10 @@
             },
             "tags": [
                 "decky"
+            ],
+            "categories": [
+                "recommended",
+                "utilities"
             ],
             "icon": "XXX",
             "display_name": "Decky Loader",
@@ -74,6 +98,10 @@
             "tags": [
                 "moonlight",
                 "sunshine",
+                "streaming"
+            ],
+            "categories": [
+                "recommended",
                 "streaming"
             ],
             "display_name": "Moonlight",
@@ -93,6 +121,9 @@
                 "playstation",
                 "streaming"
             ],
+            "categories": [
+                "streaming"
+            ],
             "display_name": "Chiaki4Deck",
             "description": "Playstation Remote Play client for Steam Deck"
         },
@@ -110,6 +141,9 @@
                 "compatibility",
                 "stalker"
             ],
+            "categories": [
+                "utilities"
+            ],
             "display_name": "ProtonUp-Qt",
             "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
         },
@@ -125,6 +159,9 @@
                 "humble",
                 "epic"
             ],
+            "categories": [
+                "games"
+            ],
             "icon": "XXX",
             "display_name": "Lutris",
             "description": "Game launcher for GOG, Ubisoft, Humble, Epic, and more."
@@ -135,6 +172,9 @@
                 "type": "flatpak",
                 "id": "org.DolphinEmu.dolphin-emu"
             },
+            "categories": [
+                "games"
+            ],
             "icon": "XXX",
             "display_name": "Dolphin Emulator",
             "description": "Gamecube/Wii emulator."
@@ -152,6 +192,10 @@
                 "gog",
                 "epic"
             ],
+            "categories": [
+                "recommended",
+                "games"
+            ],
             "icon": "XXX",
             "display_name": "Heroic",
             "description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
@@ -166,6 +210,9 @@
                 "system",
                 "settings",
                 "plasma"
+            ],
+            "categories": [
+                "system"
             ],
             "icon": "XXX",
             "display_name": "System Settings",
@@ -183,6 +230,9 @@
                 "file browser",
                 "dolphin",
                 "plasma"
+            ],
+            "categories": [
+                "system"
             ],
             "icon": "XXX",
             "display_name": "File Browser",
@@ -202,6 +252,9 @@
                 "cmdline",
                 "commandline"
             ],
+            "categories": [
+                "system"
+            ],
             "icon": "XXX",
             "display_name": "Terminal (Konsole)",
             "description": "Terminal for typing system commands.",
@@ -215,6 +268,9 @@
             },
             "tags": [
                 "settings",
+                "system"
+            ],
+            "categories": [
                 "system"
             ],
             "icon": "XXX",
@@ -232,6 +288,9 @@
                 "firefox",
                 "browser"
             ],
+            "categories": [
+                "system"
+            ],
             "icon": "XXX",
             "display_name": "Firefox",
             "description": "Free and open source web browser from Mozilla."
@@ -247,6 +306,9 @@
                 "chromium",
                 "browser"
             ],
+            "categories": [
+                "system"
+            ],
             "icon": "XXX",
             "display_name": "Chrome",
             "description": "Free and open source web browser from Google."
@@ -260,6 +322,9 @@
             "tags": [
                 "discord",
                 "chat"
+            ],
+            "categories": [
+                "social-entertainment"
             ],
             "icon": "XXX",
             "display_name": "Discord (Official App)",
@@ -277,6 +342,9 @@
                 "chat",
                 "vesktop"
             ],
+            "categories": [
+                "social-entertainment"
+            ],
             "icon": "XXX",
             "display_name": "Discord (Vesktop)",
             "description": "Community-maintained launcher for Discord that adds vencord and makes updates less intrusive."
@@ -290,6 +358,9 @@
             "tags": [
                 "spotify",
                 "music"
+            ],
+            "categories": [
+                "social-entertainment"
             ],
             "icon": "XXX",
             "display_name": "Spotify",

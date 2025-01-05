@@ -1,6 +1,5 @@
 use crate::prelude::*;
 use crate::tricks_config::Trick;
-use std::collections::btree_map::Iter;
 use std::collections::BTreeMap;
 
 pub struct AllTricksStatus(BTreeMap<TrickID, TrickStatus>);
@@ -19,9 +18,10 @@ pub struct ActionDisplayStatus {
 impl AllTricksStatus {
     pub fn new(executor: &Executor, logger: &LoggerRc) -> Self {
         let mut trick_map = BTreeMap::new();
-        let tricks_and_providers = executor.get_all_providers(logger);
+        let providers = executor.get_all_providers(logger);
 
-        for (trick, provider) in tricks_and_providers {
+        for provider in providers {
+            let trick = provider.get_trick();
             let is_installing = provider.is_installing();
             let is_running = provider.is_running();
             let available_actions = provider.get_available_actions();
@@ -43,7 +43,7 @@ impl AllTricksStatus {
             }
 
             let trick_id = trick.id.clone();
-            let trick_status = TrickStatus { trick, actions };
+            let trick_status = TrickStatus { trick: trick.clone(), actions };
             trick_map.insert(trick_id, trick_status);
         }
 
@@ -58,10 +58,10 @@ impl AllTricksStatus {
         self.0.iter()
     }
 
-//    fn get_all_tricks_in_category<'a>(
-//        &'a self,
-//        category_id: &'a str,
-//    ) -> impl Iterator<Item = (&'a TrickID, &'a TrickStatus)> + 'a {
-//        self.get_all_tricks().filter(move |t| t.1.trick.categories.contains(category_id))
-//    }
+    fn get_all_tricks_in_category<'a>(
+        &'a self,
+        category_id: &'a String,
+    ) -> impl Iterator<Item = (&'a TrickID, &'a TrickStatus)> + 'a {
+        self.get_all_tricks().filter(move |t| t.1.trick.categories.contains(category_id))
+    }
 }

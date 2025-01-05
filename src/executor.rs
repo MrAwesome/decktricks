@@ -424,11 +424,11 @@ impl Executor {
     pub fn get_all_providers(
         &self,
         logger: &LoggerRc,
-    ) -> Vec<(Trick, DynTrickProvider)> {
+    ) -> Vec<DynTrickProvider> {
         let current_log_level = LogType::Debug;
 
         let mut providers = vec![];
-        for (trick_id, trick) in self.loader.get_all_tricks() {
+        for (_trick_id, trick) in self.loader.get_all_tricks() {
             let ctx = SpecificExecutionContext::new(
                 trick.clone(),
                 self.runner.clone(),
@@ -440,7 +440,7 @@ impl Executor {
                     .tricks_to_installing_pids
                     .contains_key(&trick.id),
             );
-            providers.push((trick.clone(), DynTrickProvider::new(&ctx, &self.full_ctx)));
+            providers.push(DynTrickProvider::new(&ctx, &self.full_ctx));
         }
         providers
     }
