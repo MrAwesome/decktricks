@@ -1,5 +1,7 @@
 use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
+use crate::tricks_status::AllTricksStatus;
+use crate::tricks_status::TrickStatus;
 use std::sync::Arc;
 
 pub trait ExecCtx: Clone + Send + Sync {
@@ -421,10 +423,7 @@ impl Executor {
         (&self.loader, &self.full_ctx, &self.runner)
     }
 
-    pub fn get_all_providers(
-        &self,
-        logger: &LoggerRc,
-    ) -> Vec<DynTrickProvider> {
+    pub fn get_all_providers(&self, logger: &LoggerRc) -> Vec<DynTrickProvider> {
         let current_log_level = LogType::Debug;
 
         let mut providers = vec![];
@@ -434,7 +433,6 @@ impl Executor {
                 self.runner.clone(),
                 current_log_level,
                 logger.clone(),
-
                 self.full_ctx
                     .procs_ctx
                     .tricks_to_installing_pids
@@ -443,6 +441,16 @@ impl Executor {
             providers.push(DynTrickProvider::new(&ctx, &self.full_ctx));
         }
         providers
+    }
+
+    pub fn get_full_map_for_all_categories(
+        &self,
+        logger: &LoggerRc,
+    ) -> Vec<(CategoryID, Vec<(TrickID, TrickStatus)>)> {
+        let providers = self.get_all_providers(logger);
+        let all_tricks_status = AllTricksStatus::new(providers);
+        let known_categories = self.loader.get_all_categories();
+        all_tricks_status.get_full_map_for_categories(known_categories)
     }
 }
 

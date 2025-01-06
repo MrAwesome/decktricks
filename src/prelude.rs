@@ -26,6 +26,7 @@ pub const INSTALLING_ENV_STRING: &str = "DECKTRICKS_IS_INSTALLING";
 
 pub type ProcessID = String;
 pub type TrickID = String;
+pub type CategoryID = String;
 
 pub trait StringType: AsRef<str> + Clone + std::fmt::Display + std::fmt::Debug + ToString + Sized {}
 impl StringType for String {}

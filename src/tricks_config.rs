@@ -13,7 +13,7 @@ pub const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
 
 #[derive(Debug, Deserialize)]
 pub struct TricksConfig {
-    pub known_categories: Vec<String>,
+    pub known_categories: Vec<CategoryID>,
     pub tricks: Vec<Trick>,
 }
 
@@ -33,6 +33,7 @@ impl From<serde_json::Error> for KnownError {
 #[derive(Debug, Clone)]
 pub struct TricksLoader {
     tricks: BTreeMap<TrickID, Trick>,
+    categories: Vec<CategoryID>,
 }
 
 impl TryFrom<&str> for TricksLoader {
@@ -50,7 +51,9 @@ impl TryFrom<&str> for TricksLoader {
             tricks.insert(trick.id.clone(), trick);
         }
 
-        Ok(Self { tricks })
+        let categories = config.known_categories;
+
+        Ok(Self { tricks, categories })
     }
 }
 
@@ -93,6 +96,10 @@ impl TricksLoader {
     #[must_use]
     pub fn get_btreemap(&self) -> &BTreeMap<TrickID, Trick> {
         &self.tricks
+    }
+
+    pub fn get_all_categories(&self) -> Vec<CategoryID> {
+        self.categories.clone()
     }
 }
 

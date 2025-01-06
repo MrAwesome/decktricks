@@ -9,6 +9,7 @@ use godot::prelude::*;
 mod action_button;
 pub mod dispatcher;
 mod gui;
+mod create_all_action_buttons;
 pub mod logging;
 pub mod logs_container;
 
