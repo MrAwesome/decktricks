@@ -25,7 +25,7 @@ trap 'rm -f /tmp/decktricks-install-*' EXIT
 # Backup our previous update logs, and spawn off a background process to update
 # TODO: make sure that this nohup won't be detected/killed by SteamOS when exiting in Game Mode
 ( [[ -f "$logs_dir/decktricks-update.log" ]] && mv "$logs_dir/decktricks-update.log"{,.bak} ) || true
-nohup nice -n 10 -- /bin/bash "$bin_dir/decktricks-update.sh" &> "$logs_dir/decktricks-update.log" &
+nohup nice -n 10 -- /bin/bash "$bin_dir/decktricks-update.sh" 2>&1 | grep -v 'gameoverlayrenderer.so' &> "$logs_dir/decktricks-update.log" &
 
 ( [[ -f "$logs_dir/decktricks-gui.log" ]] && mv "$logs_dir/decktricks-gui.log"{,.bak} ) || true
 "$bin_dir/decktricks-gui" "$@" &> "$logs_dir/decktricks-gui.log"
