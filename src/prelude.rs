@@ -1,5 +1,4 @@
-pub use crate::actions::SpecificActionID;
-pub(crate) use crate::actions::*;
+pub use crate::actions::*;
 pub use crate::add_to_steam::*;
 pub use crate::command::*;
 pub use crate::executor::*;
@@ -20,6 +19,7 @@ pub use crate::errors::*;
 pub use crate::providers::*;
 
 pub const GITHUB_LINK: &str = "https://github.com/MrAwesome/decktricks";
+pub const GITHUB_ISSUES_LINK: &str = "https://github.com/MrAwesome/decktricks";
 pub const DEFAULT_USER: &str = "deck";
 pub const PID_ENV_STRING: &str = "DECKTRICKS_TRICK_ID";
 pub const INSTALLING_ENV_STRING: &str = "DECKTRICKS_IS_INSTALLING";

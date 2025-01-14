@@ -7,9 +7,11 @@ mod specific;
 
 pub(crate) use general::*;
 pub use specific::SpecificActionID;
+pub use specific::SpecificAction;
 pub(crate) use specific::*;
 
-pub(crate) enum TypedAction {
+#[derive(Debug, Clone)]
+pub enum TypedAction {
     Specific(SpecificAction),
     General(GeneralAction),
 }
@@ -50,7 +52,7 @@ impl From<&Action> for TypedAction {
 }
 
 impl TypedAction {
-    pub(crate) fn do_with(
+    pub fn do_with(
         self,
         executor: &Executor,
         current_log_level: LogType,

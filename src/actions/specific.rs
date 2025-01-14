@@ -41,15 +41,22 @@ enum_with_all_variants!(
     }
 );
 
+// Needed for hot reloading for ActionButton in the Godot GUI
+impl Default for SpecificActionID {
+    fn default() -> Self {
+        Self::Run
+    }
+}
+
 impl SpecificActionID {
     #[must_use]
-    pub fn get_display_name(&self) -> &'static str {
+    pub fn get_display_name(&self, is_ongoing: bool) -> &'static str {
         match self {
-            Self::Run => "Run",
+            Self::Run => if is_ongoing { "Running" } else { "Run" },
             Self::AddToSteam => "Add To Steam",
-            Self::Install => "Install",
-            Self::Uninstall => "Uninstall",
-            Self::Update => "Update",
+            Self::Install => if is_ongoing { "Installing" } else { "Install" },
+            Self::Uninstall => if is_ongoing { "Uninstalling" } else { "Uninstall" },
+            Self::Update => if is_ongoing { "Updating" } else { "Update" },
             Self::Kill => "Kill",
             Self::Info => "Info",
         }
@@ -61,10 +68,23 @@ impl SpecificActionID {
         all_vars
             .into_iter()
             .map(|v| {
-                let dname = v.get_display_name();
+                let dname = v.get_display_name(false);
                 (v.to_string(), dname)
             })
             .collect()
+    }
+
+    pub fn as_action(&self, trick_id: String) -> SpecificAction {
+        let id = trick_id;
+        match self {
+            Self::Run => SpecificAction::Run { id },
+            Self::Install => SpecificAction::Install { id },
+            Self::Kill => SpecificAction::Kill { id },
+            Self::Uninstall => SpecificAction::Uninstall { id },
+            Self::AddToSteam => SpecificAction::AddToSteam { id },
+            Self::Info => SpecificAction::Info { id },
+            Self::Update => SpecificAction::Update { id },
+        }
     }
 }
 
@@ -74,7 +94,7 @@ impl Display for SpecificActionID {
             f,
             "{}",
             // TODO: this may be too much trouble
-            String::try_from(self).unwrap_or("ERROR_SERIALIZING_SPECIFIC_ACTION_ID".into())
+            String::try_from(self).unwrap_or_else(|e| format!("{e}"))
         )
     }
 }
@@ -116,7 +136,11 @@ impl SpecificAction {
         }
     }
 
-    pub(crate) fn do_with(
+    pub(crate) fn as_info(id: &impl ToString) -> Self {
+        SpecificAction::Info { id: id.to_string() }
+    }
+
+    pub fn do_with(
         self,
         executor: &Executor,
         current_log_level: LogType,
@@ -128,6 +152,7 @@ impl SpecificAction {
         let trick = loader.get_trick(trick_id.as_ref())?;
         let ctx = SpecificExecutionContext::new(
             trick.clone(),
+            self.clone(),
             runner.clone(),
             current_log_level,
             logger,

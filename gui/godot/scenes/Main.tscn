@@ -1,8 +1,7 @@
-[gd_scene load_steps=11 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=10 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
-[ext_resource type="PackedScene" uid="uid://do4v7dct1d2rl" path="res://scenes/tricks_list.tscn" id="3_0bbpv"]
 [ext_resource type="PackedScene" uid="uid://be0s6mdnsfnbv" path="res://scenes/background_colorrect.tscn" id="3_q8u5g"]
 [ext_resource type="Script" path="res://scripts/exit_button.gd" id="4_c01mt"]
 [ext_resource type="Script" path="res://scripts/steam_restart_warning.gd" id="4_jlsqs"]
@@ -13,9 +12,9 @@
 
 [node name="Decktricks" type="Control"]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 1280.0
-offset_bottom = 800.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_0bbpv")
@@ -42,17 +41,15 @@ current_tab = 0
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MainTabs/Home"]
+[node name="Categories" type="TabContainer" parent="MainTabs/Home"]
 unique_name_in_owner = true
-layout_mode = 2
-offset_right = 1280.0
-offset_bottom = 732.0
-theme = ExtResource("1_0bbpv")
-follow_focus = true
-
-[node name="TricksList" parent="MainTabs/Home/ScrollContainer" instance=ExtResource("3_0bbpv")]
-unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
 
 [node name="Logs" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false

@@ -2,9 +2,9 @@
     "NOTE": "Changes to this file will not be reflected in the CLI or the GUI until you've run `cargo build` or `cargo build --release`, depending on mode.",
 
     "known_categories": [
-        "games",
         "recommended",
-        "social-entertainment",
+        "games",
+        "entertainment",
         "streaming",
         "system",
         "utilities"
@@ -324,7 +324,7 @@
                 "chat"
             ],
             "categories": [
-                "social-entertainment"
+                "entertainment"
             ],
             "icon": "XXX",
             "display_name": "Discord (Official App)",
@@ -343,7 +343,7 @@
                 "vesktop"
             ],
             "categories": [
-                "social-entertainment"
+                "entertainment"
             ],
             "icon": "XXX",
             "display_name": "Discord (Vesktop)",
@@ -360,7 +360,7 @@
                 "music"
             ],
             "categories": [
-                "social-entertainment"
+                "entertainment"
             ],
             "icon": "XXX",
             "display_name": "Spotify",

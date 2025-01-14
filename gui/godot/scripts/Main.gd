@@ -71,16 +71,17 @@ func create_action_button(action: String, trick_id: String, ongoing: bool):
 
 	return button
 
-func popup_info_window(root: Window, info: Dictionary):
-		var dialog: AcceptDialog = INFO_WINDOW.instantiate()
-		dialog.theme = theme
-		dialog.get_ok_button().set_text("OK")
+func popup_info_window(info: Dictionary):
+	var root = get_tree().root
+	var dialog: AcceptDialog = INFO_WINDOW.instantiate()
+	dialog.theme = theme
+	dialog.get_ok_button().set_text("OK")
 
-		dialog.set_title(info["display_name"])
-		dialog.set_text(info["description"])
+	dialog.set_title(info["title"])
+	dialog.set_text(info["text"])
 
-		root.add_child(dialog)
-		dialog.popup_centered_ratio(0.8)
+	root.add_child(dialog)
+	dialog.popup_centered_ratio(0.8)
 
 func take_action(action: String, trick_id: String):
 	var args: Array[String] = [action, trick_id]
@@ -100,7 +101,8 @@ func take_action(action: String, trick_id: String):
 		if ret == OK:
 			var info = info_json.data
 			var root = get_tree().root
-			popup_info_window(root, info)
+			#NOTE: currently using wrong info
+			popup_info_window(info)
 	else:
 		dd.async_run_with_decktricks(args)
 
@@ -263,11 +265,12 @@ func _ready():
 	dd.get_time_passed_ms("executor_ready")
 
 	# Hook up the signal that refreshes our UI over time
-	dd.connect("actions", refresh_ui)
+	#dd.connect("actions", refresh_ui)
+	dd.show_info_window.connect(_on_show_info_window)
 
 	# Synchronously build out our full UI for display
-	var actions_text = get_actions_text_sync()
-	refresh_ui(actions_text)
+	#var actions_text = get_actions_text_sync()
+	#refresh_ui(actions_text)
 
 	var should_test = OS.get_environment("DECKTRICKS_GUI_TEST_COMMAND_ONLY")
 	var should_exit = OS.get_environment("DECKTRICKS_GUI_EXIT_IMMEDIATELY")
@@ -278,10 +281,17 @@ func _ready():
 		dd.sync_run_with_decktricks(test_cmd_args)
 	
 	%LogContainer.populate_logs()
+	dd.populate_categories(%Categories)
+	
+	var first_button = get_tree().get_nodes_in_group("first_button").pop_front()
+	if first_button:
+		print("Grabbing focus...")
+		print(first_button.text)
+		first_button.grab_focus.call_deferred()
 
 	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])
 	dd.log(2, "Version info:\n" + version_info)
-
+	
 	dd.log(2, "Decktricks GUI initialization complete!")
 	# This line should be last, otherwise integration tests will fail:
 	print("Decktricks GUI initialization complete!")
@@ -308,3 +318,6 @@ func _on_ui_refresh_timer_timeout() -> void:
 
 func _on_log_refresh_timer_timeout() -> void:
 	%LogContainer.populate_logs()
+
+func _on_show_info_window(info: Dictionary) -> void:
+	popup_info_window(info)

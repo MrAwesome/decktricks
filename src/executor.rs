@@ -154,10 +154,11 @@ pub struct SpecificExecutionContext {
     // TODO: can default to "none", reserve that as special, and use to
     // still track all procs we have launched?
     //pub trick_id: TrickID,
+    pub trick: Trick,
+    pub action: SpecificAction,
     pub log_channel: LogChannel,
     pub current_log_level: LogType,
     pub runner: RunnerRc,
-    pub trick: Trick,
     pub logger: LoggerRc,
     pub is_installing: bool,
 }
@@ -255,16 +256,18 @@ impl SpecificExecutionContext {
     #[must_use]
     pub fn new(
         trick: Trick,
+        action: SpecificAction,
         runner: RunnerRc,
         current_log_level: LogType,
         logger: LoggerRc,
         is_installing: bool,
     ) -> Self {
         Self {
+            action,
             log_channel: LogChannel::TrickID(trick.id.clone()),
+            trick,
             current_log_level,
             runner,
-            trick,
             logger,
             is_installing,
         }
@@ -277,6 +280,7 @@ impl SpecificExecutionContext {
             current_log_level: LogType::Warn,
             runner: Arc::new(MockTestActualRunner::new()),
             trick,
+            action: SpecificAction::as_info(&"FAKE_FOR_TEST"),
             logger: Arc::new(DecktricksConsoleLogger::new()),
             is_installing: false,
         }
@@ -289,6 +293,7 @@ impl SpecificExecutionContext {
             current_log_level: LogType::Warn,
             runner,
             trick,
+            action: SpecificAction::as_info(&"FAKE_FOR_TEST"),
             logger: Arc::new(DecktricksConsoleLogger::new()),
             is_installing: false,
         }
@@ -427,9 +432,10 @@ impl Executor {
         let current_log_level = LogType::Debug;
 
         let mut providers = vec![];
-        for (_trick_id, trick) in self.loader.get_all_tricks() {
+        for (trick_id, trick) in self.loader.get_all_tricks() {
             let ctx = SpecificExecutionContext::new(
                 trick.clone(),
+                SpecificAction::as_info(&trick_id),
                 self.runner.clone(),
                 current_log_level,
                 logger.clone(),
@@ -443,12 +449,19 @@ impl Executor {
         providers
     }
 
+    pub fn get_all_tricks_status(
+        &self,
+        logger: LoggerRc,
+    ) -> AllTricksStatus {
+        let providers = self.get_all_providers(&logger);
+        AllTricksStatus::new(providers)
+    }
+
     pub fn get_full_map_for_all_categories(
         &self,
-        logger: &LoggerRc,
+        logger: LoggerRc,
     ) -> Vec<(CategoryID, Vec<(TrickID, TrickStatus)>)> {
-        let providers = self.get_all_providers(logger);
-        let all_tricks_status = AllTricksStatus::new(providers);
+        let all_tricks_status = self.get_all_tricks_status(logger);
         let known_categories = self.loader.get_all_categories();
         all_tricks_status.get_full_map_for_categories(known_categories)
     }

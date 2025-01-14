@@ -121,7 +121,9 @@ impl Deref for DynTrickProvider {
 
 impl DerefMut for DynTrickProvider {
     fn deref_mut<'a>(&'a mut self) -> &'a mut Box<dyn TrickProvider + 'static> {
-        let DynTrickProvider { prov: ref mut v, .. } = *self;
+        let DynTrickProvider {
+            prov: ref mut v, ..
+        } = *self;
         v
     }
 }

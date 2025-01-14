@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+use std::path::Path;
 use crate::prelude::*;
 use std::fmt::Display;
 
@@ -75,11 +77,15 @@ pub(crate) fn run_remote_script(
         .as_success()
 }
 
-pub(crate) fn get_homedir() -> String {
+pub fn get_homedir() -> String {
     std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
 }
 
-pub(crate) fn exists_and_executable(ctx: &impl ExecCtx, path: &str) -> bool {
+pub fn get_decktricks_dir() -> PathBuf {
+    Path::join(Path::new(&get_homedir()), ".local/share/decktricks/")
+}
+
+pub fn exists_and_executable(ctx: &impl ExecCtx, path: &str) -> bool {
     // Using this instead of rust-native code to piggyback on the test-friendliness of SysCommand
     let res = SysCommand::new(ctx, "/bin/test", ["-x", path]).run();
 

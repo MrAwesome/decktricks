@@ -1,7 +1,14 @@
 #![allow(clippy::needless_pass_by_value)]
 
+use godot::classes::Label;
+use godot::classes::PanelContainer;
+use godot::classes::VBoxContainer;
+use godot::classes::ScrollContainer;
+use godot::classes::TabContainer;
 use decktricks::run_system_command::SysCommandRunner;
 use decktricks::run_system_command::SysCommand;
+use godot::classes::HBoxContainer;
+use crate::action_button::ActionButton;
 use crate::logging::get_log_level;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use std::time::Duration;
@@ -35,6 +42,9 @@ impl DecktricksDispatcher {
     // TODO: figure out how to send parsed tricksconfig?
     #[signal]
     fn actions(actions_json_string: GString);
+
+    #[signal]
+    fn show_info_window(info: Dictionary);
 
     fn get_singleton() -> Gd<Object> {
         godot::classes::Engine::singleton()
@@ -83,7 +93,12 @@ impl DecktricksDispatcher {
                     Some(new_inner_arc)
                 },
                 Err(err) => {
-                    error!(early_log_ctx(), "Failed to access executor while writing! This is a serious error, please report it: {err:?}");
+                    error!(
+                        early_log_ctx(),
+                        "Failed to access executor while writing! This is a serious error, please report it at {}\n\nError: {:?}",
+                        GITHUB_ISSUES_LINK,
+                        err
+                    );
                     None
                 }
             };
@@ -97,7 +112,7 @@ impl DecktricksDispatcher {
         }
     }
 
-    fn get_executor() -> Option<Arc<Option<Executor>>> {
+    pub fn get_executor() -> Option<Arc<Option<Executor>>> {
         let mut read_result = EXECUTOR_GUARD.try_read();
         let mut delay_ms = 1;
         for _ in 0..NUM_EXECUTOR_READ_RETRIES {
@@ -113,7 +128,12 @@ impl DecktricksDispatcher {
         match read_result {
             Ok(guard) => Some((*guard).clone()),
             Err(err) => {
-                error!(early_log_ctx(), "Failed to access executor while reading! This is a serious error, please report it: {err:?}");
+                error!(
+                    early_log_ctx(),
+                    "Failed to access executor while writing! This is a serious error, please report it at {}\n\nError: {:?}",
+                    GITHUB_ISSUES_LINK,
+                    err
+                );
                 None
             }
         }
@@ -153,7 +173,30 @@ impl DecktricksDispatcher {
                 std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
                 Self::async_executor_refresh();
             });
+        } else {
+            error!(early_log_ctx(), "No executor found! This is a very serious error, please report it at: {}", GITHUB_ISSUES_LINK);
         }
+    }
+
+    fn async_run_action(action: TypedAction) {
+        let log_ctx = early_log_ctx();
+        info!(log_ctx, "Dispatching command to decktricks: {action:?}");
+
+        let maybe_executor_arc = Self::get_executor();
+
+        if let Some(maybe_executor) = maybe_executor_arc {
+                    spawn(move || {
+                        if let Some(executor) = maybe_executor.as_ref().as_ref() {
+                            action.clone().do_with(executor, log_ctx.get_current_log_level(), log_ctx.get_logger());
+                        }
+                    });
+                    spawn(|| {
+                        std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
+                        Self::async_executor_refresh();
+                    });
+                    return;
+            }
+        error!(log_ctx, "No executor found! This is a very serious error, please report it at: {}", GITHUB_ISSUES_LINK);
     }
 
     // TODO: move this out of dispatcher and into a more general object?
@@ -212,7 +255,88 @@ impl DecktricksDispatcher {
             message
         );
     }
+
+    #[func]
+    fn populate_categories(mut categories_tabcontainer: Gd<TabContainer>) {
+        let maybe_executor = Self::get_executor();
+        let lawl = maybe_executor.unwrap().clone();
+        let executor = lawl.as_ref().as_ref().unwrap();
+
+        // TODO: move to function with errors
+        let map = executor.get_full_map_for_all_categories(early_log_ctx().get_logger().clone());
+
+        let trickslist_packed: Gd<PackedScene> =
+            try_load::<PackedScene>("res://scenes/tricks_list.tscn").unwrap();
+        let row_outer_packed: Gd<PackedScene> = try_load::<PackedScene>("res://scenes/row_outer.tscn").unwrap();
+        let actions_row_outer_packed: Gd<PackedScene> = try_load::<PackedScene>("res://scenes/actions_row.tscn").unwrap();
+        let label_outer_packed: Gd<PackedScene> = try_load::<PackedScene>("res://scenes/label_outer.tscn").unwrap();
+
+        let mut first_button_was_marked = false;
+
+        for (category_id, category_trick_map) in map {
+            let mut trickslist_scroller: Gd<ScrollContainer> = trickslist_packed.try_instantiate_as::<ScrollContainer>().unwrap();
+            trickslist_scroller.set_name(&category_id);
+            let mut trickslist: Gd<VBoxContainer> = trickslist_scroller.get_child(0).unwrap().try_cast::<VBoxContainer>().unwrap();
+
+            for (_, trick_status) in category_trick_map {
+                let mut row_outer: Gd<PanelContainer> = row_outer_packed.try_instantiate_as::<PanelContainer>().unwrap();
+                row_outer.set_name(&trick_status.trick.id);
+                let mut row_outer_vbox: Gd<VBoxContainer> = row_outer.get_child(1).unwrap().get_child(0).unwrap().try_cast::<VBoxContainer>().unwrap();
+
+                let label_outer: Gd<PanelContainer> = label_outer_packed.try_instantiate_as::<PanelContainer>().unwrap();
+                let mut label: Gd<Label> = label_outer.get_child(1).unwrap().try_cast::<Label>().unwrap();
+                label.set_text(&trick_status.trick.display_name);
+
+                row_outer_vbox.add_child(&label_outer);
+
+                let actions_row_outer: Gd<PanelContainer> = actions_row_outer_packed.try_instantiate_as::<PanelContainer>().unwrap();
+                let mut actions_row: Gd<HBoxContainer> = actions_row_outer.get_child(1).unwrap().get_child(0).unwrap().try_cast::<HBoxContainer>().unwrap();
+
+                for action in trick_status.actions {
+                    let is_available = action.is_available;
+                    let mut action_button = ActionButton::from_action_display_status(action);
+                    if !first_button_was_marked && is_available  {
+                        action_button.add_to_group("first_button");
+                        first_button_was_marked = true;
+                    }
+                    action_button.add_to_group("action_buttons");
+                    actions_row.add_child(&action_button);
+                }
+
+                row_outer_vbox.add_child(&actions_row_outer);
+                trickslist.add_child(&row_outer);
+            }
+
+            categories_tabcontainer.add_child(&trickslist_scroller);
+            
+        }
+    }
+    #[func]
+    fn update_all_buttons(mut scene_tree: Gd<SceneTree>) {
+        let maybe_executor = Self::get_executor();
+        let exec_arc = maybe_executor.unwrap().clone();
+        let executor = exec_arc.as_ref().as_ref().unwrap();
+        let all_tricks_status = &executor.get_all_tricks_status(CRATE_DECKTRICKS_DEFAULT_LOGGER.clone());
+
+        let nodes = scene_tree.get_nodes_in_group("action_buttons");
+        let buttons = nodes.iter_shared().map(|node| node.try_cast::<ActionButton>().unwrap());
+        for mut button in buttons {
+            button.bind_mut().update_from(all_tricks_status);
+        }
+    }
+
 }
+
+impl DecktricksDispatcher {
+    pub fn emit_show_info_window(info: Dictionary) {
+        let mut singleton = Self::get_singleton();
+        singleton.emit_signal(
+            &StringName::from("show_info_window"),
+            &[Variant::from(info)],
+        );
+    }
+}
+
 
 fn gargs_to_args(gargs: Array<GString>) -> Vec<String> {
     let vecgargs: Vec<GString> = (&gargs).into();

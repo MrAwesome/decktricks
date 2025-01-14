@@ -1,7 +1,9 @@
-use godot::classes::ColorRect;
+use std::path::Path;
+use decktricks::utils::get_decktricks_dir;
 use crate::early_log_ctx;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::prelude::*;
+use godot::classes::ColorRect;
 use std::fmt::Display;
 
 use godot::classes::RichTextLabel;
@@ -44,6 +46,14 @@ impl Logs {
         self.make_or_update_log_channel(&log_channel_scene, "all".into(), parsed.all)?;
         self.make_or_update_log_channel(&log_channel_scene, "general".into(), parsed.general)?;
 
+        let log_file_location = Path::join(&get_decktricks_dir(), "logs/decktricks-update.log");
+        if log_file_location.exists() {
+            let updates_text = std::fs::read_to_string(log_file_location)?;
+            self.make_or_update_log_channel(&log_channel_scene, "updates".into(), updates_text)?;
+        } else {
+            warn!(early_log_ctx(), "Updates log file not found at {}", log_file_location.to_str().unwrap());
+        }
+
         for (trick_id, trick_logtext) in parsed.tricks {
             self.make_or_update_log_channel(&log_channel_scene, trick_id, trick_logtext)?;
         }
@@ -64,7 +74,7 @@ impl Logs {
             .iter_shared()
             .find(|c| c.get_name() == name.clone().into());
 
-        let scroll = match found_child {
+        let color_rect = match found_child {
             Some(node_child) => match node_child.try_cast::<ColorRect>() {
                 Ok(scroll_child) => scroll_child,
                 Err(err) => Err(Box::new(LogLoadingError(format!(
@@ -83,9 +93,11 @@ impl Logs {
             },
         };
 
-        match scroll.get_child(0).and_then(
-            |color_rect| color_rect.get_child(0)).and_then(
-            |margin_container| margin_container.get_child(0)) {
+        match color_rect
+            .get_child(0)
+            .and_then(|scroll_container| scroll_container.get_child(0))
+            .and_then(|margin_container| margin_container.get_child(0))
+        {
             Some(child) => match child.try_cast::<RichTextLabel>() {
                 Ok(mut textedit) => {
                     // Given that logs are always appends, just checking length should be enough always:
@@ -103,6 +115,6 @@ impl Logs {
                 "Failed to get child of ScrollContainer!".into(),
             )))?,
         };
-        Ok(scroll)
+        Ok(color_rect)
     }
 }

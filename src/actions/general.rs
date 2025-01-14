@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 #[derive(Debug, Clone)]
-pub(crate) enum GeneralAction {
+pub enum GeneralAction {
     Gui {
         gui: GuiType,
     },
@@ -61,6 +61,7 @@ impl GeneralAction {
                             let trick = name_and_trick.1;
                             let trick_ctx = SpecificExecutionContext::new(
                                 trick.clone(),
+                                SpecificAction::as_info(&trick.id),
                                 runner.clone(),
                                 current_log_level,
                                 logger.clone(),
@@ -202,6 +203,7 @@ fn get_action_context_for_trick(
     let (_loader, full_ctx, runner) = executor.get_pieces();
     let ctx = SpecificExecutionContext::new(
         trick.clone(),
+        SpecificAction::as_info(&trick.id),
         runner.clone(),
         current_log_level,
         logger,

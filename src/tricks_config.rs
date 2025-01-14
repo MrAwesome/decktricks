@@ -125,9 +125,9 @@ pub struct Trick {
     //depends: Vec<TrickID>,
 }
 
-#[cfg(test)]
-impl Trick {
-    pub(crate) fn test() -> Self {
+// Needed for hot reloading for ActionButton in the Godot GUI
+impl Default for Trick {
+    fn default() -> Self {
         Self {
             id: "trick_for_test".into(),
             provider_config: ProviderConfig::SimpleCommand(SimpleCommand {
@@ -141,6 +141,13 @@ impl Trick {
             always_present_on_steamdeck: Default::default(),
             icon: Default::default(),
         }
+    }
+}
+
+#[cfg(test)]
+impl Trick {
+    pub(crate) fn test() -> Self {
+        Self::default()
     }
 }
 
