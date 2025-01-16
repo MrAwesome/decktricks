@@ -270,11 +270,23 @@ impl ActualRunner for LiveActualRunner {
             }))
         })?;
 
-        info!(
-            sys_command.get_ctx(),
-            "Command {sys_command:#?} ran successfully with output:\n\n{}",
-            String::from_utf8_lossy(&output.stdout)
-        );
+        if output.status.success() {
+            info!(
+                sys_command.get_ctx(),
+                "Command {sys_command:#?} ran successfully with output:\n\n{}",
+                String::from_utf8_lossy(&output.stdout)
+            );
+        } else {
+            let exit_code = output.status.code().map(|c| c.to_string()).unwrap_or_else(|| "UNKNOWN".into());
+            // NOTE: we don't want to warn here, as we run a lot of background commands that we
+            // expect to fail, and we'd flood the logs immediately
+            info!(
+                sys_command.get_ctx(),
+                "Command {sys_command:#?} exited with non-zero exit code {exit_code} with:\n\n\nSTDOUT:\n\n{}\n\nSTDERR:\n\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
 
         Ok(SysCommandResult::new(sys_command.clone(), output))
     }

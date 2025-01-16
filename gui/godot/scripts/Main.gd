@@ -29,8 +29,47 @@ var focused_trick_and_action = [null, null]
 
 signal restart_steam_hint
 
-@onready var display_name_mapping: Dictionary = dd.get_display_name_mapping()
-@onready var config: Dictionary = get_config()
+# TODO: Nuke:
+@onready var display_name_mapping: Dictionary = {}
+@onready var config: Dictionary = {}
+
+func update_action_button(
+	action_button: ActionButton,
+	display_name: String,
+	display_text: String,
+	is_available: bool,
+	is_ongoing: bool,
+):
+	action_button.set_name(display_name)
+	action_button.set_text(display_text)
+	action_button.set_visible(is_available)
+	
+	if is_ongoing:
+		if not action_button.button_known_ongoing_state:
+			action_button.button_known_ongoing_state = true
+
+			# TODO: only set this once
+			action_button.button_original_color = action_button.modulate
+
+			var tween = create_tween()
+			tween.set_loops()
+			tween.tween_interval(0.1)
+			var trans = Tween.TRANS_QUAD
+			tween.tween_property(action_button, "modulate", Color.GREEN, 2) \
+				.set_ease(Tween.EASE_IN_OUT).set_trans(trans)
+			tween.tween_property(action_button, "modulate", Color.FOREST_GREEN, 2) \
+				.set_ease(Tween.EASE_IN_OUT).set_trans(trans)
+			tween.bind_node(action_button)
+
+			action_button.button_tween = tween
+	
+	if not is_ongoing:
+		if action_button.button_known_ongoing_state:
+			action_button.button_known_ongoing_state = false
+			action_button.set_modulate(action_button.button_original_color)
+
+			action_button.button_tween.kill()
+	# TODO: make not clickable while running
 
 func focus_button(button: Button, action, trick_id):
 	# On button focus, make sure that at least one row above can be focused
@@ -248,29 +287,20 @@ func refresh_ui_inner(actions_json_string: String):
 func _init():
 	dd.get_time_passed_ms("init")
 
-	# IMPORTANT: this MUST be run before wait_for_executor:
-	dd.initialize_executor_with_lock()
+	dd.run_startup_logic()
 
 	Engine.set_max_fps(DEFAULT_MAX_FPS)
 
 	dd.get_time_passed_ms("init_finished")
 
 func _ready():
-	dd.get_time_passed_ms("ready")
-
-	# IMPORTANT: Do not try to run any commands with the executor
-	#            before this has finished:
-	dd.wait_for_executor();
-	dd.get_time_passed_ms("executor_ready")
+	dd.get_time_passed_ms("entered_ready")
 
 	# Hook up the signal that refreshes our UI over time
 	#dd.connect("actions", refresh_ui)
 	dd.show_info_window.connect(_on_show_info_window)
 	dd.context_was_updated.connect(_on_context_was_updated)
-
-	# Synchronously build out our full UI for display
-	#var actions_text = get_actions_text_sync()
-	#refresh_ui(actions_text)
+	dd.update_action_button.connect(update_action_button.call_deferred)
 
 	var should_test = OS.get_environment("DECKTRICKS_GUI_TEST_COMMAND_ONLY")
 	var should_exit = OS.get_environment("DECKTRICKS_GUI_EXIT_IMMEDIATELY")
@@ -306,6 +336,7 @@ func _input(event: InputEvent) -> void:
 	if not DisplayServer.window_is_focused(0):
 		accept_event()
 		return
+
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
 	if event.is_action_pressed("ui_next_main_tab"):

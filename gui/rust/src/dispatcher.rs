@@ -55,8 +55,22 @@ impl DecktricksDispatcher {
     #[signal]
     fn context_was_updated();
 
+    #[signal]
+    fn update_action_button(
+        action_button: Gd<ActionButton>,
+        display_name: GString,
+        display_text: GString,
+        is_available: bool,
+        is_ongoing: bool,
+    );
+
     #[func]
     fn run_startup_logic() {
+        // Start gathering for the executor ASAP so it's happening during godot initialization
+        spawn(|| {
+            let _unused = EXECUTOR_GUARD.try_read();
+        });
+
         let log_file_location = get_decktricks_update_log_file_location();
         if !log_file_location.exists() {
             warn!(
@@ -81,10 +95,6 @@ impl DecktricksDispatcher {
         });
     }
 
-    #[func]
-    fn wait_for_executor() {
-        let _unused = EXECUTOR_GUARD.read();
-    }
     #[func]
     fn get_time_passed_ms(section: GString) -> GString {
         let time_passed_ms = STARTUP.elapsed().as_millis();
@@ -313,6 +323,26 @@ impl DecktricksDispatcher {
         singleton.emit_signal(
             &StringName::from("show_info_window"),
             &[Variant::from(info)],
+        );
+    }
+
+    pub fn emit_update_action_button(
+        action_button: Gd<ActionButton>,
+        display_name: String,
+        display_text: String,
+        is_available: bool,
+        is_ongoing: bool,
+    ) {
+        let mut singleton = Self::get_singleton();
+        singleton.emit_signal(
+            &StringName::from("update_action_button"),
+            &[
+                Variant::from(action_button),
+                Variant::from(GString::from(display_name)),
+                Variant::from(GString::from(display_text)),
+                Variant::from(is_available),
+                Variant::from(is_ongoing),
+            ],
         );
     }
 
