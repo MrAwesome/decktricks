@@ -8,7 +8,7 @@ fn main() -> DeckResult<()> {
 
     let logger = CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
     let log_level = cmd.log_level.unwrap_or(CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL);
-    let executor = Executor::create_with_gather(ExecutorMode::OnceOff, &cmd, log_level, logger.clone())?;
+    let executor = Executor::create_with_gather(ExecutorMode::OnceOff, log_level, logger.clone(), Some(&cmd));
     let results = executor.execute(&cmd, logger);
 
     let mut experienced_error = false;

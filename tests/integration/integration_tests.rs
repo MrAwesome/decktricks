@@ -82,17 +82,23 @@ fn test_config_exclusivity() -> Result<(), DynamicError> {
     Ok(())
 }
 
+// TODO: check stderr / log call on broken_config_falls_back_to_default and missing_config_gives_error
 #[test]
-fn broken_config_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks_cli!["-c", "tests/integration/broken_config.json", "actions"];
-    assert!(res.is_err());
+fn broken_config_falls_back_to_default() -> Result<(), DynamicError> {
+    let output = decktricks_cli!["-c", "tests/integration/broken_config.json", "actions"]?;
+    assert!(output.contains("decky"));
+    assert!(output.contains("protonup-qt"));
+    assert!(!output.contains("jfds"));
+
     Ok(())
 }
 
 #[test]
 fn missing_config_gives_error() -> Result<(), DynamicError> {
-    let res = decktricks_cli!["-c", "tests/integration/jkfldjsaifdosaj.json", "actions"];
-    assert!(res.is_err());
+    let output = decktricks_cli!["-c", "tests/integration/jkfldjsaifdosaj.json", "actions"]?;
+    assert!(output.contains("decky"));
+    assert!(output.contains("protonup-qt"));
+    assert!(!output.contains("jfds"));
     Ok(())
 }
 

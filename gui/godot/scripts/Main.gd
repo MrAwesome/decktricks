@@ -100,7 +100,6 @@ func take_action(action: String, trick_id: String):
 		var ret = info_json.parse(output)
 		if ret == OK:
 			var info = info_json.data
-			var root = get_tree().root
 			#NOTE: currently using wrong info
 			popup_info_window(info)
 	else:
@@ -267,6 +266,7 @@ func _ready():
 	# Hook up the signal that refreshes our UI over time
 	#dd.connect("actions", refresh_ui)
 	dd.show_info_window.connect(_on_show_info_window)
+	dd.context_was_updated.connect(_on_context_was_updated)
 
 	# Synchronously build out our full UI for display
 	#var actions_text = get_actions_text_sync()
@@ -314,7 +314,10 @@ func _input(event: InputEvent) -> void:
 		%MainTabs.select_previous_available()
 
 func _on_ui_refresh_timer_timeout() -> void:
-	dd.async_executor_refresh()
+	dd.async_refresh_system_context()
+
+func _on_context_was_updated() -> void:
+	dd.update_all_buttons(get_tree())
 
 func _on_log_refresh_timer_timeout() -> void:
 	%LogContainer.populate_logs()

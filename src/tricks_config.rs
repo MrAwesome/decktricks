@@ -77,6 +77,13 @@ impl TricksLoader {
         Self::try_from(contents.as_ref())
     }
 
+    pub fn empty_last_fallback_dangerous() -> Self {
+        Self {
+            tricks: Default::default(),
+            categories: Default::default(),
+        }
+    }
+
     /// # Errors
     ///
     /// Returns errors relating to config parsing.

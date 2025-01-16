@@ -1,5 +1,6 @@
-use std::path::Path;
-use decktricks::utils::get_decktricks_dir;
+// TODO: improve performance when large amounts of log text is present!
+
+use decktricks::utils::get_decktricks_update_log_file_location;
 use crate::early_log_ctx;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::prelude::*;
@@ -46,14 +47,11 @@ impl Logs {
         self.make_or_update_log_channel(&log_channel_scene, "all".into(), parsed.all)?;
         self.make_or_update_log_channel(&log_channel_scene, "general".into(), parsed.general)?;
 
-        let log_file_location = Path::join(&get_decktricks_dir(), "logs/decktricks-update.log");
+        let log_file_location = get_decktricks_update_log_file_location();
         if log_file_location.exists() {
             let updates_text = std::fs::read_to_string(log_file_location)?;
             self.make_or_update_log_channel(&log_channel_scene, "updates".into(), updates_text)?;
-        } else {
-            warn!(early_log_ctx(), "Updates log file not found at {}", log_file_location.to_str().unwrap());
         }
-
         for (trick_id, trick_logtext) in parsed.tricks {
             self.make_or_update_log_channel(&log_channel_scene, trick_id, trick_logtext)?;
         }

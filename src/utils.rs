@@ -85,6 +85,10 @@ pub fn get_decktricks_dir() -> PathBuf {
     Path::join(Path::new(&get_homedir()), ".local/share/decktricks/")
 }
 
+pub fn get_decktricks_update_log_file_location() -> PathBuf {
+    Path::join(&get_decktricks_dir(), "logs/decktricks-update.log")
+}
+
 pub fn exists_and_executable(ctx: &impl ExecCtx, path: &str) -> bool {
     // Using this instead of rust-native code to piggyback on the test-friendliness of SysCommand
     let res = SysCommand::new(ctx, "/bin/test", ["-x", path]).run();

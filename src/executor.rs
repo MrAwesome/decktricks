@@ -325,25 +325,15 @@ impl Executor {
     ///
     pub fn create_with_gather(
         mode: ExecutorMode,
-        command: &DecktricksCommand,
         current_log_level: LogType,
         logger: LoggerRc,
-    ) -> DeckResult<Self> {
-        let maybe_config_path = command.config.as_ref();
-        let loader = match maybe_config_path {
-            Some(config_path) => TricksLoader::from_config(config_path)?,
-            // To fall back to default config:
-            //            match TricksLoader::from_config(config_path) {
-            //                Ok(config) => config,
-            //                Err(err) => {
-            //                    error!("Failed to load config from path '{config_path}'. Will fall back to default config. Error was: {err:?}");
-            //                    TricksLoader::from_default_config()?
-            //            }},
-            None => TricksLoader::from_default_config()?,
-        };
-
+        maybe_command: Option<&DecktricksCommand>,
+    ) -> Self {
         let runner = Arc::new(Runner::new());
+        let gather_execution_ctx =
+            GeneralExecutionContext::new(runner.clone(), current_log_level, logger.clone());
 
+        let loader = get_loader(&gather_execution_ctx, maybe_command);
         // TODO: unit test
         //
         // If we're running in CLI mode, we're only going to run a single time
@@ -352,30 +342,30 @@ impl Executor {
         // If we're running in GUI mode, we're planning to reuse this executor
         //      multiple times with the same system context and so we always
         //      want to gather context.
-        let full_ctx = {
-            let gather_execution_ctx =
-                GeneralExecutionContext::new(runner.clone(), current_log_level, logger);
-            if matches!(mode, ExecutorMode::OnceOff) {
-                let do_not_gather = command
-                    .action
-                    .does_not_need_system_context(command.gather_context_on_specific_actions);
-                if do_not_gather {
-                    FullSystemContext::default()
-                } else {
-                    FullSystemContext::gather_with(&gather_execution_ctx, &loader)
-                }
-            } else {
-                FullSystemContext::gather_with(&gather_execution_ctx, &loader)
-            }
-        };
+        let full_ctx =
+            gather_full_system_context(mode, &gather_execution_ctx, &loader, maybe_command);
 
-        Ok(Self::with(
+        Self::with(
             mode,
             loader,
             full_ctx,
             runner,
             current_log_level,
-        ))
+        )
+    }
+
+    pub fn get_new_system_context(&self, logger: LoggerRc) -> FullSystemContext {
+        let gather_execution_ctx = GeneralExecutionContext::new(
+            self.runner.clone(),
+            self.current_log_level,
+            logger.clone(),
+        );
+
+        gather_full_system_context(self.mode, &gather_execution_ctx, &self.loader, None)
+    }
+
+    pub fn update_system_context(&mut self, full_ctx: FullSystemContext) {
+        self.full_ctx = full_ctx
     }
 
     #[must_use]
@@ -449,10 +439,7 @@ impl Executor {
         providers
     }
 
-    pub fn get_all_tricks_status(
-        &self,
-        logger: LoggerRc,
-    ) -> AllTricksStatus {
+    pub fn get_all_tricks_status(&self, logger: LoggerRc) -> AllTricksStatus {
         let providers = self.get_all_providers(&logger);
         AllTricksStatus::new(providers)
     }
@@ -464,6 +451,55 @@ impl Executor {
         let all_tricks_status = self.get_all_tricks_status(logger);
         let known_categories = self.loader.get_all_categories();
         all_tricks_status.get_full_map_for_categories(known_categories)
+    }
+}
+
+fn gather_full_system_context(
+    mode: ExecutorMode,
+    gather_execution_ctx: &GeneralExecutionContext,
+    loader: &TricksLoader,
+    maybe_command: Option<&DecktricksCommand>,
+) -> FullSystemContext {
+    if let Some(command) = maybe_command {
+        if matches!(mode, ExecutorMode::OnceOff) {
+            let do_not_gather = command
+                .action
+                .does_not_need_system_context(command.gather_context_on_specific_actions);
+            if do_not_gather {
+                return FullSystemContext::default();
+            }
+        }
+    }
+    FullSystemContext::gather_with(gather_execution_ctx, loader)
+}
+
+fn get_loader(
+    gather_execution_ctx: &GeneralExecutionContext,
+    maybe_command: Option<&DecktricksCommand>,
+) -> TricksLoader {
+    let maybe_config_path = maybe_command.and_then(|cmd| cmd.config.as_ref());
+    if let Some(config_path) = maybe_config_path {
+        match TricksLoader::from_config(config_path) {
+            Ok(config) => return config,
+            Err(err) => {
+                error!(
+                    &gather_execution_ctx,
+                    "Failed to load config from path '{config_path}'. Will fall back to default config. Error was: {err:?}"
+                );
+            }
+        }
+    };
+    match TricksLoader::from_default_config() {
+        Ok(config) => config,
+        Err(err) => {
+            // This should never, ever, ever happen because we will not pass tests with a
+            // broken config, but since it's such a critical part of the path we'll be safe.
+            error!(
+                &gather_execution_ctx,
+                "Failed to load default config! This is an serious error, please report it at {GITHUB_ISSUES_LINK}\n\nError was: {err:?}"
+            );
+            TricksLoader::empty_last_fallback_dangerous()
+        }
     }
 }
 

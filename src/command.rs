@@ -150,8 +150,6 @@ pub enum Action {
     #[clap(hide = true)]
     GetActionDisplayNameMapping,
     #[clap(hide = true)]
-    GatherContext,
-    #[clap(hide = true)]
     RunSystemCommand { command: String, args: Option<Vec<String>> },
     #[clap(hide = true)]
     DebugSteamShortcuts {

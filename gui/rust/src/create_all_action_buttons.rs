@@ -1,5 +1,5 @@
 use decktricks::prelude::*;
-use decktricks::tricks_status::{ActionDisplayStatus, TrickStatus};
+use decktricks::tricks_status::TrickStatus;
 use godot::classes::Button;
 use godot::prelude::*;
 use std::fmt::Display;

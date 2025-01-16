@@ -8,7 +8,6 @@ mod specific;
 pub(crate) use general::*;
 pub use specific::SpecificActionID;
 pub use specific::SpecificAction;
-pub(crate) use specific::*;
 
 #[derive(Debug, Clone)]
 pub enum TypedAction {
@@ -39,7 +38,6 @@ impl From<&Action> for TypedAction {
             Action::GetActionDisplayNameMapping => {
                 Self::General(GeneralAction::GetActionDisplayNameMapping)
             }
-            Action::GatherContext => Self::General(GeneralAction::GatherContext),
             Action::RunSystemCommand { command, args } => {
                 Self::General(GeneralAction::RunSystemCommand { command, args })
             }

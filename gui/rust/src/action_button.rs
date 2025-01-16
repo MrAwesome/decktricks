@@ -40,7 +40,6 @@ impl IButton for ActionButton {
     fn pressed(&mut self) {
         let info = &self.info;
 
-        let exec_arc = DecktricksDispatcher::get_executor().unwrap().clone();
 
         let trick_id = info.trick.id.clone();
         let action = info.action_id.as_action(trick_id.clone());
@@ -55,7 +54,7 @@ impl IButton for ActionButton {
             spawn(move || {
                 let res = action
                     .do_with(
-                        &exec_arc.clone().as_ref().as_ref().unwrap(),
+                        &DecktricksDispatcher::get_executor().clone(),
                         CRATE_DECKTRICKS_CURRENT_LOG_LEVEL.read().unwrap().clone(),
                         CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
                     )
@@ -82,9 +81,11 @@ impl ActionButton {
         let is_available = info.is_available;
 
         let mut base = self.base_mut();
-        base.set_name(&GString::from(action_id));
-        base.set_text(&GString::from(display_text));
-        base.set_visible(is_available);
+        base.call_deferred("set_name", &[Variant::from(GString::from(action_id))]);
+        base.call_deferred("set_text", &[Variant::from(GString::from(display_text))]);
+        base.call_deferred("set_visible", &[Variant::from(is_available)]);
+
+        // TODO: prevent clicking when ongoing
 
         // base.connect(
         //     &StringName::from("focus_entered"),

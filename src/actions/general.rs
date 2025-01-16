@@ -30,7 +30,6 @@ pub enum GeneralAction {
 
     // Internal use:
     GetActionDisplayNameMapping,
-    GatherContext,
     RunSystemCommand {
         command: String,
         args: Option<Vec<String>>,
@@ -119,7 +118,6 @@ impl GeneralAction {
                 )]
             }
             Self::Gui { gui } => vec![gui.launch(executor)],
-            Self::GatherContext => vec![],
             Self::GetConfig => {
                 // TODO: if using live configs, use here
                 vec![success!(DEFAULT_CONFIG_CONTENTS)]
