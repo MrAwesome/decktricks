@@ -6,32 +6,18 @@ extends Control
 # 		(or how quickly)), and have an exit program option from errors
 # TODO: fix going up from info sometimes going to tabs 
 # 		instead of previous trick's buttons
-# TODO: only re/populate new nodes on refresh (requires keeping
-# 		full track of previous state)
-# TODO: does selecting a node keep it from being cleaned up?
 # TODO: handle 720p since that's a common resolution on TVs?
 # TODO: use this to set the STEAM_ID as needed for gamescope? Window.set_flag
+# TODO: improve visual "you did it" cues for "Add to Steam" (either have a check if it's already
+#		added to steam, or just change the button to "yeah yay added" and flash green?
 
 const DEFAULT_MAX_FPS = 30
 var dd = DecktricksDispatcher
 
 var initializing = true
-var ACTIONS_ROW = preload("res://scenes/actions_row.tscn")
-var ACTION_BUTTON = preload("res://scenes/action_button.tscn")
-var LABEL_OUTER = preload("res://scenes/label_outer.tscn")
-var ROW_OUTER = preload("res://scenes/row_outer.tscn")
-var TRICKS_LIST = preload("res://scenes/tricks_list.tscn")
 var INFO_WINDOW = preload("res://scenes/info_window.tscn")
 
-var did_focus = false
-var last_actions_string = "THROWAWAY_VALUE"
-var focused_trick_and_action = [null, null]
-
 signal restart_steam_hint
-
-# TODO: Nuke:
-@onready var display_name_mapping: Dictionary = {}
-@onready var config: Dictionary = {}
 
 func update_action_button(
 	action_button: ActionButton,
@@ -43,12 +29,12 @@ func update_action_button(
 	action_button.set_name(display_name)
 	action_button.set_text(display_text)
 	action_button.set_visible(is_available)
-	
+
 	if is_ongoing:
 		if not action_button.button_known_ongoing_state:
 			action_button.button_known_ongoing_state = true
 
-			# TODO: only set this once
+			# TODO: only set this once, when button is fully created
 			action_button.button_original_color = action_button.modulate
 
 			var tween = create_tween()
@@ -71,45 +57,6 @@ func update_action_button(
 			action_button.button_tween.kill()
 	# TODO: make not clickable while running
 
-func focus_button(button: Button, action, trick_id):
-	# On button focus, make sure that at least one row above can be focused
-	#    (to fix scrolling up inside tabcontainer)
-	var row = button.find_parent("RowOuterMargin").get_parent()
-	var idx = row.get_index()
-	var desired_idx = max(0, idx-1)
-	var desired_row = row.get_parent().get_child(desired_idx)
-	%ScrollContainer.ensure_control_visible(desired_row)
-
-	# Store the focused button to be re-focused on refresh
-	focused_trick_and_action = [trick_id, action]
-
-func create_action_button(action: String, trick_id: String, ongoing: bool):
-	var button: Button = ACTION_BUTTON.instantiate()
-	button.name = action
-	if ongoing and action == "install":
-		button.text = "Installing..."
-	elif ongoing and action == "run":
-		button.text = "Running..."
-	else:
-		button.text = display_name_mapping[action]
-	button.focus_entered.connect(focus_button.bind(button, action, trick_id))
-
-	if ongoing:
-		var tween = create_tween()
-		tween.set_loops()
-		tween.tween_interval(0.1)
-		var trans = Tween.TRANS_QUAD
-		tween.tween_property(button, "modulate", Color.GREEN, 2) \
-			.set_ease(Tween.EASE_IN_OUT).set_trans(trans)
-		tween.tween_property(button, "modulate", Color.FOREST_GREEN, 2) \
-			.set_ease(Tween.EASE_IN_OUT).set_trans(trans)
-		tween.bind_node(button)
-	else:
-		# If the action is ongoing, don't let the user click it again
-		button.pressed.connect(take_action.bind(action, trick_id))
-
-	return button
-
 func popup_info_window(info: Dictionary):
 	var root = get_tree().root
 	var dialog: AcceptDialog = INFO_WINDOW.instantiate()
@@ -121,168 +68,6 @@ func popup_info_window(info: Dictionary):
 
 	root.add_child(dialog)
 	dialog.popup_centered_ratio(0.8)
-
-func take_action(action: String, trick_id: String):
-	var args: Array[String] = [action, trick_id]
-	
-	if action == "add-to-steam":
-		emit_signal("restart_steam_hint")
-	
-	if action == "info":
-		var output = dd.sync_run_with_decktricks(args)
-		if output == "":
-			print('Error! Failed to run', './decktricks ', action, ' ', trick_id)
-			return
-
-		# TODO: test for extremely long info strings
-		var info_json = JSON.new()
-		var ret = info_json.parse(output)
-		if ret == OK:
-			var info = info_json.data
-			#NOTE: currently using wrong info
-			popup_info_window(info)
-	else:
-		dd.async_run_with_decktricks(args)
-
-func create_actions_row(
-		trick_id: String,
-		available_actions: Array,
-		_display_name: String,
-		_icon_path: String,
-		is_running: bool,
-		is_installing: bool
-	):
-	var actions_row_outer = ACTIONS_ROW.instantiate()
-	var actions_row = actions_row_outer.get_child(1).get_child(0)
-
-	var should_focus = focused_trick_and_action[0] == trick_id
-
-	for action in available_actions:
-		# TODO: clean up
-		var ongoing: bool = (is_installing and action == "install") \
-			or (is_running and action == "run")
-
-		var button = create_action_button(action, trick_id, ongoing)
-		actions_row.add_child(button)
-
-		if should_focus and action == focused_trick_and_action[1]:
-			button.grab_focus.call_deferred()
-			did_focus = true
-
-	if should_focus and not did_focus:
-		actions_row.get_child(0).grab_focus.call_deferred()
-		did_focus = true
-	return actions_row_outer
-
-func get_actions_text_sync():
-	# NOTE: we should not need to check validity of this output 
-	# 		if it returns successfully,
-	# 		thanks to robust error-checking on the Rust side
-	var args: Array[String] = ["actions", "--json"]
-	var actions_text = dd.sync_run_with_decktricks(args)
-	return actions_text
-
-func parse_actions(actions_text: String):
-	var json = JSON.new()
-	var ret = json.parse(actions_text)
-
-	if ret == OK:
-		return json.data
-	else:
-		print("Error parsing actions JSON: ", actions_text)
-		return {}
-
-func get_config():
-	# NOTE: we should not need to check validity of this output if it returns
-	# 		successfully, thanks to robust error-checking on the Rust side
-	#var args: Array[String] = ["get-config"]
-	#var config_data = dd.sync_run_with_decktricks(args)
-	var config_data = dd.get_config_text()
-
-	var json = JSON.new()
-	var ret = json.parse(config_data)
-
-	if ret == OK:
-		return json.data
-	else:
-		print("Error parsing config JSON: ", config_data)
-		return {}
-
-# TODO: this should live on TricksList, not here?
-func refresh_ui(actions_json_string: String):
-	# Deferred so that this can be called from outside the main thread:
-	refresh_ui_inner.call_deferred(actions_json_string)
-
-func refresh_ui_inner(actions_json_string: String):
-	# Comment this out to test focus behavior on UI change
-	if actions_json_string == last_actions_string:
-		return
-
-	var actions = parse_actions(actions_json_string)
-
-	var first_button = null
-	var games = TRICKS_LIST.instantiate()
-
-	var tricks = config.get("tricks", [])
-	# TODO: sort and parse on the Rust side?
-	tricks.sort_custom(func (a, b): return a.display_name < b.display_name)
-
-	var marked_first = false
-	for trick in tricks:
-		var trick_id = trick.get("id")
-		var display_name = trick.get("display_name")
-		# TODO: either make this mandatory or remove it:
-		var icon_path = trick.get("icon") 
-		#var description = trick.get("description")
-
-		# Error checking should never be needed for this access, since we
-		# check on the Rust side that we're only generating valid actions
-		var action_context: Dictionary = actions[trick_id]
-		var available_actions: Array = action_context["available_actions"]
-		var is_running: bool = action_context["is_running"]
-		var is_installing: bool = action_context["is_installing"]
-
-		var label_box = LABEL_OUTER.instantiate()
-		var label = label_box.get_child(1)
-		label.text = display_name
-
-		# These ended up being spammy and buggy and too big
-		# label_box.tooltip_text = description
-
-		var trick_row = create_actions_row(
-			trick_id,
-			available_actions,
-			display_name,
-			icon_path,
-			is_running,
-			is_installing
-		)
-
-		if initializing and not marked_first:
-			first_button = trick_row.get_child(1).get_child(0).get_child(0)
-			marked_first = true
-
-		var row_outer_here = ROW_OUTER.instantiate()
-		var row_inner = row_outer_here.get_child(1).get_child(0)
-		row_inner.add_child(label_box)
-		row_inner.add_child(trick_row)
-		games.add_child(row_outer_here)
-
-	var old_lists = %ScrollContainer.get_children()
-
-	for l in old_lists:
-		%ScrollContainer.remove_child(l)
-		l.queue_free()
-
-	%ScrollContainer.add_child(games)
-
-	if initializing or not did_focus:
-		if first_button:
-			first_button.grab_focus.call_deferred()
-	initializing = false
-	did_focus = false
-
-	last_actions_string = actions_json_string
 
 func _init():
 	dd.get_time_passed_ms("init")
@@ -296,11 +81,11 @@ func _init():
 func _ready():
 	dd.get_time_passed_ms("entered_ready")
 
-	# Hook up the signal that refreshes our UI over time
-	#dd.connect("actions", refresh_ui)
+	# Hook up signals:
 	dd.show_info_window.connect(_on_show_info_window)
 	dd.context_was_updated.connect(_on_context_was_updated)
 	dd.update_action_button.connect(update_action_button.call_deferred)
+	dd.added_to_steam.connect(func (): emit_signal("restart_steam_hint"))
 
 	var should_test = OS.get_environment("DECKTRICKS_GUI_TEST_COMMAND_ONLY")
 	var should_exit = OS.get_environment("DECKTRICKS_GUI_EXIT_IMMEDIATELY")
@@ -347,11 +132,11 @@ func _input(event: InputEvent) -> void:
 func _on_ui_refresh_timer_timeout() -> void:
 	dd.async_refresh_system_context()
 
-func _on_context_was_updated() -> void:
-	dd.update_all_buttons(get_tree())
-
 func _on_log_refresh_timer_timeout() -> void:
 	%LogContainer.populate_logs()
+
+func _on_context_was_updated() -> void:
+	dd.update_all_buttons(get_tree())
 
 func _on_show_info_window(info: Dictionary) -> void:
 	popup_info_window(info)

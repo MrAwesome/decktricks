@@ -47,25 +47,29 @@ impl IButton for ActionButton {
 
         let trick_id = info.trick.id.clone();
         let action = info.action_id.as_action(trick_id.clone());
-        let is_info = matches!(action, SpecificAction::Info { .. });
-        if is_info {
+        if matches!(action, SpecificAction::Info { .. }) {
             let info_dict = dict! {
                 "title": info.trick.display_name.clone(),
                 "text": info.trick.description.clone(),
             };
             DecktricksDispatcher::emit_show_info_window(info_dict);
-        } else {
-            spawn(move || {
-                // TODO: run DecktricksCommand instead of SpecificAction just to have access to flags?
-                // TODO: move back into DecktricksDispatcher?
-                let _ = action
-                    .do_with(
-                        &DecktricksDispatcher::get_executor().clone(),
-                        LogType::Info,
-                        CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
-                    );
-            });
+            return;
         }
+        // TODO: This doesn't work because of the way button text is updated from Godot, fix it:
+        // if matches!(action, SpecificAction::AddToSteam { .. }) {
+        //    self.base_mut().call_deferred("set_text", &[Variant::from("Added to Steam...")]);
+        //    DecktricksDispatcher::emit_added_to_steam();
+        //}
+        spawn(move || {
+            // TODO: run DecktricksCommand instead of SpecificAction just to have access to flags?
+            // TODO: move back into DecktricksDispatcher?
+            let _ = action
+                .do_with(
+                    &DecktricksDispatcher::get_executor().clone(),
+                    LogType::Info,
+                    CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
+                );
+        });
     }
 }
 

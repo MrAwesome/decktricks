@@ -50,6 +50,9 @@ impl DecktricksDispatcher {
     fn actions(actions_json_string: GString);
 
     #[signal]
+    fn added_to_steam();
+
+    #[signal]
     fn show_info_window(info: Dictionary);
 
     #[signal]
@@ -116,34 +119,6 @@ impl DecktricksDispatcher {
         run_with_decktricks(Self::get_executor(), args).unwrap_or_else(|()| "".into())
     }
 
-    //    // NOTE: do not run this from executor refresh, because it will cause a loop
-    //    #[func]
-    //    fn async_run_with_decktricks(gargs: Array<GString>) {
-    //        info!(
-    //            early_log_ctx(),
-    //            "Dispatching command to decktricks: {gargs}"
-    //        );
-    //        let args = gargs_to_args(gargs);
-    //
-    //        let maybe_executor_ptr = Self::get_executor();
-    //
-    //        if let Some(executor_ptr) = maybe_executor_ptr {
-    //            spawn(move || {
-    //                run_with_decktricks(executor_ptr, args).unwrap_or("".into());
-    //            });
-    //            spawn(|| {
-    //                std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
-    //                Self::async_executor_refresh();
-    //            });
-    //        } else {
-    //            error!(
-    //                early_log_ctx(),
-    //                "No executor found! This is a very serious error, please report it at: {}",
-    //                GITHUB_ISSUES_LINK
-    //            );
-    //        }
-    //    }
-
     fn async_run_action(action: TypedAction) {
         let log_ctx = early_log_ctx();
         info!(log_ctx, "Dispatching command to decktricks: {action:?}");
@@ -166,29 +141,6 @@ impl DecktricksDispatcher {
             Self::async_refresh_system_context();
         });
     }
-
-    //    // TODO: move this out of dispatcher and into a more general object?
-    //    #[func]
-    //    #[must_use]
-    //    pub fn get_display_name_mapping() -> Dictionary {
-    //        Dictionary::from_iter(SpecificActionID::get_display_name_mapping())
-    //    }
-
-    //    // This is what actually triggers a UI refresh. This is called on a timer from GDScript.
-    //    fn async_update_actions(executor: Arc<Option<Executor>>) {
-    //        spawn(move || {
-    //            let maybe_actions =
-    //                run_with_decktricks(executor, vec!["actions".into(), "--json".into()]);
-    //
-    //            if let Ok(actions_json_string) = maybe_actions {
-    //                let mut singleton = Self::get_singleton();
-    //                singleton.emit_signal(
-    //                    &StringName::from("actions"),
-    //                    &[Variant::from(actions_json_string)],
-    //                );
-    //            }
-    //        });
-    //    }
 
     #[func]
     fn get_config_text() -> GString {
@@ -318,6 +270,14 @@ impl DecktricksDispatcher {
 }
 
 impl DecktricksDispatcher {
+    pub fn emit_added_to_steam() {
+        let mut singleton = Self::get_singleton();
+        singleton.emit_signal(
+            &StringName::from("added_to_steam"),
+            &[],
+        );
+    }
+
     pub fn emit_show_info_window(info: Dictionary) {
         let mut singleton = Self::get_singleton();
         singleton.emit_signal(
