@@ -3,6 +3,7 @@
 use crate::action_button::ActionButton;
 use crate::early_log_ctx;
 use crate::logging::get_log_level;
+use crate::utils::gderr;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::rayon::spawn;
 use decktricks::run_system_command::SysCommand;
@@ -10,6 +11,7 @@ use decktricks::run_system_command::SysCommandRunner;
 use decktricks::tricks_config::DEFAULT_CONFIG_CONTENTS;
 use decktricks::utils::get_decktricks_update_log_file_location;
 use decktricks::{inner_print, prelude::*};
+use godot::classes::ColorRect;
 use godot::classes::HBoxContainer;
 use godot::classes::Label;
 use godot::classes::PanelContainer;
@@ -21,6 +23,8 @@ use std::sync::LazyLock;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use std::time::Instant;
+
+// TODO: reduce bloat
 
 const UI_REFRESH_DELAY_MILLIS: u64 = 200;
 const NUM_EXECUTOR_READ_RETRIES: u8 = 10;
@@ -170,70 +174,89 @@ impl DecktricksDispatcher {
         inner_print!(log_type, early_log_ctx(), "{}", message);
     }
 
+    // TODO: clean up all unwraps
     #[func]
-    fn populate_categories(mut categories_tabcontainer: Gd<TabContainer>) {
+    fn populate_categories(categories_tabcontainer: Gd<TabContainer>) {
+        if let Err(err) = Self::populate_categories_inner(categories_tabcontainer) {
+            error!(
+                early_log_ctx(),
+                "Error encountered while populating categories! Error: {err:?}"
+            );
+        }
+    }
+
+    fn populate_categories_inner(
+        mut categories_tabcontainer: Gd<TabContainer>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let executor = Self::get_executor();
 
         // TODO: move to function with errors
         let map = executor.get_full_map_for_all_categories(early_log_ctx().get_logger().clone());
 
         let trickslist_packed: Gd<PackedScene> =
-            try_load::<PackedScene>("res://scenes/tricks_list.tscn").unwrap();
+            try_load::<PackedScene>("res://scenes/tricks_list.tscn")?;
         let row_outer_packed: Gd<PackedScene> =
-            try_load::<PackedScene>("res://scenes/row_outer.tscn").unwrap();
+            try_load::<PackedScene>("res://scenes/row_outer.tscn")?;
         let actions_row_outer_packed: Gd<PackedScene> =
-            try_load::<PackedScene>("res://scenes/actions_row.tscn").unwrap();
+            try_load::<PackedScene>("res://scenes/actions_row.tscn")?;
         let label_outer_packed: Gd<PackedScene> =
-            try_load::<PackedScene>("res://scenes/label_outer.tscn").unwrap();
+            try_load::<PackedScene>("res://scenes/label_outer.tscn")?;
 
         let mut first_button_was_marked = false;
 
+        log!(early_log_ctx(), "IN HERE");
+
         for (category_id, category_trick_map) in map {
-            let mut trickslist_scroller: Gd<ScrollContainer> = trickslist_packed
-                .try_instantiate_as::<ScrollContainer>()
-                .unwrap();
-            trickslist_scroller.set_name(&category_id);
+            let mut trickslist_background: Gd<ColorRect> = trickslist_packed
+                .try_instantiate_as::<ColorRect>()
+                .ok_or("background not found")?;
+            trickslist_background.set_name(&category_id);
+            let trickslist_scroller: Gd<ScrollContainer> = trickslist_background
+                .get_child(0)
+                .ok_or("scroller not found")?
+                .try_cast::<ScrollContainer>()
+                .map_err(gderr)?;
             let mut trickslist: Gd<VBoxContainer> = trickslist_scroller
                 .get_child(0)
-                .unwrap()
+                .ok_or("vboxcontainer not found")?
                 .try_cast::<VBoxContainer>()
-                .unwrap();
+                .map_err(gderr)?;
 
             for (_, trick_status) in category_trick_map {
                 let mut row_outer: Gd<PanelContainer> = row_outer_packed
                     .try_instantiate_as::<PanelContainer>()
-                    .unwrap();
+                    .ok_or("panelcontainer not found")?;
                 row_outer.set_name(&trick_status.trick.id);
                 let mut row_outer_vbox: Gd<VBoxContainer> = row_outer
                     .get_child(1)
-                    .unwrap()
+                    .ok_or("vboxcontainer second child not found")?
                     .get_child(0)
-                    .unwrap()
+                    .ok_or("inner vboxcontainer not found")?
                     .try_cast::<VBoxContainer>()
-                    .unwrap();
+                    .map_err(gderr)?;
 
                 let label_outer: Gd<PanelContainer> = label_outer_packed
                     .try_instantiate_as::<PanelContainer>()
-                    .unwrap();
+                    .ok_or("label_outer not found")?;
                 let mut label: Gd<Label> = label_outer
                     .get_child(1)
-                    .unwrap()
+                    .ok_or("label not found")?
                     .try_cast::<Label>()
-                    .unwrap();
+                    .map_err(gderr)?;
                 label.set_text(&trick_status.trick.display_name);
 
                 row_outer_vbox.add_child(&label_outer);
 
                 let actions_row_outer: Gd<PanelContainer> = actions_row_outer_packed
                     .try_instantiate_as::<PanelContainer>()
-                    .unwrap();
+                    .ok_or("actions_row_outer not found")?;
                 let mut actions_row: Gd<HBoxContainer> = actions_row_outer
                     .get_child(1)
-                    .unwrap()
+                    .ok_or("actions_row_outer second child not found")?
                     .get_child(0)
-                    .unwrap()
+                    .ok_or("actions_row hbox not found")?
                     .try_cast::<HBoxContainer>()
-                    .unwrap();
+                    .map_err(gderr)?;
 
                 for action in trick_status.actions {
                     let is_available = action.is_available;
@@ -250,8 +273,10 @@ impl DecktricksDispatcher {
                 trickslist.add_child(&row_outer);
             }
 
-            categories_tabcontainer.add_child(&trickslist_scroller);
+            categories_tabcontainer.add_child(&trickslist_background);
         }
+
+        Ok(())
     }
     #[func]
     fn update_all_buttons(mut scene_tree: Gd<SceneTree>) {
@@ -272,10 +297,7 @@ impl DecktricksDispatcher {
 impl DecktricksDispatcher {
     pub fn emit_added_to_steam() {
         let mut singleton = Self::get_singleton();
-        singleton.emit_signal(
-            &StringName::from("added_to_steam"),
-            &[],
-        );
+        singleton.emit_signal(&StringName::from("added_to_steam"), &[]);
     }
 
     pub fn emit_show_info_window(info: Dictionary) {

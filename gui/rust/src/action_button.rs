@@ -12,12 +12,6 @@ use godot::obj::WithBaseField;
 use godot::prelude::*;
 
 // TODO: fix black backgrounds behind tab containers
-// TODO: shorten the gate (?)
-// TODO: figure out the architecture of this, where it should be called from
-// TODO: have actions happen in a thread
-//
-// TODO: show is_ongoing status
-// TODO: handle updates over time
 
 // NOTE: This should not be initialized directly, use the factory functions below
 //       This is only class(init) because class(no_init) breaks hot reloading right now:
