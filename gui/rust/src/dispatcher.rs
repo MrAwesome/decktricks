@@ -47,10 +47,6 @@ pub struct DecktricksDispatcher {
 
 #[godot_api]
 impl DecktricksDispatcher {
-    // TODO: figure out how to send parsed tricksconfig?
-    #[signal]
-    fn actions(actions_json_string: GString);
-
     #[signal]
     fn added_to_steam();
 
@@ -134,7 +130,6 @@ impl DecktricksDispatcher {
         inner_print!(log_type, early_log_ctx(), "{}", message);
     }
 
-    // TODO: clean up all unwraps
     #[func]
     fn populate_categories(categories_tabcontainer: Gd<TabContainer>) {
         if let Err(err) = Self::populate_categories_inner(categories_tabcontainer) {
@@ -145,6 +140,7 @@ impl DecktricksDispatcher {
         }
     }
 
+    // TODO: clean up all unwraps
     fn populate_categories_inner(
         mut categories_tabcontainer: Gd<TabContainer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -238,6 +234,7 @@ impl DecktricksDispatcher {
 
         Ok(())
     }
+
     #[func]
     fn update_all_buttons(mut scene_tree: Gd<SceneTree>) {
         let executor = Self::get_executor();

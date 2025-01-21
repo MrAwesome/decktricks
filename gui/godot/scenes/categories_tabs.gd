@@ -1,4 +1,4 @@
-extends Logs
+extends TabContainer
 
 func _input(event: InputEvent) -> void:
 	if get_parent().visible:

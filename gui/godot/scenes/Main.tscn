@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=11 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
 [ext_resource type="PackedScene" uid="uid://be0s6mdnsfnbv" path="res://scenes/background_colorrect.tscn" id="3_q8u5g"]
 [ext_resource type="Script" path="res://scripts/exit_button.gd" id="4_c01mt"]
 [ext_resource type="Script" path="res://scripts/steam_restart_warning.gd" id="4_jlsqs"]
+[ext_resource type="Script" path="res://scenes/categories_tabs.gd" id="4_lhr70"]
 [ext_resource type="PackedScene" uid="uid://4xc2w5wvrdl8" path="res://scenes/settings.tscn" id="4_rarhs"]
 [ext_resource type="Script" path="res://scripts/restart_steam_and_exit_button.gd" id="5_jlsqs"]
 [ext_resource type="Script" path="res://scripts/log_container.gd" id="5_lhr70"]
@@ -50,6 +51,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 40
+script = ExtResource("4_lhr70")
 
 [node name="Logs" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false
