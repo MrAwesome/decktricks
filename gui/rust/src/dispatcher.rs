@@ -8,7 +8,6 @@ use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::rayon::spawn;
 use decktricks::run_system_command::SysCommand;
 use decktricks::run_system_command::SysCommandRunner;
-use decktricks::tricks_config::DEFAULT_CONFIG_CONTENTS;
 use decktricks::utils::get_decktricks_update_log_file_location;
 use decktricks::{inner_print, prelude::*};
 use godot::classes::ColorRect;
@@ -26,7 +25,6 @@ use std::time::Instant;
 
 // TODO: reduce bloat
 
-const UI_REFRESH_DELAY_MILLIS: u64 = 200;
 const NUM_EXECUTOR_READ_RETRIES: u8 = 10;
 
 // TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
@@ -95,7 +93,7 @@ impl DecktricksDispatcher {
     }
 
     #[func]
-    fn async_refresh_system_context() {
+    pub(crate) fn async_refresh_system_context() {
         spawn(move || {
             Self::spawn_executor_refresh_inner();
             Self::notify_godot_of_new_context();
@@ -123,50 +121,12 @@ impl DecktricksDispatcher {
         run_with_decktricks(Self::get_executor(), args).unwrap_or_else(|()| "".into())
     }
 
-    fn async_run_action(action: TypedAction) {
-        let log_ctx = early_log_ctx();
-        info!(log_ctx, "Dispatching command to decktricks: {action:?}");
-
-        let executor = Self::get_executor();
-
-        // Actually run the decktricks command:
-        spawn(move || {
-            action.clone().do_with(
-                executor.as_ref(),
-                log_ctx.get_current_log_level(),
-                log_ctx.get_logger(),
-            );
-        });
-
-        // Wait a short amount of time for the command to start running,
-        // then trigger a UI update with new system context
-        spawn(|| {
-            std::thread::sleep(Duration::from_millis(UI_REFRESH_DELAY_MILLIS));
-            Self::async_refresh_system_context();
-        });
-    }
-
-    #[func]
-    fn get_config_text() -> GString {
-        // NOTE: to use custom configs, you'll need to refactor or just
-        //       use "get-config" with an executor
-        DEFAULT_CONFIG_CONTENTS.into()
-    }
-
     #[func]
     fn restart_steam() {
         // TODO: move this into Command on the rust side
         // TODO: if in Desktop mode, actually restart steam
         let _ = SysCommand::new(early_log_ctx(), "steam", ["-shutdown"]).run();
     }
-
-    //    fn get_actions_mapping() {
-    //        get_full_gui_actions_map(
-    //            executor,
-    //            get_log_level(),
-    //            CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
-    //        )
-    //    }
 
     #[func]
     fn log(log_level: u8, message: GString) {
@@ -442,13 +402,4 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
     } else {
         Ok(outputs.join("\n").into())
     }
-}
-
-fn gather_new_executor() -> Executor {
-    Executor::create_with_gather(
-        ExecutorMode::Continuous,
-        get_log_level(),
-        CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
-        None,
-    )
 }

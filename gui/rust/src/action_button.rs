@@ -1,3 +1,4 @@
+use std::time::Duration;
 use godot::classes::Tween;
 use crate::dispatcher::DecktricksDispatcher;
 use crate::early_log_ctx;
@@ -11,11 +12,10 @@ use godot::classes::{Button, IButton};
 use godot::obj::WithBaseField;
 use godot::prelude::*;
 
-// TODO: fix black backgrounds behind tab containers
-
 // NOTE: This should not be initialized directly, use the factory functions below
 //       This is only class(init) because class(no_init) breaks hot reloading right now:
 //       https://github.com/godot-rust/gdext/issues/539
+
 #[derive(GodotClass)]
 #[class(init,base=Button)]
 #[derive(Debug)]
@@ -63,6 +63,13 @@ impl IButton for ActionButton {
                     LogType::Info,
                     CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
                 );
+        });
+
+        // Wait a short amount of time for the command to start running,
+        // then trigger a UI update with new system context
+        spawn(|| {
+            std::thread::sleep(Duration::from_millis(crate::UI_REFRESH_DELAY_MILLIS));
+            DecktricksDispatcher::async_refresh_system_context();
         });
     }
 }

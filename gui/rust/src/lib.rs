@@ -13,6 +13,8 @@ mod utils;
 pub mod logging;
 pub mod logs_container;
 
+pub(crate) const UI_REFRESH_DELAY_MILLIS: u64 = 200;
+
 decktricks_logging_init!(LogType::Log, DecktricksGodotLogger);
 
 // For use only within this crate, and not within logging.rs:
