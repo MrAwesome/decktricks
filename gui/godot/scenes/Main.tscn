@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=15 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
@@ -9,7 +9,11 @@
 [ext_resource type="PackedScene" uid="uid://4xc2w5wvrdl8" path="res://scenes/settings.tscn" id="4_rarhs"]
 [ext_resource type="Script" path="res://scripts/restart_steam_and_exit_button.gd" id="5_jlsqs"]
 [ext_resource type="Script" path="res://scripts/log_container.gd" id="5_lhr70"]
+[ext_resource type="Texture2D" uid="uid://blrk67cx78eao" path="res://assets/buttons/steamdeck_button_l2_outline.svg" id="5_mwfav"]
 [ext_resource type="Script" path="res://scripts/fps_buttons.gd" id="5_vcsgt"]
+[ext_resource type="Texture2D" uid="uid://dvwu1w8hbxqxg" path="res://assets/buttons/steamdeck_button_l1_outline.svg" id="11_bjd11"]
+[ext_resource type="Texture2D" uid="uid://cj2lytf83uois" path="res://assets/buttons/steamdeck_button_r1_outline.svg" id="12_qmy6f"]
+[ext_resource type="Texture2D" uid="uid://dynnrkyvf34hp" path="res://assets/buttons/steamdeck_button_r2_outline.svg" id="13_qmy6f"]
 
 [node name="Decktricks" type="Control"]
 layout_mode = 3
@@ -31,11 +35,14 @@ autostart = true
 
 [node name="MainTabs" type="TabContainer" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1280, 800)
-layout_mode = 0
-offset_right = 1280.0
-offset_bottom = 800.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_font_sizes/font_size = 60
+tab_alignment = 1
 current_tab = 0
 
 [node name="Home" parent="MainTabs" instance=ExtResource("3_q8u5g")]
@@ -51,7 +58,20 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 40
+tab_alignment = 1
 script = ExtResource("4_lhr70")
+
+[node name="L2Hint" type="TouchScreenButton" parent="MainTabs/Home"]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+position = Vector2(3, -6)
+scale = Vector2(0.786041, 0.786041)
+texture_normal = ExtResource("5_mwfav")
+
+[node name="R2Hint" type="TouchScreenButton" parent="MainTabs/Home"]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+position = Vector2(1227, -6)
+scale = Vector2(0.786041, 0.786041)
+texture_normal = ExtResource("13_qmy6f")
 
 [node name="Logs" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false
@@ -67,7 +87,20 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 40
+tab_alignment = 1
 script = ExtResource("5_lhr70")
+
+[node name="L2Hint" type="TouchScreenButton" parent="MainTabs/Logs"]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+position = Vector2(3, -6)
+scale = Vector2(0.786041, 0.786041)
+texture_normal = ExtResource("5_mwfav")
+
+[node name="R2Hint" type="TouchScreenButton" parent="MainTabs/Logs"]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+position = Vector2(1227, -6)
+scale = Vector2(0.786041, 0.786041)
+texture_normal = ExtResource("13_qmy6f")
 
 [node name="Exit" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false
@@ -148,6 +181,17 @@ theme_override_constants/margin_bottom = 5
 [node name="About" type="PanelContainer" parent="HiddenForLater"]
 visible = false
 layout_mode = 2
+
+[node name="L1Hint" type="TouchScreenButton" parent="."]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+scale = Vector2(1.01655, 1.01655)
+texture_normal = ExtResource("11_bjd11")
+
+[node name="R1Hint" type="TouchScreenButton" parent="."]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+position = Vector2(1215, 0)
+scale = Vector2(1.017, 1.017)
+texture_normal = ExtResource("12_qmy6f")
 
 [connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/SteamRestartWarning" method="_on_decktricks_restart_steam_hint"]
 [connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_decktricks_restart_steam_hint"]

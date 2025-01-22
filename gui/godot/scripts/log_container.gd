@@ -1,8 +1,9 @@
 extends Logs
 
-func _input(event: InputEvent) -> void:
+# We need to use _process since L2/R2 are analog triggers and send actions multiple times
+func _process(delta: float) -> void:
 	if get_parent().visible:
-		if event.is_action_pressed("ui_next_subtab"):
+		if Input.is_action_just_pressed("ui_next_subtab"):
 			select_next_available()
-		if event.is_action_pressed("ui_prev_subtab"):
+		if Input.is_action_just_pressed("ui_prev_subtab"):
 			select_previous_available()
