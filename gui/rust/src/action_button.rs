@@ -75,14 +75,18 @@ impl IButton for ActionButton {
 }
 
 impl ActionButton {
-    pub fn from_action_display_status(action_display_status: ActionDisplayStatus) -> Gd<Self> {
-        Gd::from_init_fn(|base: Base<_>| Self {
+    pub fn initialize_from_action_display_status(action_display_status: ActionDisplayStatus) -> Gd<Self> {
+        let action_button = Gd::from_init_fn(|base: Base<_>| Self {
             base,
             info: action_display_status,
             button_known_ongoing_state: false,
             button_tween: None,
             button_original_color: Default::default(),
-        })
+        });
+
+        DecktricksDispatcher::emit_initialize_action_button(action_button.clone());
+
+        action_button
     }
 
     fn update_appearance(&mut self) {

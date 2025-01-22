@@ -19,23 +19,41 @@ var INFO_WINDOW = preload("res://scenes/info_window.tscn")
 
 signal restart_steam_hint
 
+func initialize_action_button(
+	action_button: ActionButton,
+):
+	action_button.button_original_color = action_button.modulate
+	action_button.focus_entered.connect(focus_button.bind(action_button))
+
+# On button focus, make sure that at least one row above can be focused (to fix scrolling up)
+func focus_button(button: Button):
+	var row = button.find_parent("RowOuterMargin").get_parent()
+	var idx = row.get_index()
+	var desired_idx = max(0, idx-1)
+	var desired_row = row.get_parent().get_child(desired_idx)
+
+	var scroller = button.find_parent("TricksScroller")
+	scroller.ensure_control_visible(desired_row)
+
+	# Store the focused button to be re-focused on refresh
+	#focused_trick_and_action = [trick_id, action]
+
 func update_action_button(
 	action_button: ActionButton,
-	display_name: String,
+	identifier: String,
 	display_text: String,
 	is_available: bool,
 	is_ongoing: bool,
 ):
-	action_button.set_name(display_name)
+	action_button.set_name(identifier)
 	action_button.set_text(display_text)
 	action_button.set_visible(is_available)
 
+	# TODO: make not clickable while running
 	if is_ongoing:
 		if not action_button.button_known_ongoing_state:
 			action_button.button_known_ongoing_state = true
-
-			# TODO: only set this once, when button is fully created
-			action_button.button_original_color = action_button.modulate
+			action_button.disabled = true
 
 			var tween = create_tween()
 			tween.set_loops()
@@ -52,10 +70,10 @@ func update_action_button(
 	if not is_ongoing:
 		if action_button.button_known_ongoing_state:
 			action_button.button_known_ongoing_state = false
+			action_button.disabled = false
 			action_button.set_modulate(action_button.button_original_color)
 
 			action_button.button_tween.kill()
-	# TODO: make not clickable while running
 
 func popup_info_window(info: Dictionary):
 	var root = get_tree().root
@@ -69,22 +87,47 @@ func popup_info_window(info: Dictionary):
 	root.add_child(dialog)
 	dialog.popup_centered_ratio(0.8)
 
+func _on_ui_refresh_timer_timeout() -> void:
+	dd.async_refresh_system_context()
+
+func _on_log_refresh_timer_timeout() -> void:
+	%LogContainer.populate_logs()
+
+func _on_context_was_updated() -> void:
+	dd.update_all_buttons(get_tree())
+
+func _on_show_info_window(info: Dictionary) -> void:
+	popup_info_window(info)
+
+func _input(event: InputEvent) -> void:
+	# If this window loses focus, do not accept any input (otherwise,
+	# we would process gamepad input while child programs are in focus
+	# which is a major problem in gamescope)
+	if not DisplayServer.window_is_focused(0):
+		accept_event()
+		return
+
+	if event.is_action_pressed("ui_exit_decktricks"):
+		get_tree().quit()
+	if event.is_action_pressed("ui_next_main_tab"):
+		%MainTabs.select_next_available()
+	if event.is_action_pressed("ui_prev_main_tab"):
+		%MainTabs.select_previous_available()
+
 func _init():
 	dd.get_time_passed_ms("init")
-
 	dd.run_startup_logic()
-
 	Engine.set_max_fps(DEFAULT_MAX_FPS)
-
 	dd.get_time_passed_ms("init_finished")
 
 func _ready():
 	dd.get_time_passed_ms("entered_ready")
 
-	# Hook up signals:
+	# Hook up signals, most of which are sent from the Rust side:
 	dd.show_info_window.connect(_on_show_info_window)
 	dd.context_was_updated.connect(_on_context_was_updated)
 	dd.update_action_button.connect(update_action_button.call_deferred)
+	dd.initialize_action_button.connect(initialize_action_button.call_deferred)
 	dd.added_to_steam.connect(func (): emit_signal("restart_steam_hint"))
 
 	var should_test = OS.get_environment("DECKTRICKS_GUI_TEST_COMMAND_ONLY")
@@ -113,30 +156,3 @@ func _ready():
 
 	if should_exit:
 		get_tree().quit()
-
-func _input(event: InputEvent) -> void:
-	# If this window loses focus, do not accept any input (otherwise,
-	# we would process gamepad input while child programs are in focus
-	# which is a major problem in gamescope)
-	if not DisplayServer.window_is_focused(0):
-		accept_event()
-		return
-
-	if event.is_action_pressed("ui_exit_decktricks"):
-		get_tree().quit()
-	if event.is_action_pressed("ui_next_main_tab"):
-		%MainTabs.select_next_available()
-	if event.is_action_pressed("ui_prev_main_tab"):
-		%MainTabs.select_previous_available()
-
-func _on_ui_refresh_timer_timeout() -> void:
-	dd.async_refresh_system_context()
-
-func _on_log_refresh_timer_timeout() -> void:
-	%LogContainer.populate_logs()
-
-func _on_context_was_updated() -> void:
-	dd.update_all_buttons(get_tree())
-
-func _on_show_info_window(info: Dictionary) -> void:
-	popup_info_window(info)

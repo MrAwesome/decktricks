@@ -57,9 +57,12 @@ impl DecktricksDispatcher {
     fn context_was_updated();
 
     #[signal]
+    fn initialize_action_button(action_button: Gd<ActionButton>);
+
+    #[signal]
     fn update_action_button(
         action_button: Gd<ActionButton>,
-        display_name: GString,
+        identifier: GString,
         display_text: GString,
         is_available: bool,
         is_ongoing: bool,
@@ -216,7 +219,8 @@ impl DecktricksDispatcher {
 
                 for action in trick_status.actions {
                     let is_available = action.is_available;
-                    let mut action_button = ActionButton::from_action_display_status(action);
+                    let mut action_button =
+                        ActionButton::initialize_from_action_display_status(action);
                     if !first_button_was_marked && is_available {
                         action_button.add_to_group("first_button");
                         first_button_was_marked = true;
@@ -265,9 +269,17 @@ impl DecktricksDispatcher {
         );
     }
 
+    pub fn emit_initialize_action_button(action_button: Gd<ActionButton>) {
+        let mut singleton = Self::get_singleton();
+        singleton.emit_signal(
+            &StringName::from("initialize_action_button"),
+            &[Variant::from(action_button)],
+        );
+    }
+
     pub fn emit_update_action_button(
         action_button: Gd<ActionButton>,
-        display_name: String,
+        identifier: String,
         display_text: String,
         is_available: bool,
         is_ongoing: bool,
@@ -277,7 +289,7 @@ impl DecktricksDispatcher {
             &StringName::from("update_action_button"),
             &[
                 Variant::from(action_button),
-                Variant::from(GString::from(display_name)),
+                Variant::from(GString::from(identifier)),
                 Variant::from(GString::from(display_text)),
                 Variant::from(is_available),
                 Variant::from(is_ongoing),

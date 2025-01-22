@@ -136,7 +136,7 @@ macro_rules! inner_print {
             let prefix = $logtype.get_prefix_for();
             let channel = ctx.get_log_channel();
             let full_filename = ::std::file!();
-            let filename = full_filename.split_once("decktricks")
+            let filename = full_filename.split_once(REPO_DIRECTORY_NAME)
                 .map(|(_, s)| s.split_once("/")
                     .map(|(_, ss)| ss)
                     .unwrap_or(full_filename))
@@ -145,7 +145,7 @@ macro_rules! inner_print {
                 $logtype.clone(),
                 $ctx.as_ctx(),
                 ::std::format!(
-                    "{} <{}> {}: {}:{} {}",
+                    "{} <{}> {}: {}:{} {{{{{{\n{}\n}}}}}}",
                     prefix,
                     channel.to_key(),
                     filename,
