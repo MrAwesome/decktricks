@@ -9,6 +9,7 @@ use std::fs;
 
 const GODOT_BASE_DIR: &str = "../godot";
 const GODOT_BUILD_DIR: &str = "../godot/build";
+const GODOT_CACHE_DIR: &str = "../godot/.godot";
 
 // If the GUI hasn't started in 5 seconds on a decently-fast system,
 // something is wrong
@@ -31,6 +32,11 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     }
 
     let path = Path::new(GODOT_BUILD_DIR);
+    if path.is_dir() {
+        fs::remove_dir_all(path).unwrap();
+    }
+
+    let path = Path::new(GODOT_CACHE_DIR);
     if path.is_dir() {
         fs::remove_dir_all(path).unwrap();
     }
@@ -58,6 +64,12 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
         tmp_path,
         Path::join(path, Path::new("libdecktricks_godot_gui.so")),
     ).unwrap();
+
+    Command::new("godot")
+        .current_dir(GODOT_BASE_DIR)
+        .args(["--import"])
+        .output()
+        .unwrap();
 
     let output = Command::new("godot")
         .current_dir(GODOT_BASE_DIR)
@@ -100,7 +112,7 @@ fn test_run_godot() {
 // at least finished _ready(), because test_gui_startup_speed
 // ensures we start up faster than this
 //
-// Note the lack of DECKTRICKS_GUI_EXIT_IMMEDIATELY here - we want the 
+// Note the lack of DECKTRICKS_GUI_EXIT_IMMEDIATELY here - we want the
 // GUI to run normally
 #[test]
 fn test_gui_timeout() {
@@ -140,7 +152,7 @@ fn test_gui_startup_speed() {
     assert!(dur < ((GUI_MAXIMUM_STARTUP_TIME_MS - 1) as u128));
 }
 
-// Ensures that a command is passed through to the dispatcher, 
+// Ensures that a command is passed through to the dispatcher,
 // parsed, run, and returned successfully
 #[test]
 fn test_dispatcher_e2e() {
@@ -151,7 +163,7 @@ fn test_dispatcher_e2e() {
         .env("DECKTRICKS_GUI_TEST_COMMAND_ONLY", "run-system-command|DELIM|--|DELIM|echo|DELIM|THISISMYTESTSTRINGYES")
         .output()
         .unwrap();
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
 

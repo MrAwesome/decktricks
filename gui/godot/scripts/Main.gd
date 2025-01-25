@@ -14,6 +14,8 @@ extends Control
 const DEFAULT_MAX_FPS = 30
 var dd = DecktricksDispatcher
 
+var lol = Color.from_rgba8(0,0,0,0)
+
 var initializing = true
 var INFO_WINDOW = preload("res://scenes/info_window.tscn")
 
@@ -44,7 +46,7 @@ func update_action_button(
 	display_text: String,
 	is_available: bool,
 	is_ongoing: bool,
-):
+) -> void:
 	action_button.set_name(identifier)
 	action_button.set_text(display_text)
 	action_button.set_visible(is_available)

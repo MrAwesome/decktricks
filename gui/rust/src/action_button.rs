@@ -28,6 +28,8 @@ pub struct ActionButton {
     button_tween: Option<Gd<Tween>>,
     #[var]
     button_original_color: Color,
+    #[var]
+    override_text: GString,
 }
 
 #[godot_api]
@@ -49,11 +51,13 @@ impl IButton for ActionButton {
             DecktricksDispatcher::emit_show_info_window(info_dict);
             return;
         }
+
         // TODO: This doesn't work because of the way button text is updated from Godot, fix it:
         // if matches!(action, SpecificAction::AddToSteam { .. }) {
         //    self.base_mut().call_deferred("set_text", &[Variant::from("Added to Steam...")]);
         //    DecktricksDispatcher::emit_added_to_steam();
         //}
+
         spawn(move || {
             // TODO: run DecktricksCommand instead of SpecificAction just to have access to flags?
             // TODO: move back into DecktricksDispatcher?
@@ -82,6 +86,7 @@ impl ActionButton {
             button_known_ongoing_state: false,
             button_tween: None,
             button_original_color: Default::default(),
+            override_text: Default::default(),
         });
 
         DecktricksDispatcher::emit_initialize_action_button(action_button.clone());

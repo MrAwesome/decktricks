@@ -13,4 +13,4 @@ cp ../rust/target/release/libdecktricks_godot_gui.so "$tmpdir"/libdecktricks_god
 # mv instead of copy to get atomic switch without overwriting a running file
 mv "$tmpdir"/libdecktricks_godot_gui.so build/
 
-godot
+( command -v godot4 && godot4 ) || godot
