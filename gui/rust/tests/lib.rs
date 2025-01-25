@@ -31,15 +31,17 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
         panic!("GUI tests should not be run in debug mode! Use `cargo test --release`.");
     }
 
-    let path = Path::new(GODOT_BUILD_DIR);
-    if path.is_dir() {
-        fs::remove_dir_all(path).unwrap();
+    let build_path = Path::new(GODOT_BUILD_DIR);
+    if build_path.is_dir() {
+        fs::remove_dir_all(build_path).unwrap();
+    }
+    fs::create_dir_all(build_path).unwrap();
+
+    let cache_path = Path::new(GODOT_CACHE_DIR);
+    if cache_path.is_dir() {
+        fs::remove_dir_all(cache_path).unwrap();
     }
 
-    let path = Path::new(GODOT_CACHE_DIR);
-    if path.is_dir() {
-        fs::remove_dir_all(path).unwrap();
-    }
 
     // NOTE: for production builds, you want to delete the ../godot/.godot directory
     //       as well. That is handled in gui.sh in CI, but if you're encountering
@@ -50,9 +52,7 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
         .output()
         .unwrap();
 
-    fs::create_dir_all(path).unwrap();
-
-    let tmp_path = Path::join(path, Path::new("libdecktricks_godot_gui.so.new"));
+    let tmp_path = Path::join(build_path, Path::new("libdecktricks_godot_gui.so.new"));
     fs::copy(
         "target/release/libdecktricks_godot_gui.so",
         &tmp_path,
@@ -62,7 +62,7 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     // Do a mv instead of a cp to avoid overwriting a running file
     fs::rename(
         tmp_path,
-        Path::join(path, Path::new("libdecktricks_godot_gui.so")),
+        Path::join(build_path, Path::new("libdecktricks_godot_gui.so")),
     ).unwrap();
 
     Command::new("godot")
@@ -88,7 +88,7 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     assert!(!stdout.contains("ERROR"));
     assert!(!stderr.contains("ERROR"));
 
-    Path::join(path, Path::new("decktricks-gui"))
+    Path::join(build_path, Path::new("decktricks-gui"))
 });
 
 fn get_godot_cmd() -> Command {
