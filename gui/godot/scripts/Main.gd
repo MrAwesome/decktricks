@@ -1,10 +1,10 @@
 extends Control
 
-# TODO: some kind of error display system (emit signal and handle it by 
+# TODO: some kind of error display system (emit signal and handle it by
 # 		displaying an AcceptDialog with the text and a report link/QR,
 # 		and have a timeout for how many errors can be shown at a time
 # 		(or how quickly)), and have an exit program option from errors
-# TODO: fix going up from info sometimes going to tabs 
+# TODO: fix going up from info sometimes going to tabs
 # 		instead of previous trick's buttons
 # TODO: handle 720p since that's a common resolution on TVs?
 # TODO: use this to set the STEAM_ID as needed for gamescope? Window.set_flag
@@ -68,7 +68,7 @@ func update_action_button(
 			tween.bind_node(action_button)
 
 			action_button.button_tween = tween
-	
+
 	if not is_ongoing:
 		if action_button.button_known_ongoing_state:
 			action_button.button_known_ongoing_state = false
@@ -111,10 +111,15 @@ func _input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
+
+	# NOTE: could focus the first element of the first subtab here if desired
 	if event.is_action_pressed("ui_next_main_tab"):
 		%MainTabs.select_next_available()
+		%MainTabs.get_tab_bar().grab_focus()
 	if event.is_action_pressed("ui_prev_main_tab"):
 		%MainTabs.select_previous_available()
+		%MainTabs.get_tab_bar().grab_focus()
+
 
 func _init():
 	dd.get_time_passed_ms("init")
@@ -139,10 +144,10 @@ func _ready():
 		var test_cmd_args: Array[String]
 		test_cmd_args.assign(should_test.split("|DELIM|"))
 		dd.sync_run_with_decktricks(test_cmd_args)
-	
+
 	%LogContainer.populate_logs()
 	dd.populate_categories(%Categories)
-	
+
 	var first_button = get_tree().get_nodes_in_group("first_button").pop_front()
 	if first_button:
 		print("Grabbing focus...")
@@ -151,7 +156,7 @@ func _ready():
 
 	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])
 	dd.log(2, "Version info:\n" + version_info)
-	
+
 	dd.log(2, "Decktricks GUI initialization complete!")
 	# This line should be last, otherwise integration tests will fail:
 	print("Decktricks GUI initialization complete!")
