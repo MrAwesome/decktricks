@@ -12,6 +12,7 @@ extends Control
 #		added to steam, or just change the button to "yeah yay added" and flash green?
 
 const DEFAULT_MAX_FPS = 30
+const UPDATE_FILE = "/tmp/decktricks_did_update"
 var dd = DecktricksDispatcher
 
 var lol = Color.from_rgba8(0,0,0,0)
@@ -101,6 +102,16 @@ func _on_context_was_updated() -> void:
 func _on_show_info_window(info: Dictionary) -> void:
 	popup_info_window(info)
 
+func _on_should_restart_decktricks_gui() -> void:
+	DirAccess.remove_absolute(UPDATE_FILE)
+	# Exit with a special exit code that ../../build_assets/decktricks-gui.sh
+	# will use to know whether to restart this program
+	get_tree().quit(100)
+
+func _on_update_check_timer_timeout() -> void:
+	if FileAccess.file_exists(UPDATE_FILE):
+		$UpdateButton.set_visible(true)
+
 func _input(event: InputEvent) -> void:
 	# If this window loses focus, do not accept any input (otherwise,
 	# we would process gamepad input while child programs are in focus
@@ -119,7 +130,6 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_prev_main_tab"):
 		%MainTabs.select_previous_available()
 		%MainTabs.get_tab_bar().grab_focus()
-
 
 func _init():
 	dd.get_time_passed_ms("init")
@@ -163,3 +173,7 @@ func _ready():
 
 	if should_exit:
 		get_tree().quit()
+		
+		
+		
+	

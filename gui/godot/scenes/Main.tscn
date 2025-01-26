@@ -33,6 +33,10 @@ autostart = true
 wait_time = 0.5
 autostart = true
 
+[node name="UpdateCheckTimer" type="Timer" parent="."]
+wait_time = 3.0
+autostart = true
+
 [node name="MainTabs" type="TabContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -193,13 +197,26 @@ position = Vector2(1215, 0)
 scale = Vector2(1.017, 1.017)
 texture_normal = ExtResource("12_qmy6f")
 
+[node name="UpdateButton" type="Button" parent="."]
+visible = false
+modulate = Color(0, 0.999404, 0.511962, 1)
+layout_mode = 0
+offset_left = 899.0
+offset_top = 4.0
+offset_right = 1268.32
+offset_bottom = 83.251
+scale = Vector2(0.755279, 0.755279)
+text = "Click To Update!"
+
 [connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/SteamRestartWarning" method="_on_decktricks_restart_steam_hint"]
 [connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_decktricks_restart_steam_hint"]
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
 [connection signal="timeout" from="LogRefreshTimer" to="." method="_on_log_refresh_timer_timeout"]
+[connection signal="timeout" from="UpdateCheckTimer" to="." method="_on_update_check_timer_timeout"]
 [connection signal="focus_entered" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_focus_entered"]
 [connection signal="pressed" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_pressed"]
 [connection signal="visibility_changed" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_visibility_changed"]
 [connection signal="focus_entered" from="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_focus_entered"]
 [connection signal="pressed" from="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_pressed"]
 [connection signal="visibility_changed" from="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/ExitButton" method="_on_visibility_changed"]
+[connection signal="pressed" from="UpdateButton" to="." method="_on_should_restart_decktricks_gui"]

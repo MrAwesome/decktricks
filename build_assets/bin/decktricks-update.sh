@@ -21,6 +21,17 @@ fi
 
 echo "[INFO] Decktricks update starting at $(date)..."
 
+# Currently unused:
+is_updating_file="/tmp/decktricks_is_updating"
+
+# Used by the GUI to detect if an update is ready
+updated_successfully_file="/tmp/decktricks_did_update"
+
+rm -f "$is_updating_file"
+echo "$$" > "$is_updating_file"
+rm -f "$updated_successfully_file"
+touch "$is_updating_file"
+
 # TODOs: 
 # [] have godot gui check for error/success messages and inform user
 # [] write changelog in logs
@@ -57,7 +68,8 @@ find . -maxdepth 1 -type d -name 'tmp_update_*' -exec rm -rf {} +
 # This *MUST* be in the same filesystem as our decktricks dir, so we just make it a subdir.
 tmp_update="$dtdir/tmp_update_$(date +%s)_$$"
 mkdir -p "$tmp_update"
-trap 'rm -rf "$tmp_update"
+trap 'rm -f "$is_updating_file"
+rm -rf "$tmp_update"
 set +x
 if [[ "$final_message" != "" ]]; then
     echo -e "\n\n!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -209,6 +221,8 @@ echo "[INFO] All files updated! Cleaning up..."
 if ( "$checksums_enabled" && ! "$failed_hash_check" ) || ( ! "$local_hashfile_found" ); then
     cp "$downloaded_hash_filename" "$installed_hash_filename"
 fi
+
+touch "$updated_successfully_file"
 
 set +x
 echo -e "\n\n\n"
