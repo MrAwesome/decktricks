@@ -19,15 +19,9 @@ Decktricks is designed with SteamOS in mind, but it should work on any Arch Linu
 
 ## In Progress
 * Alpha
-    * Auto-updates for Decktricks
-    * Error logs in the app
-    * Better visual indication of what's running
-    * "Add To Steam" prompting to restart Steam so that links are available sooner
     * "Fix OLED Wifi6 on streaming"
-    * "Open file browser"
     * "Update all"
     * Provider: NonSteamLaunchers (for battle.net, PS Plus, and many more)
-    * Provider: 
 
 * Beta
     * "Run in Nested Desktop Mode"
