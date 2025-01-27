@@ -124,11 +124,16 @@ func _input(event: InputEvent) -> void:
 		get_tree().quit()
 
 	# NOTE: could focus the first element of the first subtab here if desired
-	if event.is_action_pressed("ui_next_main_tab"):
-		%MainTabs.select_next_available()
-		%MainTabs.get_tab_bar().grab_focus()
+	if event.is_action_pressed("ui_next_main_tab"):		
+		var did_change_tab = %MainTabs.select_next_available()
+		if did_change_tab:
+			%MainTabs.get_tab_bar().grab_focus()
+		elif $UpdateButton.visible:
+			$UpdateButton.grab_focus()
+		
 	if event.is_action_pressed("ui_prev_main_tab"):
-		%MainTabs.select_previous_available()
+		if not $UpdateButton.has_focus():
+			%MainTabs.select_previous_available()
 		%MainTabs.get_tab_bar().grab_focus()
 
 func _init():
@@ -164,7 +169,7 @@ func _ready():
 	var main_tab_bar: TabBar = %MainTabs.get_tab_bar()
 	main_tab_bar.set_focus_neighbor(SIDE_RIGHT, $UpdateButton.get_path())
 	$UpdateButton.set_focus_neighbor(SIDE_LEFT, main_tab_bar.get_path())
-	
+	$UpdateButton.set_focus_neighbor(SIDE_RIGHT, '')	
 
 	var first_button = get_tree().get_nodes_in_group("first_button").pop_front()
 	if first_button:
