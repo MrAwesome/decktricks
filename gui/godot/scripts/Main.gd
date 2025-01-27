@@ -157,11 +157,17 @@ func _ready():
 
 	%LogContainer.populate_logs()
 	dd.populate_categories(%Categories)
+	
+	%Categories.select_next_available()
+	%Categories.get_tab_control(1).find_child("ActionButton")
+	
+	var main_tab_bar: TabBar = %MainTabs.get_tab_bar()
+	main_tab_bar.set_focus_neighbor(SIDE_RIGHT, $UpdateButton.get_path())
+	$UpdateButton.set_focus_neighbor(SIDE_LEFT, main_tab_bar.get_path())
+	
 
 	var first_button = get_tree().get_nodes_in_group("first_button").pop_front()
 	if first_button:
-		print("Grabbing focus...")
-		print(first_button.text)
 		first_button.grab_focus.call_deferred()
 
 	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])

@@ -147,6 +147,29 @@ theme_override_font_sizes/font_size = 56
 text = "Exit"
 script = ExtResource("4_c01mt")
 
+[node name="UpdateButton" type="Button" parent="."]
+visible = false
+modulate = Color(0, 0.999404, 0.511962, 1)
+layout_mode = 0
+offset_left = 899.0
+offset_top = 4.0
+offset_right = 1268.32
+offset_bottom = 83.251
+scale = Vector2(0.755279, 0.755279)
+focus_previous = NodePath("../MainTabs")
+text = "Click To Update!"
+
+[node name="L1Hint" type="TouchScreenButton" parent="."]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+scale = Vector2(1.01655, 1.01655)
+texture_normal = ExtResource("11_bjd11")
+
+[node name="R1Hint" type="TouchScreenButton" parent="."]
+modulate = Color(0.321728, 0.321728, 0.321728, 1)
+position = Vector2(1215, 0)
+scale = Vector2(1.017, 1.017)
+texture_normal = ExtResource("12_qmy6f")
+
 [node name="HiddenForLater" type="Control" parent="."]
 visible = false
 anchors_preset = 0
@@ -185,28 +208,6 @@ theme_override_constants/margin_bottom = 5
 [node name="About" type="PanelContainer" parent="HiddenForLater"]
 visible = false
 layout_mode = 2
-
-[node name="L1Hint" type="TouchScreenButton" parent="."]
-modulate = Color(0.321728, 0.321728, 0.321728, 1)
-scale = Vector2(1.01655, 1.01655)
-texture_normal = ExtResource("11_bjd11")
-
-[node name="R1Hint" type="TouchScreenButton" parent="."]
-modulate = Color(0.321728, 0.321728, 0.321728, 1)
-position = Vector2(1215, 0)
-scale = Vector2(1.017, 1.017)
-texture_normal = ExtResource("12_qmy6f")
-
-[node name="UpdateButton" type="Button" parent="."]
-visible = false
-modulate = Color(0, 0.999404, 0.511962, 1)
-layout_mode = 0
-offset_left = 899.0
-offset_top = 4.0
-offset_right = 1268.32
-offset_bottom = 83.251
-scale = Vector2(0.755279, 0.755279)
-text = "Click To Update!"
 
 [connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/SteamRestartWarning" method="_on_decktricks_restart_steam_hint"]
 [connection signal="restart_steam_hint" from="." to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_decktricks_restart_steam_hint"]

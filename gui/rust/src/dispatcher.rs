@@ -165,6 +165,10 @@ impl DecktricksDispatcher {
 
         log!(early_log_ctx(), "IN HERE");
 
+        // We focus on the second tab
+        let mut i = 0;
+        let desired_first_tab_index = 1;
+
         for (category_id, category_trick_map) in map {
             let mut trickslist_background: Gd<ColorRect> = trickslist_packed
                 .try_instantiate_as::<ColorRect>()
@@ -222,8 +226,10 @@ impl DecktricksDispatcher {
                     let mut action_button =
                         ActionButton::initialize_from_action_display_status(action);
                     if !first_button_was_marked && is_available {
-                        action_button.add_to_group("first_button");
-                        first_button_was_marked = true;
+                        if i == desired_first_tab_index {
+                            action_button.add_to_group("first_button");
+                            first_button_was_marked = true;
+                        }
                     }
                     action_button.add_to_group("action_buttons");
                     actions_row.add_child(&action_button);
@@ -234,6 +240,7 @@ impl DecktricksDispatcher {
             }
 
             categories_tabcontainer.add_child(&trickslist_background);
+            i += 1;
         }
 
         Ok(())
