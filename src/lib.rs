@@ -2,6 +2,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 
+// Entry point for all of our custom logging:
 decktricks_logging_init!(LogType::Warn);
 
 pub mod actions;
