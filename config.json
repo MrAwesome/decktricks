@@ -46,7 +46,7 @@
             "categories": [
                 "games"
             ],
-            "display_name": "Minecraft (Prism Launcher)",
+            "display_name": "Prism Launcher (Minecraft)",
             "description": "A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
         },
         {
@@ -176,7 +176,7 @@
                 "games"
             ],
             "icon": "XXX",
-            "display_name": "Dolphin Emulator",
+            "display_name": "Dolphin Emulator (Gamecube/Wii)",
             "description": "Gamecube/Wii emulator."
         },
         {
@@ -197,7 +197,7 @@
                 "games"
             ],
             "icon": "XXX",
-            "display_name": "Heroic",
+            "display_name": "Heroic Launcher (GOG, Epic, Amazon)",
             "description": "Game launcher and storefront for Epic, Amazon Prime, and GOG."
         },
         {
