@@ -90,7 +90,7 @@ pub(crate) fn get_steam_shortcuts_inner(
     } else {
         let userdata_path = &get_userdata_path();
         let mut map = HashMap::new();
-        for ref steam_userid in get_steam_userids(userdata_path)? {
+        for ref steam_userid in get_steam_userids(userdata_path, fail_if_not_found)? {
             let filename = format!("{userdata_path}/{steam_userid}/config/shortcuts.vdf");
             let shortcuts = get_current_shortcuts_from_file(&filename, fail_if_not_found)?;
             map.insert(filename, shortcuts);
@@ -250,7 +250,7 @@ fn get_userdata_path() -> String {
     format!("{homedir}/.local/share/Steam/userdata")
 }
 
-fn get_steam_userids(userdata_path: &str) -> DeckResult<Vec<String>> {
+fn get_steam_userids(userdata_path: &str, fail_if_not_found: bool) -> DeckResult<Vec<String>> {
     let mut steam_userids = vec![];
 
     if let Ok(entries) = std::fs::read_dir(userdata_path) {
@@ -265,7 +265,7 @@ fn get_steam_userids(userdata_path: &str) -> DeckResult<Vec<String>> {
             }
         }
     }
-    if steam_userids.is_empty() {
+    if steam_userids.is_empty() && fail_if_not_found {
         Err(KnownError::AddToSteamError(
             "No Steam user directory found!".into(),
         ))
