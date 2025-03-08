@@ -13,12 +13,90 @@ const DECKTRICKS_FULL_APPID_FILENAME: &str = "/tmp/decktricks_newest_full_steam_
 static DECKTRICKS_NAME_STRING: std::sync::LazyLock<String> =
     std::sync::LazyLock::new(|| "decktricks".to_string());
 
-fn is_decktricks_shortcut(shortcut: &ShortcutOwned) -> bool {
-    shortcut.tags.contains(&DECKTRICKS_NAME_STRING)
+use std::ops::{Deref, DerefMut};
+
+#[derive(Debug, Clone)]
+pub struct SteamShortcut(ShortcutOwned);
+
+impl From<ShortcutOwned> for SteamShortcut {
+    fn from(s: ShortcutOwned) -> Self {
+        Self(s)
+    }
 }
 
-fn is_existing_trick_shortcut(trick_tag: &String, shortcut: &ShortcutOwned) -> bool {
-    shortcut.tags.contains(trick_tag)
+impl Deref for SteamShortcut {
+    type Target = ShortcutOwned;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for SteamShortcut {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl SteamShortcut {
+    fn get_all_from_system() -> DeckResult<Vec<Self>> {
+        Ok(get_steam_shortcuts_inner(None, false)?
+            .values()
+            .flat_map(|v| v.clone())
+            .collect())
+    }
+
+    fn is_decktricks_shortcut(&self) -> bool {
+        self.tags.contains(&DECKTRICKS_NAME_STRING)
+    }
+
+    fn is_existing_trick_shortcut(&self, trick_id: &TrickID) -> bool {
+        let trick_tag = format!("decktricks-{}", trick_id);
+        self.tags.contains(&trick_tag)
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct AllKnownSteamShortcutsContext {
+    shortcuts: Vec<SteamShortcut>,
+}
+
+impl AllKnownSteamShortcutsContext {
+    pub(crate) fn trick_has_existing_shortcut(&self, trick_id: &TrickID) -> bool {
+        self.shortcuts
+            .iter()
+            .any(|s| s.is_existing_trick_shortcut(trick_id))
+    }
+
+    // NOTE: the unused ctx here is a good clue that we're not using our test-safe abstractions
+    pub(crate) fn gather_with(_ctx: &impl ExecCtx) -> DeckResult<Self> {
+        let shortcuts = SteamShortcut::get_all_from_system()?;
+
+        Ok(Self { shortcuts })
+    }
+}
+
+// TODO: call this from wherever you gather full context
+pub(crate) fn get_steam_shortcuts_inner(
+    mut specific_filename: Option<String>,
+    fail_if_not_found: bool,
+) -> DeckResult<HashMap<String, Vec<SteamShortcut>>> {
+    if let Ok(fname) = std::env::var("DECKTRICKS_OVERRIDE_STEAM_SHORTCUTS_FILE") {
+        specific_filename = Some(fname);
+    }
+
+    if let Some(filename) = specific_filename {
+        let shortcuts = get_current_shortcuts_from_file(&filename, fail_if_not_found)?;
+        Ok(HashMap::from([(filename, shortcuts)]))
+    } else {
+        let userdata_path = &get_userdata_path();
+        let mut map = HashMap::new();
+        for ref steam_userid in get_steam_userids(userdata_path)? {
+            let filename = format!("{userdata_path}/{steam_userid}/config/shortcuts.vdf");
+            let shortcuts = get_current_shortcuts_from_file(&filename, fail_if_not_found)?;
+            map.insert(filename, shortcuts);
+        }
+        Ok(map)
+    }
 }
 
 fn get_full_appid(appid_short: u32) -> u64 {
@@ -29,7 +107,7 @@ fn get_full_appid(appid_short: u32) -> u64 {
 #[derive(Debug)]
 pub enum AddToSteamTarget {
     Decktricks,
-    Specific(AddToSteamContext),
+    Specific(TrickAddToSteamContext),
 }
 
 impl Display for AddToSteamTarget {
@@ -45,8 +123,8 @@ impl Display for AddToSteamTarget {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct AddToSteamContext {
+#[derive(Debug, Default, Clone)]
+pub struct TrickAddToSteamContext {
     pub trick_id: String,
     pub app_name: String,
     pub exe: String,
@@ -56,7 +134,7 @@ pub struct AddToSteamContext {
     pub launch_options: String,
 }
 
-impl TryFrom<&Trick> for AddToSteamContext {
+impl TryFrom<&Trick> for TrickAddToSteamContext {
     type Error = KnownError;
     fn try_from(trick: &Trick) -> Result<Self, Self::Error> {
         let trick_id = trick.id.clone();
@@ -80,7 +158,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                 // This is what Steam uses, even if it's a silly place to cd to
                 let start_dir = "/usr/bin".into();
 
-                AddToSteamContext {
+                TrickAddToSteamContext {
                     trick_id,
                     app_name,
                     exe,
@@ -99,7 +177,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                 let exe = format!("\"{}\"", get_emudeck_binary_path());
                 let start_dir = "/usr/bin".into();
                 let launch_options = String::default();
-                AddToSteamContext {
+                TrickAddToSteamContext {
                     trick_id,
                     app_name,
                     exe,
@@ -122,7 +200,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                     None => String::default(),
                 };
 
-                AddToSteamContext {
+                TrickAddToSteamContext {
                     trick_id,
                     app_name,
                     exe,
@@ -144,7 +222,7 @@ impl TryFrom<&Trick> for AddToSteamContext {
                     None => String::default(),
                 };
 
-                AddToSteamContext {
+                TrickAddToSteamContext {
                     trick_id,
                     app_name,
                     exe,
@@ -196,10 +274,10 @@ fn get_steam_userids(userdata_path: &str) -> DeckResult<Vec<String>> {
     }
 }
 
-fn get_current_shortcuts(
+fn get_current_shortcuts_from_file(
     filename: &str,
     fail_if_not_found: bool,
-) -> DeckResult<Vec<ShortcutOwned>> {
+) -> DeckResult<Vec<SteamShortcut>> {
     let content = match std::fs::read(filename) {
         Ok(content) => content,
         Err(err) => {
@@ -210,12 +288,12 @@ fn get_current_shortcuts(
                     ))
                 })?
             } else {
-                return Ok(Vec::<ShortcutOwned>::default());
+                return Ok(Vec::<SteamShortcut>::default());
             }
         }
     };
     if content.is_empty() {
-        Ok(Vec::<ShortcutOwned>::default())
+        Ok(Vec::<SteamShortcut>::default())
     } else {
         Ok(parse_shortcuts(content.as_slice())
             .map_err(|e| {
@@ -225,14 +303,15 @@ fn get_current_shortcuts(
             })?
             .iter()
             .map(Shortcut::to_owned)
+            .map(From::from)
             .collect())
     }
 }
 
-fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
+fn create_decktricks_shortcut(desired_order_num: &str) -> SteamShortcut {
     let app_name = "Decktricks";
     let homedir = get_homedir();
-    // TODO: wrap in double quotes always?
+    // TODO: wrap in double quotes always? often in Steam this is in double quotes
     let bindir_path = format!("{homedir}/.local/share/decktricks/bin");
     let exe = format!("{bindir_path}/decktricks-gui.sh");
     let start_dir = bindir_path;
@@ -259,10 +338,13 @@ fn create_decktricks_shortcut(desired_order_num: &str) -> ShortcutOwned {
 
     decktricks_shortcut.tags = vec!["decktricks"];
 
-    decktricks_shortcut.to_owned()
+    SteamShortcut::from(decktricks_shortcut.to_owned())
 }
 
-fn create_specific_shortcut(desired_order_num: &str, sctx: &AddToSteamContext) -> ShortcutOwned {
+fn create_specific_shortcut(
+    desired_order_num: &str,
+    sctx: &TrickAddToSteamContext,
+) -> SteamShortcut {
     let app_name = &sctx.app_name;
     let exe = &sctx.exe;
     let start_dir = &sctx.start_dir;
@@ -290,18 +372,19 @@ fn create_specific_shortcut(desired_order_num: &str, sctx: &AddToSteamContext) -
     let tag = format!("decktricks-{}", sctx.trick_id);
     specific_shortcut.tags = vec![tag.as_ref()];
 
-    specific_shortcut.to_owned()
+    SteamShortcut::from(specific_shortcut.to_owned())
 }
 
-fn create_shortcut(target: &AddToSteamTarget, desired_order_num: &str) -> ShortcutOwned {
+fn create_shortcut(target: &AddToSteamTarget, desired_order_num: &str) -> SteamShortcut {
     match target {
         AddToSteamTarget::Decktricks => create_decktricks_shortcut(desired_order_num),
         AddToSteamTarget::Specific(sctx) => create_specific_shortcut(desired_order_num, sctx),
     }
 }
 
-// Return the highest order num in the file, plus one
-fn get_desired_order_num(shortcuts: &[ShortcutOwned]) -> String {
+// Return the highest order num in the file, plus one, to ensure we always add our new entry
+// as a unique ID that isn't already present in the file
+fn get_desired_order_num(shortcuts: &[SteamShortcut]) -> String {
     match shortcuts
         .iter()
         .map(|s| {
@@ -318,36 +401,12 @@ fn get_desired_order_num(shortcuts: &[ShortcutOwned]) -> String {
     .to_string()
 }
 
-fn write_shortcuts_to_disk(path: &str, shortcuts: &[ShortcutOwned]) -> DeckResult<()> {
+fn write_shortcuts_to_disk(path: &str, shortcuts: &[SteamShortcut]) -> DeckResult<()> {
     let shortcut_bytes_vec = shortcuts_to_bytes(&shortcuts.iter().map(|s| s.borrow()).collect());
     std::fs::write(path, &shortcut_bytes_vec).map_err(|e| {
         KnownError::AddToSteamError(format!("Failed to write shortcuts to disk: {e:#?}"))
     })?;
     Ok(())
-}
-
-pub(crate) fn get_shortcuts(
-    mut filename: Option<String>,
-    fail_if_not_found: bool,
-) -> DeckResult<HashMap<String, Vec<ShortcutOwned>>> {
-    let override_filename = std::env::var("DECKTRICKS_OVERRIDE_STEAM_SHORTCUTS_FILE");
-    if let Ok(fname) = override_filename {
-        filename = Some(fname);
-    }
-
-    if let Some(filename) = filename {
-        let shortcuts = get_current_shortcuts(&filename, fail_if_not_found)?;
-        Ok(HashMap::from([(filename, shortcuts)]))
-    } else {
-        let userdata_path = &get_userdata_path();
-        let mut map = HashMap::new();
-        for ref steam_userid in get_steam_userids(userdata_path)? {
-            let filename = format!("{userdata_path}/{steam_userid}/config/shortcuts.vdf");
-            let shortcuts = get_current_shortcuts(&filename, fail_if_not_found)?;
-            map.insert(filename, shortcuts);
-        }
-        Ok(map)
-    }
 }
 
 /// # Errors
@@ -368,15 +427,14 @@ pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess>
     // In all likelihood, this will only ever run once. But since we don't know the
     // steam userid of the current user, we hedge our bets and add the shortcut to
     // all steam users present on the system.
-    for (filename, mut shortcuts) in get_shortcuts(None, false)? {
+    for (filename, mut shortcuts) in get_steam_shortcuts_inner(None, false)? {
         // Trim out existing Decktricks shortcuts
         match target {
             AddToSteamTarget::Decktricks => {
-                shortcuts.retain(|s| !is_decktricks_shortcut(s));
-            } 
+                shortcuts.retain(|s| !s.is_decktricks_shortcut());
+            }
             AddToSteamTarget::Specific(sctx) => {
-                let trick_tag = format!("decktricks-{}", sctx.trick_id);
-                shortcuts.retain(|s| !is_existing_trick_shortcut(&trick_tag, s));
+                shortcuts.retain(|s| !s.is_existing_trick_shortcut(&sctx.trick_id));
             }
         }
 
@@ -414,7 +472,7 @@ pub fn add_to_steam_real(target: &AddToSteamTarget) -> DeckResult<ActionSuccess>
 
 pub(crate) fn debug_steam_shortcuts(filename: Option<String>) -> DeckResult<ActionSuccess> {
     let mut outputs = Vec::<String>::default();
-    for (filename, shortcuts) in get_shortcuts(filename, true)? {
+    for (filename, shortcuts) in get_steam_shortcuts_inner(filename, true)? {
         outputs.push(format!("{filename}: "));
         for shortcut in shortcuts {
             outputs.push(format!("{shortcut:#?}"));

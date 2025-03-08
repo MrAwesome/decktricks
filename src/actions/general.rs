@@ -64,7 +64,9 @@ impl GeneralAction {
                                 runner.clone(),
                                 current_log_level,
                                 logger.clone(),
-                                // Whether or not we're currently installing doesn't matter here:
+                                // Whether or not we're currently installing or added to Steam doesn't matter here:
+                                // TODO: code smell
+                                false,
                                 false,
                             );
                             let provider = DynTrickProvider::new(&trick_ctx, full_ctx);
@@ -166,6 +168,7 @@ struct SpecificActionContext {
     trick_id: String,
     is_installing: bool,
     is_running: bool,
+    is_added_to_steam: bool,
     available_actions: Vec<String>,
 }
 
@@ -205,16 +208,16 @@ fn get_action_context_for_trick(
         runner.clone(),
         current_log_level,
         logger,
-        full_ctx
-            .procs_ctx
-            .tricks_to_installing_pids
-            .contains_key(&trick.id),
+        full_ctx.is_installing(&trick.id),
+        full_ctx.is_added_to_steam(&trick.id),
     );
     let provider = DynTrickProvider::new(&ctx, full_ctx);
 
     // TODO: unit/integration test that this all works as expected
     let is_installing = provider.is_installing();
     let is_running = provider.is_running();
+    let is_added_to_steam = provider.is_added_to_steam();
+
     let available_actions = provider
         .get_available_actions()
         .iter()
@@ -224,6 +227,7 @@ fn get_action_context_for_trick(
         trick_id: trick.id.clone(),
         is_installing,
         is_running,
+        is_added_to_steam,
         available_actions,
     }
 }

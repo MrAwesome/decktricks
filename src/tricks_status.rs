@@ -3,8 +3,6 @@ use crate::prelude::*;
 use crate::tricks_config::Trick;
 use std::collections::BTreeMap;
 
-pub struct AllTricksStatus(BTreeMap<TrickID, TrickStatus>);
-
 #[derive(Debug, Clone)]
 pub struct TrickStatus {
     pub trick: Rc<Trick>,
@@ -21,7 +19,10 @@ pub struct ActionDisplayStatus {
     pub action_id: SpecificActionID,
     pub is_available: bool,
     pub is_ongoing: bool,
+    pub is_completed: bool,
 }
+
+pub struct AllTricksStatus(BTreeMap<TrickID, TrickStatus>);
 
 impl AllTricksStatus {
     #[must_use]
@@ -32,6 +33,7 @@ impl AllTricksStatus {
             let trick = Rc::new(provider.get_trick().clone());
             let is_installing = provider.is_installing();
             let is_running = provider.is_running();
+            let is_added_to_steam = provider.is_added_to_steam();
             let available_actions = provider.get_available_actions();
             let all_actions = provider.get_all_actions();
 
@@ -42,12 +44,17 @@ impl AllTricksStatus {
                     SpecificActionID::Run => is_running,
                     _ => false,
                 };
+                let is_completed = match action_id {
+                    SpecificActionID::AddToSteam => is_added_to_steam,
+                    _ => false,
+                };
                 let is_available = available_actions.contains(&action_id);
                 actions.push(ActionDisplayStatus {
                     trick: trick.clone(),
                     action_id,
                     is_available,
                     is_ongoing,
+                    is_completed,
                 });
             }
 

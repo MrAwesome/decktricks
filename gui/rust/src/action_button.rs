@@ -15,6 +15,8 @@ use godot::prelude::*;
 // NOTE: This should not be initialized directly, use the factory functions below
 //       This is only class(init) because class(no_init) breaks hot reloading right now:
 //       https://github.com/godot-rust/gdext/issues/539
+//
+//       looks like adding "reloadable = true" to the gdextension file will fix that, from ^
 
 #[derive(GodotClass)]
 #[class(init,base=Button)]
@@ -52,11 +54,9 @@ impl IButton for ActionButton {
             return;
         }
 
-        // TODO: This doesn't work because of the way button text is updated from Godot, fix it:
-        // if matches!(action, SpecificAction::AddToSteam { .. }) {
-        //    self.base_mut().call_deferred("set_text", &[Variant::from("Added to Steam...")]);
-        //    DecktricksDispatcher::emit_added_to_steam();
-        //}
+        if matches!(action, SpecificAction::AddToSteam { .. }) {
+            DecktricksDispatcher::emit_added_to_steam();
+        }
 
         spawn(move || {
             // TODO: run DecktricksCommand instead of SpecificAction just to have access to flags?
@@ -96,10 +96,11 @@ impl ActionButton {
 
     fn update_appearance(&mut self) {
         let info = &self.info;
-        let display_text = info.action_id.get_display_name(info.is_ongoing);
-        let action_id = info.action_id.to_string();
         let is_available = info.is_available;
         let is_ongoing = info.is_ongoing;
+        let is_completed = info.is_completed;
+        let display_text = info.action_id.get_display_name(is_ongoing, is_completed);
+        let action_id = info.action_id.to_string();
 
         DecktricksDispatcher::emit_update_action_button(
             self.to_gd(),
@@ -107,6 +108,7 @@ impl ActionButton {
             display_text.into(),
             is_available,
             is_ongoing,
+            is_completed,
         );
 
         //        let mut base = self.base_mut();

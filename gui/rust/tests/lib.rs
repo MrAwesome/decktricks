@@ -68,6 +68,7 @@ static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     Command::new("godot")
         .current_dir(GODOT_BASE_DIR)
         .args(["--import"])
+        .args(["--headless"])
         .output()
         .unwrap();
 

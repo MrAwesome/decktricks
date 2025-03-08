@@ -290,6 +290,7 @@ impl DecktricksDispatcher {
         display_text: String,
         is_available: bool,
         is_ongoing: bool,
+        is_completed: bool,
     ) {
         let mut singleton = Self::get_singleton();
         singleton.emit_signal(
@@ -300,6 +301,7 @@ impl DecktricksDispatcher {
                 Variant::from(GString::from(display_text)),
                 Variant::from(is_available),
                 Variant::from(is_ongoing),
+                Variant::from(is_completed),
             ],
         );
     }

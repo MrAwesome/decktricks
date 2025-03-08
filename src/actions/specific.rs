@@ -50,10 +50,10 @@ impl Default for SpecificActionID {
 
 impl SpecificActionID {
     #[must_use]
-    pub fn get_display_name(&self, is_ongoing: bool) -> &'static str {
+    pub fn get_display_name(&self, is_ongoing: bool, is_completed: bool) -> &'static str {
         match self {
             Self::Run => if is_ongoing { "Running" } else { "Run" },
-            Self::AddToSteam => "Add To Steam",
+            Self::AddToSteam => if is_completed { "Added To Steam" } else { "Add To Steam" },
             Self::Install => if is_ongoing { "Installing" } else { "Install" },
             Self::Uninstall => if is_ongoing { "Uninstalling" } else { "Uninstall" },
             Self::Update => if is_ongoing { "Updating" } else { "Update" },
@@ -68,7 +68,7 @@ impl SpecificActionID {
         all_vars
             .into_iter()
             .map(|v| {
-                let dname = v.get_display_name(false);
+                let dname = v.get_display_name(false, false);
                 (v.to_string(), dname)
             })
             .collect()
@@ -156,8 +156,10 @@ impl SpecificAction {
             runner.clone(),
             current_log_level,
             logger,
-            // In the context of actually taking an action, we don't care if we're installing,
-            // since at the moment is_installing is purely for cosmetic purposes
+            // In the context of actually taking an action, we don't care if we're installing
+            // or added to Steam, since at the moment these are purely for cosmetic purposes
+            // TODO: code smell
+            false,
             false,
         );
         let provider = DynTrickProvider::new(&ctx, full_ctx);

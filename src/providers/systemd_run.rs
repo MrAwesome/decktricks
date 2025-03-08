@@ -98,7 +98,7 @@ impl ProviderActions for SystemdRunProvider {
     }
 
     fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
-        add_to_steam(&AddToSteamTarget::Specific(AddToSteamContext::try_from(
+        add_to_steam(&AddToSteamTarget::Specific(TrickAddToSteamContext::try_from(
             &self.ctx.trick,
         )?))
     }

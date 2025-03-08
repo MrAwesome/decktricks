@@ -14,12 +14,13 @@ pub struct FullSystemContext {
     pub emudeck_ctx: EmuDeckSystemContext,
     pub procs_ctx: RunningProgramSystemContext,
     pub systemd_run_ctx: SystemdRunUnitsContext,
+    pub added_to_steam_ctx: AllKnownSteamShortcutsContext,
 }
 
 // NOTE: we gather optimistically, don't fail the whole gather if some particular error is encountered.
 impl FullSystemContext {
     pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> Self {
-        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, systemd_run_ctx) = join_all!(
+        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, systemd_run_ctx, added_to_steam_ctx) = join_all!(
             || DeckySystemContext::gather_with(&ctx.clone()),
             || FlatpakSystemContext::gather_with(&ctx.clone())
                 .map_err(|e| {
@@ -44,6 +45,12 @@ impl FullSystemContext {
                     error!(ctx, "Error gathering systemd-run context: {}", e);
                     e
                 })
+                .unwrap_or_default(),
+            || AllKnownSteamShortcutsContext::gather_with(&ctx.clone())
+                .map_err(|e| {
+                    error!(ctx, "Error gathering Steam shortcuts context: {}", e);
+                    e
+                })
                 .unwrap_or_default()
         );
 
@@ -53,7 +60,19 @@ impl FullSystemContext {
             emudeck_ctx,
             procs_ctx,
             systemd_run_ctx,
+            added_to_steam_ctx,
         }
+    }
+
+    pub fn is_installing(&self, trick_id: &TrickID) -> bool {
+        self.procs_ctx
+            .tricks_to_installing_pids
+            .contains_key(trick_id)
+    }
+
+    pub fn is_added_to_steam(&self, trick_id: &TrickID) -> bool {
+        self.added_to_steam_ctx
+            .trick_has_existing_shortcut(trick_id)
     }
 }
 
@@ -90,10 +109,7 @@ impl RunningProgramSystemContext {
                         let maybe_pid = line.split_whitespace().next();
                         if let Some(trick_id) = maybe_trick_id {
                             if let Some(pid) = maybe_pid {
-                                map
-                                    .entry(trick_id)
-                                    .or_default()
-                                    .push(pid.into());
+                                map.entry(trick_id).or_default().push(pid.into());
                             } else {
                                 error!(
                                 ctx,

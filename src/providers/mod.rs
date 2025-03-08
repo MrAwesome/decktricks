@@ -190,6 +190,9 @@ pub trait ProviderChecks {
     fn is_updateable(&self) -> bool;
 
     fn is_addable_to_steam(&self) -> bool;
+    fn is_added_to_steam(&self) -> bool {
+        self.get_execution_context().is_added_to_steam
+    }
 }
 
 pub trait ProviderActions {
@@ -230,6 +233,7 @@ mod tests {
             fn is_killable(&self) -> bool;
             fn is_updateable(&self) -> bool;
             fn is_addable_to_steam(&self) -> bool;
+            fn is_added_to_steam(&self) -> bool;
         }
 
         impl ProviderActions for ProviderImpl {

@@ -161,6 +161,7 @@ pub struct SpecificExecutionContext {
     pub runner: RunnerRc,
     pub logger: LoggerRc,
     pub is_installing: bool,
+    pub is_added_to_steam: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -261,6 +262,7 @@ impl SpecificExecutionContext {
         current_log_level: LogType,
         logger: LoggerRc,
         is_installing: bool,
+        is_added_to_steam: bool,
     ) -> Self {
         Self {
             action,
@@ -270,6 +272,7 @@ impl SpecificExecutionContext {
             runner,
             logger,
             is_installing,
+            is_added_to_steam,
         }
     }
 
@@ -283,6 +286,7 @@ impl SpecificExecutionContext {
             action: SpecificAction::as_info(&"FAKE_FOR_TEST"),
             logger: Arc::new(DecktricksConsoleLogger::new()),
             is_installing: false,
+            is_added_to_steam: false,
         }
     }
 
@@ -296,6 +300,7 @@ impl SpecificExecutionContext {
             action: SpecificAction::as_info(&"FAKE_FOR_TEST"),
             logger: Arc::new(DecktricksConsoleLogger::new()),
             is_installing: false,
+            is_added_to_steam: false,
         }
     }
 }
@@ -429,10 +434,8 @@ impl Executor {
                 self.runner.clone(),
                 current_log_level,
                 logger.clone(),
-                self.full_ctx
-                    .procs_ctx
-                    .tricks_to_installing_pids
-                    .contains_key(&trick.id),
+                self.full_ctx.is_installing(trick_id),
+                self.full_ctx.is_added_to_steam(trick_id),
             );
             providers.push(DynTrickProvider::new(&ctx, &self.full_ctx));
         }

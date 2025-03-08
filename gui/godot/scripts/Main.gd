@@ -22,6 +22,10 @@ var INFO_WINDOW = preload("res://scenes/info_window.tscn")
 
 signal restart_steam_hint
 
+func send_steam_restart_hint():
+	print("Sending restart hint")
+	emit_signal("restart_steam_hint")
+
 func initialize_action_button(
 	action_button: ActionButton,
 ):
@@ -47,10 +51,14 @@ func update_action_button(
 	display_text: String,
 	is_available: bool,
 	is_ongoing: bool,
+	is_completed: bool,
 ) -> void:
 	action_button.set_name(identifier)
 	action_button.set_text(display_text)
 	action_button.set_visible(is_available)
+
+	if is_completed:
+		action_button.modulate = Color.DARK_GRAY
 
 	# TODO: make not clickable while running
 	if is_ongoing:
@@ -124,13 +132,13 @@ func _input(event: InputEvent) -> void:
 		get_tree().quit()
 
 	# NOTE: could focus the first element of the first subtab here if desired
-	if event.is_action_pressed("ui_next_main_tab"):		
+	if event.is_action_pressed("ui_next_main_tab"):
 		var did_change_tab = %MainTabs.select_next_available()
 		if did_change_tab:
 			%MainTabs.get_tab_bar().grab_focus()
 		elif $UpdateButton.visible:
 			$UpdateButton.grab_focus()
-		
+
 	if event.is_action_pressed("ui_prev_main_tab"):
 		if not $UpdateButton.has_focus():
 			%MainTabs.select_previous_available()
@@ -150,7 +158,7 @@ func _ready():
 	dd.context_was_updated.connect(_on_context_was_updated)
 	dd.update_action_button.connect(update_action_button.call_deferred)
 	dd.initialize_action_button.connect(initialize_action_button.call_deferred)
-	dd.added_to_steam.connect(func (): emit_signal("restart_steam_hint"))
+	dd.added_to_steam.connect(send_steam_restart_hint.call_deferred)
 
 	var should_test = OS.get_environment("DECKTRICKS_GUI_TEST_COMMAND_ONLY")
 	var should_exit = OS.get_environment("DECKTRICKS_GUI_EXIT_IMMEDIATELY")
@@ -162,14 +170,14 @@ func _ready():
 
 	%LogContainer.populate_logs()
 	dd.populate_categories(%Categories)
-	
+
 	%Categories.select_next_available()
 	%Categories.get_tab_control(1).find_child("ActionButton")
-	
+
 	var main_tab_bar: TabBar = %MainTabs.get_tab_bar()
 	main_tab_bar.set_focus_neighbor(SIDE_RIGHT, $UpdateButton.get_path())
 	$UpdateButton.set_focus_neighbor(SIDE_LEFT, main_tab_bar.get_path())
-	$UpdateButton.set_focus_neighbor(SIDE_RIGHT, '')	
+	$UpdateButton.set_focus_neighbor(SIDE_RIGHT, '')
 
 	var first_button = get_tree().get_nodes_in_group("first_button").pop_front()
 	if first_button:
@@ -184,7 +192,3 @@ func _ready():
 
 	if should_exit:
 		get_tree().quit()
-		
-		
-		
-	
