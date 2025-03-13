@@ -33,6 +33,30 @@
             "always_present_on_steamdeck": true
         },
         {
+            "id": "kde-connect",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "org.kde.kdeconnect"
+            },
+            "tags": [
+                "system",
+                "files",
+                "file transfer",
+                "remote control",
+                "remote input",
+                "clipboard",
+                "keyboard",
+                "mouse"
+            ],
+            "categories": [
+                "system",
+                "recommended"
+            ],
+            "icon": "XXX",
+            "display_name": "KDE Connect",
+            "description": "A secure way to sync files, clipboard, and remote input (mouse and keyboard) from your smartphone to your Deck."
+        },
+        {
             "id": "prism-launcher",
             "provider_config": {
                 "type": "flatpak",

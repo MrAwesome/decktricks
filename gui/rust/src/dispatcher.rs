@@ -163,8 +163,6 @@ impl DecktricksDispatcher {
 
         let mut first_button_was_marked = false;
 
-        log!(early_log_ctx(), "IN HERE");
-
         // We focus on the second tab
         let mut i = 0;
         let desired_first_tab_index = 1;
