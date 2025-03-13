@@ -1,3 +1,7 @@
+[] Add precommit hook looking for triple X and do not commit
+[] clean up unwraps in src/dispatcher.rs
+
+
 [] HANGING ON EXIT
     [] investigate why this is happening (figure out a repro case from lemuel's message and check over ssh on deck)
 

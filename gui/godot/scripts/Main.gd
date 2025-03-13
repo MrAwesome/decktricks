@@ -15,8 +15,6 @@ const DEFAULT_MAX_FPS = 30
 const UPDATE_FILE = "/tmp/decktricks_did_update"
 var dd = DecktricksDispatcher
 
-var lol = Color.from_rgba8(0,0,0,0)
-
 var initializing = true
 var INFO_WINDOW = preload("res://scenes/info_window.tscn")
 
@@ -172,7 +170,6 @@ func _ready():
 	dd.populate_categories(%Categories)
 
 	%Categories.select_next_available()
-	%Categories.get_tab_control(1).find_child("ActionButton")
 
 	var main_tab_bar: TabBar = %MainTabs.get_tab_bar()
 	main_tab_bar.set_focus_neighbor(SIDE_RIGHT, $UpdateButton.get_path())

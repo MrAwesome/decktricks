@@ -439,6 +439,7 @@ impl Executor {
             );
             providers.push(DynTrickProvider::new(&ctx, &self.full_ctx));
         }
+
         providers
     }
 

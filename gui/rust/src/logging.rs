@@ -142,8 +142,8 @@ impl DecktricksLogger for DecktricksGodotLogger {
 
 fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogs {
     let mut all_entries = vec![];
-    let mut general = String::new();
-    let mut tricks = Vec::new();
+    let mut general_log_text = String::new();
+    let mut trickid_to_log_text = Vec::new();
     for (log_channel, entries) in unparsed {
         let channel_entries_combined_as_text: String = entries
             .iter()
@@ -152,10 +152,10 @@ fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogs {
             .join("\n");
         match log_channel {
             LogChannel::General => {
-                general = channel_entries_combined_as_text;
+                general_log_text = channel_entries_combined_as_text;
             }
             LogChannel::TrickID(trick_id) => {
-                tricks.push((trick_id, channel_entries_combined_as_text));
+                trickid_to_log_text.push((trick_id, channel_entries_combined_as_text));
             }
             LogChannel::IgnoreCompletelyAlways => {}
         };
@@ -165,7 +165,10 @@ fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogs {
             .for_each(|entry| all_entries.push(entry));
     }
 
-    tricks.sort();
+    // Sort our assortment of trick logs to be displayed alphabetically by trick id
+    trickid_to_log_text.sort();
+
+    // Sort log entries to be displayed chronologically, regardless of where they came from
     all_entries.sort();
 
     let all = all_entries
@@ -176,8 +179,8 @@ fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogs {
 
     ParsedLogs {
         all,
-        general,
-        tricks,
+        general: general_log_text,
+        tricks: trickid_to_log_text,
     }
 }
 

@@ -80,7 +80,7 @@ impl DecktricksDispatcher {
             warn!(
                 early_log_ctx(),
                 "Updates log file not found at {}",
-                log_file_location.to_str().unwrap()
+                log_file_location.to_string_lossy()
             );
         }
     }
@@ -143,13 +143,11 @@ impl DecktricksDispatcher {
         }
     }
 
-    // TODO: clean up all unwraps
     fn populate_categories_inner(
         mut categories_tabcontainer: Gd<TabContainer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let executor = Self::get_executor();
 
-        // TODO: move to function with errors
         let map = executor.get_full_map_for_all_categories(early_log_ctx().get_logger().clone());
 
         let trickslist_packed: Gd<PackedScene> =
@@ -167,7 +165,7 @@ impl DecktricksDispatcher {
         let mut i = 0;
         let desired_first_tab_index = 1;
 
-        for (category_id, category_trick_map) in map {
+        for (category_id, category_trick_map_unsorted) in map {
             let mut trickslist_background: Gd<ColorRect> = trickslist_packed
                 .try_instantiate_as::<ColorRect>()
                 .ok_or("background not found")?;
@@ -182,6 +180,12 @@ impl DecktricksDispatcher {
                 .ok_or("vboxcontainer not found")?
                 .try_cast::<VBoxContainer>()
                 .map_err(gderr)?;
+
+            // NOTE: it's inefficient to do this sort here, but for clarity of mind
+            //       easier to keep tricks sorted by ID until we want them sorted by
+            //       display name for actually showing to the user
+            let mut category_trick_map = category_trick_map_unsorted.clone();
+            category_trick_map.sort_by_key(|t| t.1.trick.display_name.clone());
 
             for (_, trick_status) in category_trick_map {
                 let mut row_outer: Gd<PanelContainer> = row_outer_packed
@@ -244,6 +248,8 @@ impl DecktricksDispatcher {
         Ok(())
     }
 
+
+    // TODO: clean up all unwraps
     #[func]
     fn update_all_buttons(mut scene_tree: Gd<SceneTree>) {
         let executor = Self::get_executor();
