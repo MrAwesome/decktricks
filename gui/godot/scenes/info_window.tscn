@@ -1,7 +1,10 @@
-[gd_scene format=3 uid="uid://61rro6gvfnsg"]
+[gd_scene load_steps=2 format=3 uid="uid://61rro6gvfnsg"]
+
+[ext_resource type="Script" uid="uid://boixmcagdommy" path="res://scripts/info_window.gd" id="1_a7jd5"]
 
 [node name="InfoWindow" type="AcceptDialog"]
 auto_translate_mode = 1
 gui_embed_subwindows = true
 size = Vector2i(600, 558)
 dialog_autowrap = true
+script = ExtResource("1_a7jd5")
