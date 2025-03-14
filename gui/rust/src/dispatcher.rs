@@ -182,8 +182,9 @@ impl DecktricksDispatcher {
                 .map_err(gderr)?;
 
             // NOTE: it's inefficient to do this sort here, but for clarity of mind
-            //       easier to keep tricks sorted by ID until we want them sorted by
-            //       display name for actually showing to the user
+            //       easier to not worry about sort order until we sort here by
+            //       display name for actually showing to the user.
+            //       (meaning we can probably change some BTreeMaps back into HashMaps if desired)
             let mut category_trick_map = category_trick_map_unsorted.clone();
             category_trick_map.sort_by_key(|t| t.1.trick.display_name.clone());
 
@@ -397,7 +398,8 @@ fn run_with_decktricks(executor: Arc<Executor>, args: Vec<String>) -> Result<GSt
 fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Result<GString, ()> {
     let mut experienced_error = false;
     let action = &cmd.action;
-    let results = executor.execute(&cmd, CRATE_DECKTRICKS_DEFAULT_LOGGER.clone());
+    let (maybe_ctx, results) = executor.execute(&cmd, CRATE_DECKTRICKS_DEFAULT_LOGGER.clone());
+    let ctx = maybe_ctx.unwrap_or_else(|| early_log_ctx().clone());
 
     let mut outputs = vec![];
 
@@ -405,7 +407,7 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
         Ok(action_success) => {
             let msg = action_success.get_message().unwrap_or_else(String::default);
             info!(
-                early_log_ctx(),
+                &ctx,
                 "Decktricks command {action:?} finished with success: '{msg}'"
             );
             outputs.push(msg);
@@ -413,7 +415,7 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
         Err(known_error) => {
             experienced_error = true;
             error!(
-                early_log_ctx(),
+                &ctx,
                 "Decktricks command {action:?} encountered an error: '{known_error}'"
             );
         }

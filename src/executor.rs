@@ -160,6 +160,9 @@ pub struct SpecificExecutionContext {
     pub current_log_level: LogType,
     pub runner: RunnerRc,
     pub logger: LoggerRc,
+
+    // There's a code smell here. This is essentially "information from
+    // the full system context relevant to this action/trick"
     pub is_installing: bool,
     pub is_added_to_steam: bool,
 }
@@ -261,6 +264,7 @@ impl SpecificExecutionContext {
         runner: RunnerRc,
         current_log_level: LogType,
         logger: LoggerRc,
+        // These should be moved into a more general state object (move SpecificActionState here?)
         is_installing: bool,
         is_added_to_steam: bool,
     ) -> Self {
@@ -402,7 +406,7 @@ impl Executor {
         &self,
         command: &DecktricksCommand,
         logger: LoggerRc,
-    ) -> Vec<DeckResult<ActionSuccess>> {
+    ) -> (Option<ExecutionContext>, Vec<DeckResult<ActionSuccess>>) {
         let typed_action = TypedAction::from(&command.action);
         let current_log_level = command.log_level.unwrap_or(self.current_log_level);
         typed_action.do_with(self, current_log_level, logger)
@@ -421,6 +425,11 @@ impl Executor {
     #[must_use]
     pub fn get_pieces(&self) -> (&TricksLoader, &FullSystemContext, &RunnerRc) {
         (&self.loader, &self.full_ctx, &self.runner)
+    }
+
+    #[must_use]
+    pub fn get_runner(&self) -> &RunnerRc {
+        &self.runner
     }
 
     pub fn get_all_providers(&self, logger: &LoggerRc) -> Vec<DynTrickProvider> {
@@ -548,7 +557,7 @@ mod tests {
 
         let executor = get_executor(None)?;
         let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let results = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => assert_eq!(
@@ -568,7 +577,7 @@ mod tests {
 
         let executor = get_executor(None)?;
         let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let results = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => panic!(
@@ -586,7 +595,7 @@ mod tests {
 
         let executor = get_executor(None)?;
         let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let results = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(res
@@ -626,7 +635,7 @@ mod tests {
 
         let executor = get_executor(Some(mock))?;
         let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let results = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(res
@@ -646,7 +655,7 @@ mod tests {
 
         let executor = get_executor(None)?;
         let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let results = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command, logger);
 
         assert_eq!(
             results[0].as_ref().unwrap().get_message().unwrap(),

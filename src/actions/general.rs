@@ -46,11 +46,12 @@ impl GeneralAction {
         executor: &Executor,
         current_log_level: LogType,
         logger: &LoggerRc,
-    ) -> Vec<DeckResult<ActionSuccess>> {
+    ) -> (GeneralExecutionContext, Vec<DeckResult<ActionSuccess>>) {
         let (loader, full_ctx, runner) = executor.get_pieces();
         let general_ctx =
             GeneralExecutionContext::new(runner.clone(), current_log_level, logger.clone());
-        match self {
+
+        let results = match self {
             Self::List { installed } => {
                 let tricks = loader.get_all_tricks();
 
@@ -93,7 +94,7 @@ impl GeneralAction {
                 // decktricks update -> decktricks update_all
 
                 let general_providers: Vec<Box<dyn GeneralProvider>> = vec![
-                    Box::new(FlatpakGeneralProvider::new(general_ctx)),
+                    Box::new(FlatpakGeneralProvider::new(general_ctx.clone())),
                     Box::new(DeckyInstallerGeneralProvider),
                 ];
                 let mut results: Vec<DeckResult<ActionSuccess>> = general_providers
@@ -111,7 +112,7 @@ impl GeneralAction {
                 results
             }
             Self::Actions { id, json } => {
-                vec![get_all_action_context(
+                vec![get_all_action_state(
                     executor,
                     id.as_ref(),
                     current_log_level,
@@ -158,13 +159,16 @@ impl GeneralAction {
             }
             Self::DebugSteamShortcuts { filename } => vec![debug_steam_shortcuts(filename)],
             Self::AddDecktricksToSteam => vec![add_to_steam(&AddToSteamTarget::Decktricks)],
-        }
+        };
+
+        (general_ctx, results)
     }
 }
 
-// This is used only to pass information to the GUI/user about the state of available actions:
+// This is currently used only by the 'actions' command, which is only available in the CLI.
+// This can probably be merged with some of the logic used in the GUI.
 #[derive(Debug, Serialize)]
-struct SpecificActionContext {
+struct SpecificActionState {
     trick_id: String,
     is_installing: bool,
     is_running: bool,
@@ -172,35 +176,35 @@ struct SpecificActionContext {
     available_actions: Vec<String>,
 }
 
-fn get_action_context_for_all_tricks(
+fn get_action_state_for_all_tricks(
     executor: &Executor,
     current_log_level: LogType,
     logger: &LoggerRc,
-) -> Vec<(TrickID, SpecificActionContext)> {
+) -> Vec<(TrickID, SpecificActionState)> {
     let (loader, _full_ctx, _runner) = executor.get_pieces();
     let tricks = loader.get_all_tricks();
 
-    let mut name_to_action_context = vec![];
+    let mut name_to_action_state = vec![];
     for (id, trick) in tricks {
-        let action_context =
-            get_action_context_for_trick(executor, trick, current_log_level, logger.clone());
+        let action_state =
+            get_action_state_for_trick(executor, trick, current_log_level, logger.clone());
 
-        name_to_action_context.push((id.clone(), action_context));
+        name_to_action_state.push((id.clone(), action_state));
     }
 
     // We sort so that `actions --json` does not change between runs
     // unless the system state has changed
-    name_to_action_context.sort_by_key(|k| k.0.clone());
+    name_to_action_state.sort_by_key(|k| k.0.clone());
 
-    name_to_action_context
+    name_to_action_state
 }
 
-fn get_action_context_for_trick(
+fn get_action_state_for_trick(
     executor: &Executor,
     trick: &Trick,
     current_log_level: LogType,
     logger: LoggerRc,
-) -> SpecificActionContext {
+) -> SpecificActionState {
     let (_loader, full_ctx, runner) = executor.get_pieces();
     let ctx = SpecificExecutionContext::new(
         trick.clone(),
@@ -223,7 +227,7 @@ fn get_action_context_for_trick(
         .iter()
         .map(ToString::to_string)
         .collect();
-    SpecificActionContext {
+    SpecificActionState {
         trick_id: trick.id.clone(),
         is_installing,
         is_running,
@@ -232,7 +236,7 @@ fn get_action_context_for_trick(
     }
 }
 
-fn get_all_action_context(
+fn get_all_action_state(
     executor: &Executor,
     maybe_id: Option<&TrickID>,
     current_log_level: LogType,
@@ -242,17 +246,17 @@ fn get_all_action_context(
     let (loader, _full_ctx, _runner) = executor.get_pieces();
     if let Some(id) = maybe_id {
         let trick = loader.get_trick(id.as_ref())?;
-        let action_context =
-            get_action_context_for_trick(executor, trick, current_log_level, logger);
+        let action_state =
+            get_action_state_for_trick(executor, trick, current_log_level, logger);
 
         // TODO: unit test this:
         if json {
-            success!(serde_json::to_string(&action_context).map_err(KnownError::from)?)
+            success!(serde_json::to_string(&action_state).map_err(KnownError::from)?)
         } else {
-            success!(serde_json::to_string_pretty(&action_context).map_err(KnownError::from)?)
+            success!(serde_json::to_string_pretty(&action_state).map_err(KnownError::from)?)
         }
     } else {
-        let results = get_action_context_for_all_tricks(executor, current_log_level, &logger);
+        let results = get_action_state_for_all_tricks(executor, current_log_level, &logger);
 
         // TODO: unit test this:
         let results_map: std::collections::BTreeMap<_, _> = results.into_iter().collect();

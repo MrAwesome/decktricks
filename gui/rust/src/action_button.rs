@@ -61,12 +61,32 @@ impl IButton for ActionButton {
         spawn(move || {
             // TODO: run DecktricksCommand instead of SpecificAction just to have access to flags?
             // TODO: move back into DecktricksDispatcher?
-            let _ = action
+            let (maybe_ctx, res) = action
+                .clone()
                 .do_with(
                     &DecktricksDispatcher::get_executor().clone(),
                     LogType::Info,
                     CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
                 );
+
+            // Shared logic with debugging run code in src/dispatcher.rs
+            let ctx = maybe_ctx.map(|c| c.as_ctx()).unwrap_or_else(|| early_log_ctx().clone());
+            match res {
+                Ok(action_success) => {
+                    let msg = action_success.get_message().unwrap_or_else(String::default);
+                    log!(
+                        &ctx,
+                        "Decktricks command {action:?} finished with success: '{msg}'"
+                    );
+                }
+                Err(known_error) => {
+                    error!(
+                        &ctx,
+                        "Decktricks command {action:?} encountered an error: '{known_error}'"
+                    );
+                }
+            }
+
         });
 
         // Wait a short amount of time for the command to start running,

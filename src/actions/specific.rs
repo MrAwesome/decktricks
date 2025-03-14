@@ -53,7 +53,7 @@ impl SpecificActionID {
     pub fn get_display_name(&self, is_ongoing: bool, is_completed: bool) -> &'static str {
         match self {
             Self::Run => if is_ongoing { "Running" } else { "Run" },
-            Self::AddToSteam => if is_completed { "Added To Steam" } else { "Add To Steam" },
+            Self::AddToSteam => if is_completed { "Added" } else { "Add To Steam" },
             Self::Install => if is_ongoing { "Installing" } else { "Install" },
             Self::Uninstall => if is_ongoing { "Uninstalling" } else { "Uninstall" },
             Self::Update => if is_ongoing { "Updating" } else { "Update" },
@@ -145,23 +145,42 @@ impl SpecificAction {
         executor: &Executor,
         current_log_level: LogType,
         logger: LoggerRc,
-    ) -> DeckResult<ActionSuccess> {
-        let (loader, full_ctx, runner) = executor.get_pieces();
+    ) -> (Option<SpecificExecutionContext>, DeckResult<ActionSuccess>) {
+        let (loader, _full_ctx, runner) = executor.get_pieces();
 
         let trick_id = self.id();
-        let trick = loader.get_trick(trick_id.as_ref())?;
-        let ctx = SpecificExecutionContext::new(
-            trick.clone(),
-            self.clone(),
-            runner.clone(),
-            current_log_level,
-            logger,
-            // In the context of actually taking an action, we don't care if we're installing
-            // or added to Steam, since at the moment these are purely for cosmetic purposes
-            // TODO: code smell
-            false,
-            false,
-        );
+        let maybe_trick = loader.get_trick(trick_id.as_ref());
+
+        match maybe_trick {
+            Ok(trick) => {
+                let ctx = SpecificExecutionContext::new(
+                    trick.clone(),
+                    self.clone(),
+                    runner.clone(),
+                    current_log_level,
+                    logger,
+                    // In the context of actually taking an action, we don't care if we're installing
+                    // or added to Steam, since at the moment these are purely for cosmetic purposes
+                    // TODO: code smell
+                    false,
+                    false,
+                );
+
+                let res = self.do_with_inner(&ctx, executor, trick);
+                (Some(ctx), res)
+            }
+            Err(err) => (None, Err(err)),
+        }
+
+    }
+
+    pub fn do_with_inner(
+        self,
+        ctx: &SpecificExecutionContext,
+        executor: &Executor,
+        trick: &Trick,
+    ) -> DeckResult<ActionSuccess> {
+        let (_loader, full_ctx, _runner) = executor.get_pieces();
         let provider = DynTrickProvider::new(&ctx, full_ctx);
 
         if provider.can(&self) {
