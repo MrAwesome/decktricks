@@ -25,8 +25,10 @@ grow_vertical = 2
 theme = ExtResource("1_0bbpv")
 script = ExtResource("1")
 
+# This value should not be set to under a second, as it can cause steamwebhelper to freeze up trying
+# to keep track of all the subprocesses we start. Lowering this will make the UI more responsive to system events.
 [node name="UIRefreshTimer" type="Timer" parent="."]
-wait_time = 0.5
+wait_time = 3
 autostart = true
 
 [node name="LogRefreshTimer" type="Timer" parent="."]
