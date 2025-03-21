@@ -1,7 +1,6 @@
 use crate::prelude::*;
 
 pub(super) fn get_running_flatpak_applications(ctx: &impl ExecCtx) -> DeckResult<Vec<String>> {
-    // TODO: error handling
     let ps_output = flatpak_ps(ctx);
 
     match &ps_output {
@@ -17,7 +16,6 @@ pub(super) fn get_running_flatpak_applications(ctx: &impl ExecCtx) -> DeckResult
 }
 
 pub(super) fn get_installed_flatpak_applications(ctx: &impl ExecCtx) -> DeckResult<Vec<String>> {
-    // TODO: error handling
     let list_output = flatpak_list(ctx);
 
     match &list_output {

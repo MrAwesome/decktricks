@@ -16,8 +16,14 @@ macro_rules! decktricks_logging_init {
         pub const CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL: LogType = $min_log_level;
 
         pub static CRATE_DECKTRICKS_CURRENT_LOG_LEVEL: LazyLock<Arc<RwLock<LogType>>> =
-            LazyLock::new(|| Arc::new(RwLock::new($min_log_level)));
+            LazyLock::new(|| Arc::new(RwLock::new(
+                        $crate::utils::check_log_level_env_var().unwrap_or($min_log_level)
+                        )));
     };
+}
+
+pub fn get_log_level() -> LogType {
+    (*crate::CRATE_DECKTRICKS_CURRENT_LOG_LEVEL).try_read().map(|x| *x).unwrap_or(crate::CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL)
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -90,7 +96,7 @@ impl DecktricksConsoleLogger {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            log_level: crate::CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL,
+            log_level: get_log_level()
         }
     }
 }

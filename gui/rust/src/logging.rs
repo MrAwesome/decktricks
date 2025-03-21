@@ -14,10 +14,6 @@ const NUM_LOG_STORAGE_READ_RETRIES: u8 = 10;
 const DEFAULT_GODOT_LOG_LEVEL: LogType = LogType::Info;
 type LogsWithTimestamps = HashMap<LogChannel, Vec<StoredLogEntry>>;
 
-pub(crate) fn get_log_level() -> LogType {
-    (*crate::CRATE_DECKTRICKS_CURRENT_LOG_LEVEL).try_read().map(|x| *x).unwrap_or(crate::CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL)
-}
-
 #[derive(Debug)]
 pub struct ParsedLogs {
     pub all: String,

@@ -1,9 +1,18 @@
-use std::path::PathBuf;
-use std::path::Path;
 use crate::prelude::*;
 use std::fmt::Display;
+use std::path::Path;
+use std::path::PathBuf;
 
 const KNOWN_CI_ENV_VARS: &[&str] = &["CI", "GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
+
+#[must_use]
+pub fn check_log_level_env_var() -> Option<LogType> {
+    std::env::var("DECKTRICKS_LOG_LEVEL")
+        .ok()?
+        .parse::<u8>()
+        .ok()
+        .map(From::from)
+}
 
 #[must_use]
 pub fn running_in_ci_container() -> bool {
@@ -22,7 +31,10 @@ pub(crate) fn run_remote_script(
     url: &str,
     local_filename: &str,
 ) -> DeckResult<ActionSuccess> {
-    warn!(ExecutionContext::general_for_test(), "Not running run_remote_script({url}, {local_filename}) from test...");
+    warn!(
+        ExecutionContext::general_for_test(),
+        "Not running run_remote_script({url}, {local_filename}) from test..."
+    );
     success!()
 }
 
@@ -103,19 +115,18 @@ pub(crate) fn get_running_pids_exact(
     ctx: &impl ExecCtx,
     binary_name: &str,
 ) -> DeckResult<Vec<String>> {
-    Ok(SysCommand::new(ctx, "ps", ["-C", binary_name, "-o", "pid="])
-        .run()?
-        .as_success()?
-        .get_message_or_blank()
-        .split_whitespace()
-        .map(ToString::to_string)
-        .collect())
+    Ok(
+        SysCommand::new(ctx, "ps", ["-C", binary_name, "-o", "pid="])
+            .run()?
+            .as_success()?
+            .get_message_or_blank()
+            .split_whitespace()
+            .map(ToString::to_string)
+            .collect(),
+    )
 }
 
-pub(crate) fn kill_pids(
-    ctx: &impl ExecCtx,
-    pids: &[ProcessID],
-) -> DeckResult<ActionSuccess> {
+pub(crate) fn kill_pids(ctx: &impl ExecCtx, pids: &[ProcessID]) -> DeckResult<ActionSuccess> {
     let mut outputs = vec![];
     let string_pids: Vec<String> = pids.iter().map(ToString::to_string).collect();
     for pid in string_pids {

@@ -21,7 +21,7 @@ decktricks_logging_init!(LogType::Log, DecktricksGodotLogger);
 pub(crate) static EARLY_LOGGING_CONTEXT: LazyLock<Arc<ExecutionContext>> =
     LazyLock::new(|| {
         Arc::new(ExecutionContext::internal_get_for_logging(
-            CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL,
+            get_log_level(),
             Arc::new(DecktricksGodotLogger::new()),
         ))
     });

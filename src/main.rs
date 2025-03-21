@@ -7,7 +7,7 @@ fn main() -> DeckResult<()> {
     let cmd = DecktricksCommand::parse();
 
     let logger = CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-    let log_level = cmd.log_level.unwrap_or(CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL);
+    let log_level = cmd.log_level.unwrap_or(get_log_level());
     let executor = Executor::create_with_gather(ExecutorMode::OnceOff, log_level, logger.clone(), Some(&cmd));
     let (_ctx, results) = executor.execute(&cmd, logger);
 

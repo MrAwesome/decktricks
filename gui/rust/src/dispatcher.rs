@@ -2,7 +2,6 @@
 
 use crate::action_button::ActionButton;
 use crate::early_log_ctx;
-use crate::logging::get_log_level;
 use crate::utils::gderr;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::rayon::spawn;

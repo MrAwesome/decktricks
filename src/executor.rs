@@ -2,6 +2,7 @@ use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
 use crate::tricks_status::AllTricksStatus;
 use crate::tricks_status::TrickStatus;
+use crate::utils::check_log_level_env_var;
 use std::sync::Arc;
 
 pub trait ExecCtx: Clone + Send + Sync {
@@ -354,13 +355,7 @@ impl Executor {
         let full_ctx =
             gather_full_system_context(mode, &gather_execution_ctx, &loader, maybe_command);
 
-        Self::with(
-            mode,
-            loader,
-            full_ctx,
-            runner,
-            current_log_level,
-        )
+        Self::with(mode, loader, full_ctx, runner, current_log_level)
     }
 
     pub fn get_new_system_context(&self, logger: LoggerRc) -> FullSystemContext {
@@ -408,7 +403,9 @@ impl Executor {
         logger: LoggerRc,
     ) -> (Option<ExecutionContext>, Vec<DeckResult<ActionSuccess>>) {
         let typed_action = TypedAction::from(&command.action);
-        let current_log_level = command.log_level.unwrap_or(self.current_log_level);
+        // Use the log level env var, the log level cmdline flag, or the default, in that order:
+        let current_log_level = check_log_level_env_var()
+            .unwrap_or(command.log_level.unwrap_or(self.current_log_level));
         typed_action.do_with(self, current_log_level, logger)
     }
 

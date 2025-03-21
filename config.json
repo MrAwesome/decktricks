@@ -267,7 +267,8 @@
             "id": "konsole",
             "provider_config": {
                 "type": "simple-command",
-                "command": "konsole"
+                "command": "konsole",
+                "args": ["-e", "$SHELL -c \"LD_PRELOAD= exec $SHELL\""]
             },
             "tags": [
                 "terminal",
@@ -277,6 +278,7 @@
                 "commandline"
             ],
             "categories": [
+                "recommended",
                 "system"
             ],
             "icon": "XXX",

@@ -35,7 +35,6 @@ pub struct FlatpakSystemContext {
 }
 
 impl FlatpakSystemContext {
-    // TODO: parallelize this
     pub(crate) fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
         let (running, installed) = join_all!(|| get_running_flatpak_applications(ctx), || {
             get_installed_flatpak_applications(ctx)
@@ -169,9 +168,9 @@ impl ProviderActions for FlatpakProvider {
     }
 
     fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
-        add_to_steam(&AddToSteamTarget::Specific(TrickAddToSteamContext::try_from(
-            &self.ctx.trick,
-        )?))
+        add_to_steam(&AddToSteamTarget::Specific(
+            TrickAddToSteamContext::try_from(&self.ctx.trick)?,
+        ))
     }
 }
 

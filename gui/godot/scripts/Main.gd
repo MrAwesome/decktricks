@@ -98,6 +98,7 @@ func popup_info_window(info: Dictionary):
 
 func _on_ui_refresh_timer_timeout() -> void:
 	dd.async_refresh_system_context()
+	dd.log(4, "UI refresh update sent.")
 
 func _on_log_refresh_timer_timeout() -> void:
 	%LogContainer.populate_logs()
@@ -109,6 +110,7 @@ func _on_show_info_window(info: Dictionary) -> void:
 	popup_info_window(info)
 
 func _on_should_restart_decktricks_gui() -> void:
+	# NOTE: should maybe only exit if this file is actually removed:
 	DirAccess.remove_absolute(UPDATE_FILE)
 	# Exit with a special exit code that ../../build_assets/decktricks-gui.sh
 	# will use to know whether to restart this program

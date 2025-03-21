@@ -70,10 +70,10 @@ impl From<u8> for LogType {
         match log_level {
             0 => Self::Error,
             1 => Self::Warn,
+            2 => Self::Log,
             3 => Self::Info,
             4 => Self::Debug,
-
-            _ => Self::Log,
+            _ => Self::Debug,
         }
     }
 }
