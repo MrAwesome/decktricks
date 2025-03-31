@@ -1,0 +1,23 @@
+    // the emudeck installer doesn't work in gamescope
+    {
+        "id": "emudeck",
+        "provider_config": {
+            "type": "emu-deck-installer"
+        },
+        "tags": [
+            "emudeck",
+            "emulation",
+            "gamecube",
+            "snes",
+            "sega",
+            "mame",
+            "n64"
+        ],
+        "categories": [
+            "recommended",
+            "gaming"
+        ],
+        "icon": "XXX",
+        "display_name": "EmuDeck",
+        "description": "Easy setup tool for emulation. Has many, many different emulators available."
+    },

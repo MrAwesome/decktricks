@@ -74,28 +74,6 @@
             "description": "A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
         },
         {
-            "id": "emudeck",
-            "provider_config": {
-                "type": "emu-deck-installer"
-            },
-            "tags": [
-                "emudeck",
-                "emulation",
-                "gamecube",
-                "snes",
-                "sega",
-                "mame",
-                "n64"
-            ],
-            "categories": [
-                "recommended",
-                "gaming"
-            ],
-            "icon": "XXX",
-            "display_name": "EmuDeck",
-            "description": "Easy setup tool for emulation. Has many, many different emulators available."
-        },
-        {
             "id": "decky",
             "provider_config": {
                 "type": "decky-installer"
@@ -170,6 +148,29 @@
             ],
             "display_name": "ProtonUp-Qt",
             "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
+        },
+        {
+            "id": "retrodeck",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "net.retrodeck.retrodeck"
+            },
+            "icon": "XXX",
+            "tags": [
+                "retrodeck",
+                "emulation",
+                "gamecube",
+                "snes",
+                "sega",
+                "mame",
+                "n64"
+            ],
+            "categories": [
+                "recommended",
+                "gaming"
+            ],
+            "display_name": "RetroDeck",
+            "description": "Easy setup tool for emulation. Has many, many different emulators available.\n(NOTE: May take a long time to install on a slower Internet connection.)"
         },
         {
             "id": "lutris",
