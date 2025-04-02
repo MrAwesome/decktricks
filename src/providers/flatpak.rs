@@ -1,5 +1,5 @@
 use super::flatpak_helpers::{
-    get_installed_flatpak_applications, get_running_flatpak_applications,
+    get_has_user_flathub, get_installed_flatpak_applications, get_running_flatpak_applications,
 };
 use crate::prelude::*;
 
@@ -32,17 +32,21 @@ impl FlatpakProvider {
 pub struct FlatpakSystemContext {
     pub running: Vec<FlatpakID>,
     pub installed: Vec<FlatpakID>,
+    pub has_user_flathub: bool,
 }
 
 impl FlatpakSystemContext {
     pub(crate) fn gather_with(ctx: &impl ExecCtx) -> DeckResult<Self> {
-        let (running, installed) = join_all!(|| get_running_flatpak_applications(ctx), || {
-            get_installed_flatpak_applications(ctx)
-        });
+        let (running, installed, has_user_flathub) = join_all!(
+            || get_running_flatpak_applications(ctx),
+            || get_installed_flatpak_applications(ctx),
+            || get_has_user_flathub(ctx)
+            );
 
         Ok(Self {
             running: running?,
             installed: installed?,
+            has_user_flathub: has_user_flathub?,
         })
     }
 }
@@ -69,10 +73,18 @@ impl FlatpakProvider {
     }
 
     fn flatpak_install(&self) -> DeckResult<ActionSuccess> {
+        // Prefer user installation, if available
+        // TODO: see how needed this is outside of SteamOS
+        let args = if self.flatpak_ctx.has_user_flathub {
+            vec!["install", "-y", "--user", &self.id]
+        } else {
+            vec!["install", "-y", &self.id]
+        };
+
         SysCommand::new(
             &self.ctx,
             FLATPAK_SYSTEM_COMMAND,
-            ["install", "--user", "-y", &self.id],
+            args,
         )
         .env("DECKTRICKS_IS_INSTALLING", self.ctx.trick.id.as_ref())
         .run()?
@@ -213,6 +225,7 @@ mod tests {
         FlatpakSystemContext {
             installed: vec!["installed_package".into(), "installed_package2".into()],
             running: vec!["running_package".into(), "running_package2".into()],
+            has_user_flathub: false,
         }
     }
 
@@ -272,7 +285,7 @@ mod tests {
     #[test]
     fn test_can_install_pkg() {
         let cmd = FLATPAK_SYSTEM_COMMAND;
-        let args = vec!["install", "--user", "-y", "RANDOM_PACKAGE"];
+        let args = vec!["install", "-y", "RANDOM_PACKAGE"];
         let returned_args = args.clone();
         let mut mock = MockTestActualRunner::new();
 
@@ -311,7 +324,7 @@ mod tests {
     #[test]
     fn test_failed_to_install_pkg() {
         let cmd = FLATPAK_SYSTEM_COMMAND;
-        let args = vec!["install", "--user", "-y", "RANDOM_PACKAGE"];
+        let args = vec!["install", "-y", "RANDOM_PACKAGE"];
         let failure = SysCommandResult::fake_for_test(cmd, args.clone(), 1, "FAILED LOL", "");
         let expected_failure = failure.clone();
         let mut expected_sys_command = SysCommand::new(
