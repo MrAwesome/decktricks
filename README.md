@@ -1,16 +1,14 @@
 ## Install Decktricks
 Go to **([decktricks.com](https://decktricks.com))** in Desktop Mode!
 
-The installer will handle everything for you.
-
 ## About Decktricks
 Decktricks is a controller-friendly installer and launcher for Game Mode on SteamOS (Steam Deck).
 
 The dream: _installing Decktricks should be the last time you ever need to switch to Desktop Mode_.
 
-Today, now, even in pre-alpha, you can use Decktricks to install and run:
+Today, now, even in alpha, you can use Decktricks to install and run:
 * Game streaming programs like Moonlight (PC) and chiaki4deck (PS4/5)
-* Third-party utilities like EmuDeck, Decky, ProtonUp-QT, and more
+* Third-party utilities like RetroDeck, Decky, ProtonUp-QT, and more
 * Minecraft! (with Prism launcher)
 * External game store launchers like Heroic and Lutris (for Epic, GOG, Amazon, Ubisoft, Humble, and more)
 * A "Nested Desktop Mode" that lets you quickly pop in and out of Desktop Mode without restarting Steam :)
@@ -19,13 +17,13 @@ Decktricks is designed with SteamOS in mind, but it should work on any Arch Linu
 
 ## In Progress
 * Alpha
-    * "Fix OLED Wifi6 on streaming"
-    * "Update all"
-    * Provider: NonSteamLaunchers (for battle.net, PS Plus, and many more)
+    * Done!
 
 * Beta
+    * Provider: NonSteamLaunchers (for battle.net, PS Plus, and many more)
+    * "Update all"
+    * "Fix OLED Wifi6 on streaming"
     * "Run in Nested Desktop Mode"
-    * Better organization of tricks in the GUI
     * Prettier fonts and a logo
     * Better tests
     * Bug reporting from inside the app
@@ -44,7 +42,7 @@ Decktricks is designed with SteamOS in mind, but it should work on any Arch Linu
     * No-configuration installs of specific mod packs for specific games
     * Game-specific utilities (RDO Lobby Manager, etc)
     * User-selectable themes
-    * Elite 2007 keygen mode
+    * Elite 2007 keygen aesthetic
     * Steam Deck beginner's guide / tutorial
     * Popups for "this app requires manual mouse input with STEAM+RightStick" etc
 

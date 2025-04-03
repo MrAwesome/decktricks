@@ -16,7 +16,6 @@ gui/godot/ - The Godot GUI code
 ci_scripts/ - The scripts used for building/testing in GitHub Actions
 build_assets/ - The static installer/runner files (.sh and .desktop)
 ```
-The core library (used in the CLI and 
 
 # Testing
 For changes to the core library, run `cargo test`.
@@ -29,7 +28,7 @@ To run the GitHub Actions flow locally, run `act`.
 * `pacman -S flatpak fontconfig`
 * systemctl/systemd (You probably already have this.)
 * Rust (see [https://rustup.rs/](rustup.rs))
-* Godot >4.4 (12/24: This requires a dev build for now, see the archives in [misc/act-docker](./misc/act-docker))
+* Godot >=4.4
 
 The Docker image used by `act` has all the dependencies needed for runs: [gleesus/decktricks](https://hub.docker.com/r/gleesus/decktricks)
 
