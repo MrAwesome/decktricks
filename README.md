@@ -28,6 +28,7 @@ Decktricks is designed with SteamOS in mind, but it should work on any Arch Linu
     * Better tests
     * Bug reporting from inside the app
     * More providers: ES-DE, Junk Store, Kodi, 
+    * Search for tricks
 
 * Full
     * Support for XBox Cloud Gaming
