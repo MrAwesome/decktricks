@@ -18,7 +18,7 @@ pub mod executor;
 pub mod gui;
 #[macro_use]
 pub mod logging;
-pub mod run_system_command;
+pub mod system_command_runners;
 pub mod tricks_config;
 pub mod tricks_status;
 pub mod utils;

@@ -56,21 +56,21 @@ pub(super) fn get_has_user_flathub(ctx: &impl ExecCtx) -> DeckResult<bool> {
 }
 
 fn flatpak_remotes(ctx: &impl ExecCtx) -> DeckResult<ActionSuccess> {
-    SysCommand::new(ctx, "flatpak", ["remotes", "--columns=name,options"])
+    ctx.sys_command("flatpak", ["remotes", "--columns=name,options"])
         .run()?
         .as_success()
 }
 
 fn flatpak_list(ctx: &impl ExecCtx) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak list to cat.
-    SysCommand::new(ctx, "flatpak", ["list", "--app", "--columns=application"])
+    ctx.sys_command("flatpak", ["list", "--app", "--columns=application"])
         .run()?
         .as_success()
 }
 
 fn flatpak_ps(ctx: &impl ExecCtx) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak ps to cat.
-    SysCommand::new(ctx, "flatpak", ["ps", "--columns=application"])
+    ctx.sys_command("flatpak", ["ps", "--columns=application"])
         .run()?
         .as_success()
 }
@@ -102,7 +102,7 @@ mod tests {
         let cmd = "flatpak";
         let args = vec!["remotes", "--columns=name,options"];
         let returned_args = args.clone();
-        let arg = SysCommand::new(&ExecutionContext::general_for_test(), cmd, args);
+        let arg = ExecutionContext::general_for_test().sys_command(cmd, args);
         mock.expect_run()
             .with(predicate::eq(arg))
             .returning(move |_| {

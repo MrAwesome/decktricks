@@ -1,19 +1,6 @@
-#[cfg(test)]
-use std::os::unix::process::ExitStatusExt;
 use crate::prelude::*;
-use std::sync::Arc;
 
-// TODO: prevent Command module-wide
-// TODO: unit/integration test spawn vs output
-// TODO: better indication that a process was spawned vs output?
-
-// Export for unit tests in Godot
-#[cfg(any(test, feature = "test"))]
-pub type Runner = MockTestActualRunner;
-#[cfg(not(any(test, feature = "test")))]
-pub type Runner = LiveActualRunner;
-
-pub type RunnerRc = Arc<Runner>;
+use std::sync::{Arc, mpsc::TryRecvError};
 
 #[derive(Debug)]
 pub struct SysCommandRunError {
@@ -23,7 +10,7 @@ pub struct SysCommandRunError {
 
 #[derive(Debug, Clone)]
 pub struct SysCommand {
-    pub ctx: ExecutionContext,
+    pub ctx: Arc<ExecutionContext>,
     pub cmd: String,
     pub args: Vec<String>,
     pub desired_env_vars: Vec<(String, String)>,
@@ -46,15 +33,11 @@ impl SysCommand {
         SS: StringType,
     {
         Self {
-            ctx: ctx.as_ctx(),
+            ctx: Arc::new(ctx.as_ctx()),
             cmd: cmd.to_string(),
             args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
         }
-    }
-
-    pub fn new_no_args<S: StringType>(ctx: &impl ExecCtx, cmd: S) -> Self {
-        Self::new(ctx, cmd, Vec::<String>::new())
     }
 }
 
@@ -67,6 +50,11 @@ pub trait SysCommandRunner {
     fn run(&self) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
         self.get_ctx().get_runner().run(sys_command)
+    }
+
+    fn run_live(&self) -> DeckResult<LiveSysCommandWatcher> {
+        let sys_command = self.get_cmd();
+        self.get_ctx().get_runner().run_live(sys_command)
     }
 }
 
@@ -91,9 +79,8 @@ pub struct SysCommandResult {
     raw_output: std::process::Output,
 }
 
-#[cfg(not(test))]
 impl SysCommandResult {
-    fn new(sys_command: SysCommand, output: std::process::Output) -> Self {
+    pub(super) fn new(sys_command: SysCommand, output: std::process::Output) -> Self {
         Self {
             sys_command,
             raw_output: output,
@@ -110,9 +97,10 @@ impl std::fmt::Debug for SysCommandResult {
 #[cfg(test)]
 impl SysCommandResult {
     pub(crate) fn fake_success() -> Self {
+        use std::os::unix::process::ExitStatusExt;
+
         Self {
-            sys_command: SysCommand::new(
-                &ExecutionContext::general_for_test(),
+            sys_command: ExecutionContext::general_for_test().sys_command(
                 "nothingburger".to_string(),
                 ["you should not care about this"],
             ),
@@ -130,12 +118,10 @@ impl SysCommandResult {
         stdout: &str,
         stderr: &str,
     ) -> Self {
+        use std::os::unix::process::ExitStatusExt;
+
         Self {
-            sys_command: SysCommand::new(
-                &ExecutionContext::general_for_test(),
-                cmd.to_string(),
-                args,
-            ),
+            sys_command: ExecutionContext::general_for_test().sys_command(cmd.to_string(), args),
 
             raw_output: std::process::Output {
                 status: std::process::ExitStatus::from_raw(code),
@@ -146,9 +132,10 @@ impl SysCommandResult {
     }
 
     pub(crate) fn success_output(stdout: &str) -> Self {
+        use std::os::unix::process::ExitStatusExt;
+
         Self {
-            sys_command: SysCommand::new(
-                &ExecutionContext::general_for_test(),
+            sys_command: ExecutionContext::general_for_test().sys_command(
                 "nothingburger".to_string(),
                 ["you should not care about this"],
             ),
@@ -158,6 +145,48 @@ impl SysCommandResult {
                 stderr: b"".to_vec(),
             },
         }
+    }
+}
+
+#[derive(Debug)]
+enum LiveOutputLine {
+    Stdout(String),
+    Stderr(String),
+}
+
+pub struct LiveSysCommandWatcher {
+    sys_command: SysCommand,
+    line_chan: std::sync::mpsc::Receiver<LiveOutputLine>,
+    eof_chan: std::sync::mpsc::Receiver<SysCommandResult>,
+    line_printing_func: Box<dyn Fn(LiveOutputLine) + Send + Sync + 'static>,
+}
+
+impl LiveSysCommandWatcher {
+    #[must_use]
+    fn get_latest_lines(&self) -> Vec<LiveOutputLine> {
+        self.line_chan.try_iter().collect()
+    }
+
+    #[must_use]
+    fn get_is_completed(&self) -> DeckResult<Option<SysCommandResult>> {
+        match self.eof_chan.try_recv() {
+            Ok(res) => Ok(Some(res)),
+            Err(TryRecvError::Empty) => Ok(None),
+            Err(TryRecvError::Disconnected) => Err(KnownError::SystemCommandThreadError(format!(
+                "Received disconnect from live runner thread for command: {:?}",
+                self.sys_command
+            ))),
+        }
+    }
+}
+
+fn WATCHME(watcher: LiveSysCommandWatcher) {
+    loop {
+        let latest_lines = watcher.get_latest_lines();
+        for line in latest_lines {
+            todo!("print line {:?}", line);
+        }
+        watcher.get_is_completed();
     }
 }
 
@@ -210,84 +239,5 @@ impl SysCommandResultChecker for SysCommandResult {
 
     fn as_concrete(&self) -> SysCommandResult {
         self.clone()
-    }
-}
-
-pub trait ActualRunner {
-    fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult>;
-}
-
-#[cfg(any(test, feature = "test"))]
-use mockall::mock;
-#[cfg(any(test, feature = "test"))]
-mock! {
-    #[derive(Debug, Clone, Copy)]
-    pub TestActualRunner {}
-
-    impl ActualRunner for TestActualRunner {
-        fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult>;
-    }
-}
-
-#[cfg(not(test))]
-#[derive(Debug, Clone, Copy, Default)]
-pub struct LiveActualRunner {}
-
-#[cfg(not(test))]
-impl LiveActualRunner {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-#[cfg(not(test))]
-impl ActualRunner for LiveActualRunner {
-    #[cfg(test)]
-    fn run(&self, sys_command: &SysCommand) -> DeckResult<std::process::Output> {
-        panic!("Attempted to run system command {:?} in test!", sys_command)
-    }
-
-    #[cfg(not(test))]
-    fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult> {
-        let cmd = &sys_command.cmd;
-        let args = &sys_command.args;
-
-        // Here is where we finally create the actual Command to be run.
-        let mut command = std::process::Command::new(cmd);
-        command.args(args);
-
-        for (var, val) in &sys_command.desired_env_vars {
-            command.env(var, val);
-        }
-
-        let output = command.output().map_err(|e| {
-            let args = sys_command.args.join(" ");
-            error!(sys_command.get_ctx(), "Error running command \"{} {}\": {e:?}", sys_command.cmd, args);
-            KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                cmd: sys_command.clone(),
-                error: e,
-            }))
-        })?;
-
-        if output.status.success() {
-            info!(
-                sys_command.get_ctx(),
-                "Command {sys_command:#?} ran successfully with output:\n\n{}",
-                String::from_utf8_lossy(&output.stdout)
-            );
-        } else {
-            let exit_code = output.status.code().map(|c| c.to_string()).unwrap_or_else(|| "UNKNOWN".into());
-            // NOTE: we don't want to warn here, as we run a lot of background commands that we
-            // expect to fail, and we'd flood the logs immediately
-            info!(
-                sys_command.get_ctx(),
-                "Command {sys_command:#?} exited with non-zero exit code {exit_code} with:\n\n\nSTDOUT:\n\n{}\n\nSTDERR:\n\n{}",
-                String::from_utf8_lossy(&output.stdout),
-                String::from_utf8_lossy(&output.stderr)
-            );
-        }
-
-        Ok(SysCommandResult::new(sys_command.clone(), output))
     }
 }

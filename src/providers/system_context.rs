@@ -140,7 +140,7 @@ fn get_procs_with_env(ctx: &impl ExecCtx) -> Option<String> {
         return None;
     }
 
-    let run_res = SysCommand::new(ctx, "/bin/ps", ["eww"]).run();
+    let run_res = ctx.sys_command("/bin/ps", ["eww"]).run();
 
     match run_res {
         Ok(res) => match res.as_success() {

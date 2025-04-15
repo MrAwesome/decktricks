@@ -30,10 +30,10 @@ impl DeckySystemContext {
         let (is_installed, is_running) = join_all!(
             // We can rely on SysCommand to log if we encounter any errors during gather, and just
             // default to false if anything goes wrong.
-            || SysCommand::new(ctx, "/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
+            || ctx.sys_command("/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
                 .run()
                 .is_ok_and(|res| res.ran_successfully()),
-            || SysCommand::new(ctx, "/usr/bin/systemctl", ["is-active", "plugin_loader"])
+            || ctx.sys_command("/usr/bin/systemctl", ["is-active", "plugin_loader"])
                 .run()
                 .is_ok_and(|res| res.ran_successfully())
         );
@@ -96,7 +96,7 @@ impl ProviderActions for DeckyInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        let _ = SysCommand::new(&self.ctx, "xhost", vec!["+"]).run();
+        let _ = &self.ctx.sys_command("xhost", vec!["+"]).run();
         run_remote_script(&self.ctx, DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)?;
         success!("Decky installed successfully!")
     }

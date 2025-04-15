@@ -8,7 +8,7 @@ pub(crate) use crate::tricks_config::*;
 // TODO: bring in rayon::spawn here, and use it everywhere so you can
 // easily codemode to other spawn methods across crates
 
-pub(crate) use crate::run_system_command::*;
+pub(crate) use crate::system_command_runners::*;
 
 pub(crate) use crate::join_all;
 pub(crate) use crate::success;

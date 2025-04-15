@@ -41,7 +41,7 @@ impl FlatpakSystemContext {
             || get_running_flatpak_applications(ctx),
             || get_installed_flatpak_applications(ctx),
             || get_has_user_flathub(ctx)
-            );
+        );
 
         Ok(Self {
             running: running?,
@@ -67,7 +67,8 @@ impl FlatpakProvider {
     // NOTE: Can handle/track child pid status here, but
     // `flatpak ps` gives us that easily and authoritatively.
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["run", &self.id])
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["run", &self.id])
             .run()?
             .as_success()
     }
@@ -81,34 +82,30 @@ impl FlatpakProvider {
             vec!["install", "-y", &self.id]
         };
 
-        SysCommand::new(
-            &self.ctx,
-            FLATPAK_SYSTEM_COMMAND,
-            args,
-        )
-        .env("DECKTRICKS_IS_INSTALLING", self.ctx.trick.id.as_ref())
-        .run()?
-        .as_success()
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, args)
+            .env("DECKTRICKS_IS_INSTALLING", self.ctx.trick.id.as_ref())
+            .run()?
+            .as_success()
     }
 
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(
-            &self.ctx,
-            FLATPAK_SYSTEM_COMMAND,
-            ["uninstall", "-y", &self.id],
-        )
-        .run()?
-        .as_success()
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["uninstall", "-y", &self.id])
+            .run()?
+            .as_success()
     }
 
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["kill", &self.id])
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["kill", &self.id])
             .run()?
             .as_success()
     }
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["update", &self.id])
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["update", &self.id])
             .run()?
             .as_success()
     }
@@ -202,8 +199,12 @@ impl GeneralProvider for FlatpakGeneralProvider {
         // TODO: when running in parallel, collect errors for each portion
 
         // IMPORTANT: for global flatpak update -y, you MUST run it twice to remove unused runtimes.
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["update", "-y"]).run()?;
-        SysCommand::new(&self.ctx, FLATPAK_SYSTEM_COMMAND, ["update", "-y"]).run()?;
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["update", "-y"])
+            .run()?;
+        self.ctx
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["update", "-y"])
+            .run()?;
 
         success!("Flatpak update run successfully!")
     }
@@ -212,7 +213,7 @@ impl GeneralProvider for FlatpakGeneralProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::run_system_command::MockTestActualRunner;
+    use crate::system_command_runners::MockTestActualRunner;
     use mockall::*;
 
     impl Flatpak {
@@ -327,11 +328,8 @@ mod tests {
         let args = vec!["install", "-y", "RANDOM_PACKAGE"];
         let failure = SysCommandResult::fake_for_test(cmd, args.clone(), 1, "FAILED LOL", "");
         let expected_failure = failure.clone();
-        let mut expected_sys_command = SysCommand::new(
-            &ExecutionContext::specific_for_test(),
-            FLATPAK_SYSTEM_COMMAND,
-            args,
-        );
+        let mut expected_sys_command =
+            ExecutionContext::specific_for_test().sys_command(FLATPAK_SYSTEM_COMMAND, args);
         expected_sys_command.env(INSTALLING_ENV_STRING, "trick_for_test");
 
         let mut mock = MockTestActualRunner::new();

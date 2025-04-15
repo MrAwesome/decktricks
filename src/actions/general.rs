@@ -277,5 +277,5 @@ fn internal_test_run_system_command(
     maybe_args: Option<Vec<String>>,
 ) -> DeckResult<ActionSuccess> {
     let real_args = maybe_args.unwrap_or_default();
-    SysCommand::new(ctx, command, real_args).run()?.as_success()
+    ctx.sys_command(command, real_args).run()?.as_success()
 }

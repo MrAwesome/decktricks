@@ -84,7 +84,7 @@ pub(crate) fn run_remote_script(
         )?;
     }
 
-    SysCommand::new_no_args(ctx, local_filename)
+    ctx.sys_command_no_args(local_filename)
         .run()?
         .as_success()
 }
@@ -103,7 +103,7 @@ pub fn get_decktricks_update_log_file_location() -> PathBuf {
 
 pub fn exists_and_executable(ctx: &impl ExecCtx, path: &str) -> bool {
     // Using this instead of rust-native code to piggyback on the test-friendliness of SysCommand
-    let res = SysCommand::new(ctx, "/bin/test", ["-x", path]).run();
+    let res = ctx.sys_command("/bin/test", ["-x", path]).run();
 
     match res {
         Ok(cmdres) => cmdres.ran_successfully(),
@@ -115,22 +115,21 @@ pub(crate) fn get_running_pids_exact(
     ctx: &impl ExecCtx,
     binary_name: &str,
 ) -> DeckResult<Vec<String>> {
-    Ok(
-        SysCommand::new(ctx, "ps", ["-C", binary_name, "-o", "pid="])
-            .run()?
-            .as_success()?
-            .get_message_or_blank()
-            .split_whitespace()
-            .map(ToString::to_string)
-            .collect(),
-    )
+    Ok(ctx
+        .sys_command("ps", ["-C", binary_name, "-o", "pid="])
+        .run()?
+        .as_success()?
+        .get_message_or_blank()
+        .split_whitespace()
+        .map(ToString::to_string)
+        .collect())
 }
 
 pub(crate) fn kill_pids(ctx: &impl ExecCtx, pids: &[ProcessID]) -> DeckResult<ActionSuccess> {
     let mut outputs = vec![];
     let string_pids: Vec<String> = pids.iter().map(ToString::to_string).collect();
     for pid in string_pids {
-        let res = SysCommand::new(ctx, "kill", [&pid]).run()?.as_success();
+        let res = ctx.sys_command("kill", [&pid]).run()?.as_success();
 
         if res.is_ok() {
             outputs.push(format!("Successfully killed pid '{pid}'"));

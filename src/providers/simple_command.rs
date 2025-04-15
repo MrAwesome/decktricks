@@ -1,4 +1,4 @@
-use crate::run_system_command::{SysCommand, SysCommandResultChecker, SysCommandRunner};
+use crate::system_command_runners::{SysCommandResultChecker, SysCommandRunner};
 use crate::{prelude::*, utils::kill_pids};
 
 #[derive(Debug)]
@@ -74,7 +74,7 @@ impl ProviderActions for SimpleCommandProvider {
     }
 
     fn run(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(&self.ctx, &self.command, self.args.iter())
+        self.ctx.sys_command(&self.command, self.args.iter())
             .env(PID_ENV_STRING, &self.trick_id)
             .run()?
             .as_success()
@@ -105,7 +105,7 @@ impl GeneralProvider for SimpleCommandProvider {
 mod tests {
     use super::SimpleCommandProvider;
     use crate::prelude::*;
-    use crate::run_system_command::MockTestActualRunner;
+    use crate::system_command_runners::MockTestActualRunner;
 
     #[test]
     fn basic_expectations() {

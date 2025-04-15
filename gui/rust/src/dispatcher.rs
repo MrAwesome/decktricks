@@ -5,8 +5,7 @@ use crate::early_log_ctx;
 use crate::utils::gderr;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::rayon::spawn;
-use decktricks::run_system_command::SysCommand;
-use decktricks::run_system_command::SysCommandRunner;
+use decktricks::system_command_runners::SysCommandRunner;
 use decktricks::utils::get_decktricks_update_log_file_location;
 use decktricks::{inner_print, prelude::*};
 use godot::classes::ColorRect;
@@ -123,7 +122,7 @@ impl DecktricksDispatcher {
     fn restart_steam() {
         // TODO: move this into Command on the rust side
         // TODO: if in Desktop mode, actually restart steam
-        let _ = SysCommand::new(early_log_ctx(), "steam", ["-shutdown"]).run();
+        let _ = early_log_ctx().sys_command("steam", ["-shutdown"]).run();
     }
 
     #[func]

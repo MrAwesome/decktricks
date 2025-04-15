@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::run_system_command::{SysCommand, SysCommandResultChecker, SysCommandRunner};
+use crate::system_command_runners::{SysCommandResultChecker, SysCommandRunner};
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 
@@ -77,20 +77,21 @@ impl ProviderActions for SystemdRunProvider {
     fn run(&self) -> DeckResult<ActionSuccess> {
         let args = self.systemd_run_data.get_as_args();
 
-        SysCommand::new(&self.ctx, "/usr/bin/systemd-run", args)
+        self.ctx
+            .sys_command("/usr/bin/systemd-run", args)
             //.env(PID_ENV_STRING, &self.trick_id)
             .run()?
             .as_success()
     }
 
     fn kill(&self) -> DeckResult<ActionSuccess> {
-        SysCommand::new(
-            &self.ctx,
-            "/usr/bin/systemctl",
-            ["stop", self.systemd_run_data.unit_id.as_ref()],
-        )
-        .run()?
-        .as_success()
+        self.ctx
+            .sys_command(
+                "/usr/bin/systemctl",
+                ["stop", self.systemd_run_data.unit_id.as_ref()],
+            )
+            .run()?
+            .as_success()
     }
 
     fn update(&self) -> DeckResult<ActionSuccess> {
@@ -98,9 +99,9 @@ impl ProviderActions for SystemdRunProvider {
     }
 
     fn add_to_steam(&self) -> DeckResult<ActionSuccess> {
-        add_to_steam(&AddToSteamTarget::Specific(TrickAddToSteamContext::try_from(
-            &self.ctx.trick,
-        )?))
+        add_to_steam(&AddToSteamTarget::Specific(
+            TrickAddToSteamContext::try_from(&self.ctx.trick)?,
+        ))
     }
 }
 
@@ -121,9 +122,7 @@ impl SystemdRunUnitsContext {
         let all_unit_ids: Vec<String> = tricks_loader
             .get_all_tricks()
             .filter_map(|t| match &t.1.provider_config {
-                ProviderConfig::SystemdRun(systemd_run) => {
-                    Some(systemd_run.unit_id.clone())
-                }
+                ProviderConfig::SystemdRun(systemd_run) => Some(systemd_run.unit_id.clone()),
                 _ => None,
             })
             .collect();
@@ -132,7 +131,7 @@ impl SystemdRunUnitsContext {
         let running_unit_ids = all_unit_ids
             .into_par_iter()
             .filter(|id| {
-                SysCommand::new(ctx, "/usr/bin/systemctl", ["is-running", id.as_ref()])
+                ctx.sys_command("/usr/bin/systemctl", ["is-running", id.as_ref()])
                     .run()
                     .is_ok_and(|res| res.ran_successfully())
             })

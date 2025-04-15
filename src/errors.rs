@@ -26,6 +26,7 @@ pub enum KnownError {
     SeriousError(SeriousError),
     SystemCommandFailed(Box<SysCommandResult>),
     SystemCommandParse(String),
+    SystemCommandThreadError(String),
     SystemCommandRunFailure(Box<SysCommandRunError>),
     TestError(String),
     UnknownTrickID(TrickID),
@@ -57,6 +58,9 @@ impl Display for KnownError {
             }
             Self::SystemCommandRunFailure(sys_run_err) => {
                 write!(f, "Error running system command: {sys_run_err:#?}")
+            }
+            Self::SystemCommandThreadError(sys_run_err) => {
+                write!(f, "Error in system command thread: {sys_run_err:#?}")
             }
             Self::SystemCommandFailed(output) => {
                 write!(f, "System command failed: {output:?}")

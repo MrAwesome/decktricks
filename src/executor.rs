@@ -11,6 +11,21 @@ pub trait ExecCtx: Clone + Send + Sync {
     fn get_log_channel(&self) -> &LogChannel;
     fn get_current_log_level(&self) -> LogType;
     fn get_logger(&self) -> LoggerRc;
+
+    #[allow(clippy::needless_pass_by_value)]
+    fn sys_command<I, S, SS>(&self, cmd: S, args: I) -> SysCommand
+    where
+        I: IntoIterator<Item = SS>,
+        S: StringType,
+        SS: StringType,
+    {
+        SysCommand::new(self, cmd, args)
+    }
+
+    // Convenience function so callers don't have to use Vec::<String>::new()
+    fn sys_command_no_args<S: StringType>(&self, cmd: S) -> SysCommand {
+        SysCommand::new(self, cmd, Vec::<String>::new())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -97,9 +112,8 @@ impl ExecutionContext {
     // TODO: code smell
     #[must_use]
     pub fn internal_get_for_logging(current_log_level: LogType, logger: LoggerRc) -> Self {
-        let runner = Arc::new(Runner::new());
         Self::General(GeneralExecutionContext::new(
-            runner,
+            get_runner(),
             current_log_level,
             logger,
         ))
@@ -339,7 +353,7 @@ impl Executor {
         logger: LoggerRc,
         maybe_command: Option<&DecktricksCommand>,
     ) -> Self {
-        let runner = Arc::new(Runner::new());
+        let runner = get_runner();
         let gather_execution_ctx =
             GeneralExecutionContext::new(runner.clone(), current_log_level, logger.clone());
 
@@ -614,7 +628,7 @@ mod tests {
         let cmd = "flatpak";
         let args = vec!["list", "--app", "--columns=application"];
         let returned_args = args.clone();
-        let arg = SysCommand::new(&ExecutionContext::general_for_test(), cmd, args);
+        let arg = ExecutionContext::general_for_test().sys_command(cmd, args);
         mock.expect_run()
             .with(predicate::eq(arg))
             .returning(move |_| {
