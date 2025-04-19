@@ -25,7 +25,6 @@ Decktricks is designed with SteamOS in mind, but it should work on any Arch Linu
     * "Fix OLED Wifi6 on streaming"
     * "Run in Nested Desktop Mode"
     * Prettier fonts and a logo
-    * Better tests
     * Bug reporting from inside the app
     * More providers: ES-DE, Junk Store, Kodi, 
     * Search for tricks
