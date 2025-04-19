@@ -1,13 +1,9 @@
+use std::process::{Command, Stdio};
+use std::thread;
 use crate::prelude::*;
 use super::system_command::*;
+use std::sync::mpsc;
 use std::sync::Arc;
-
-// TODO: prevent Command module-wide
-// TODO: unit/integration test spawn vs output
-// TODO: better indication that a process was spawned vs output?
-
-// TODO: codemod into a dyn testrunner
-
 
 pub fn get_runner() -> Arc<dyn ActualRunner> {
     if cfg!(test) {
@@ -45,7 +41,6 @@ impl RealWorldActualRunner {
         if cfg!(test) {
             panic!("Tried to create real world command runner in tests!");
         }
-
         Self::default()
     }
 }
@@ -57,10 +52,59 @@ impl ActualRunner for RealWorldActualRunner {
             panic!("Tried to run live real command in tests!");
         }
 
-        let TODO = "start here";
-        // create mpsc, run the command in thread with a sender, in a loop that sends every second
-        // (and has a "we're done here" signal as well)
-        todo!()
+        let (rx, tx) = mpsc::channel::<LiveRunMessage>();
+
+        thread::spawn(move || {
+            let ctx = sys_command.ctx;
+
+            let command = Command::new(sys_command.cmd);
+            command.args(sys_command.args);
+            command.envs(sys_command.desired_env_vars);
+            command.stdout(Stdio::piped());
+            command.stderr(Stdio::piped());
+
+            let child_res = command.spawn();
+            let child = match child_res {
+                Ok(child) => child,
+                Err(err) => {
+                    let known_error = sys_command_error_to_known_error(sys_command, err);
+                    rx.send(LiveRunMessage::Error(known_error));
+                    return;
+                }
+            };
+
+            let stdout = child.stdout.take();
+            let stderr = child.stderr.take();
+
+            if stdout.is_none() {
+                warn!(
+                    ctx,
+                    "Live command stdout could not be taken! Command: {sys_command:?}"
+                )
+            }
+
+            if stderr.is_none() {
+                warn!(
+                    ctx,
+                    "Live command stderr could not be taken! Command: {sys_command:?}"
+                )
+            }
+
+            // TODO: use child.kill() instead of kludgy ps tracking elsewhere
+            child.kill
+        });
+
+        // STARTHERE
+        // TODO:
+        // [] open channel
+        // [] spawn command in another thread
+        // [] watch command stdout/stderr
+        // [] report back liveness periodically if needed?
+        // [] return a SysCommandResult back across the channel when done (if large amounts of text
+        // over channel won't cause issues)
+        // [] on final loop, use child.wait_with_output() to get output for use with SysCommandResult
+        //
+        // ENDHERE
     }
 
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult> {
@@ -80,17 +124,7 @@ impl ActualRunner for RealWorldActualRunner {
             command.env(var, val);
         }
 
-        let output = command.output().map_err(|e| {
-            let args = sys_command.args.join(" ");
-            error!(
-                sys_command.get_ctx(),
-                "Error running command \"{} {}\": {e:?}", sys_command.cmd, args
-            );
-            KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
-                cmd: sys_command.clone(),
-                error: e,
-            }))
-        })?;
+        let output = command.output().map_err(|e| sys_command_error_to_known_error(sys_command, e))?;
 
         if output.status.success() {
             info!(
@@ -104,8 +138,6 @@ impl ActualRunner for RealWorldActualRunner {
                 .code()
                 .map(|c| c.to_string())
                 .unwrap_or_else(|| "UNKNOWN".into());
-            // NOTE: we don't want to warn here, as we run a lot of background commands that we
-            // expect to fail, and we'd flood the logs immediately
             info!(
                 sys_command.get_ctx(),
                 "Command {sys_command:#?} exited with non-zero exit code {exit_code} with:\n\n\nSTDOUT:\n\n{}\n\nSTDERR:\n\n{}",
@@ -116,6 +148,18 @@ impl ActualRunner for RealWorldActualRunner {
 
         Ok(SysCommandResult::new(sys_command.clone(), output))
     }
+}
+
+fn sys_command_error_to_known_error(sys_command: &SysCommand, e: std::io::Error) -> KnownError {
+    let args = sys_command.args.join(" ");
+    error!(
+        sys_command.get_ctx(),
+        "Error running command \"{} {}\": {e:?}", sys_command.cmd, args
+    );
+    KnownError::SystemCommandRunFailure(Box::new(SysCommandRunError {
+        cmd: sys_command.clone(),
+        error: e,
+    }))
 }
 
 #[cfg(test)]
@@ -131,7 +175,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "Tried to run real command in tests!")]
     fn test_real_world_command_panics() {
-        // NOTE: this is not how you should run commands normally, this is just to test safety
         let r = RealWorldActualRunner {};
         let sys_command = GeneralExecutionContext::test().sys_command_no_args("echo");
         let _ = r.run(&sys_command);
@@ -140,7 +183,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "Tried to run live real command in tests!")]
     fn test_real_world_live_command_panics() {
-        // NOTE: this is not how you should run commands normally, this is just to test safety
         let r = RealWorldActualRunner {};
         let sys_command = GeneralExecutionContext::test().sys_command_no_args("echo");
         let _ = r.run_live(&sys_command);

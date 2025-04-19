@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use std::sync::{Arc, mpsc::TryRecvError};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct SysCommandRunError {
@@ -145,48 +145,6 @@ impl SysCommandResult {
                 stderr: b"".to_vec(),
             },
         }
-    }
-}
-
-#[derive(Debug)]
-enum LiveOutputLine {
-    Stdout(String),
-    Stderr(String),
-}
-
-pub struct LiveSysCommandWatcher {
-    sys_command: SysCommand,
-    line_chan: std::sync::mpsc::Receiver<LiveOutputLine>,
-    eof_chan: std::sync::mpsc::Receiver<SysCommandResult>,
-    line_printing_func: Box<dyn Fn(LiveOutputLine) + Send + Sync + 'static>,
-}
-
-impl LiveSysCommandWatcher {
-    #[must_use]
-    fn get_latest_lines(&self) -> Vec<LiveOutputLine> {
-        self.line_chan.try_iter().collect()
-    }
-
-    #[must_use]
-    fn get_is_completed(&self) -> DeckResult<Option<SysCommandResult>> {
-        match self.eof_chan.try_recv() {
-            Ok(res) => Ok(Some(res)),
-            Err(TryRecvError::Empty) => Ok(None),
-            Err(TryRecvError::Disconnected) => Err(KnownError::SystemCommandThreadError(format!(
-                "Received disconnect from live runner thread for command: {:?}",
-                self.sys_command
-            ))),
-        }
-    }
-}
-
-fn WATCHME(watcher: LiveSysCommandWatcher) {
-    loop {
-        let latest_lines = watcher.get_latest_lines();
-        for line in latest_lines {
-            todo!("print line {:?}", line);
-        }
-        watcher.get_is_completed();
     }
 }
 
