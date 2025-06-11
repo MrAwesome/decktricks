@@ -2,6 +2,9 @@ use crate::prelude::*;
 
 use std::sync::Arc;
 
+// This is not the logic for actually running system commands, just the representation of what
+// those commands are and the context within which they run.
+
 #[derive(Debug)]
 pub struct SysCommandRunError {
     pub cmd: SysCommand,

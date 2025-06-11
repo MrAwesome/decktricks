@@ -1,9 +1,12 @@
-use std::process::{Command, Stdio};
-use std::thread;
-use crate::prelude::*;
+use std::io::Read;
 use super::system_command::*;
-use std::sync::mpsc;
+use crate::prelude::*;
+use duct::cmd;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::sync::Arc;
+
+// This file contains the actual logic for running commands.
 
 pub fn get_runner() -> Arc<dyn ActualRunner> {
     if cfg!(test) {
@@ -32,7 +35,7 @@ mock! {
 }
 
 // Don't instantiate this directly, use ctx.sys_command() instead
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct RealWorldActualRunner {}
 
 impl RealWorldActualRunner {
@@ -45,66 +48,81 @@ impl RealWorldActualRunner {
     }
 }
 
+// Helper struct: implements Read for Arc<T: Read>
+struct ArcReader<T>(Arc<T>);
+
+impl<T: Read> Read for ArcReader<T> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        // Arc does not provide interior mutability for Read, so you usually need to wrap in Mutex if you share it
+        // Here, we're just demoing reading from a ref, generally only safe if only used from one place at a time
+        Arc::get_mut(&mut self.0).unwrap().read(buf)
+    }
+}
+
 impl ActualRunner for RealWorldActualRunner {
     fn run_live(&self, sys_command: &SysCommand) -> DeckResult<LiveSysCommandWatcher> {
         if cfg!(test) {
             eprintln!("Culprit command: {sys_command:?}");
             panic!("Tried to run live real command in tests!");
         }
+        let first_sys_command = sys_command.clone();
+        let second_sys_command = sys_command.clone();
+        let final_sys_command = sys_command.clone();
 
-        let (rx, tx) = mpsc::channel::<LiveRunMessage>();
+        let mut c = cmd(first_sys_command.cmd, first_sys_command.args);
+        for (k, v) in first_sys_command.desired_env_vars {
+            c = c.env(k, v);
+        }
 
-        thread::spawn(move || {
-            let ctx = sys_command.ctx;
+        // NOTE: ".reader()" actually spawns off the command:
+        let reader_handle = c
+            .stderr_to_stdout()
+            .stdout_capture()
+            .reader()
+            .map_err(|err| sys_command_error_to_known_error(sys_command, err))?;
 
-            let command = Command::new(sys_command.cmd);
-            command.args(sys_command.args);
-            command.envs(sys_command.desired_env_vars);
-            command.stdout(Stdio::piped());
-            command.stderr(Stdio::piped());
+        let arc_reader_handle = Arc::new(reader_handle);
 
-            let child_res = command.spawn();
-            let child = match child_res {
-                Ok(child) => child,
-                Err(err) => {
-                    let known_error = sys_command_error_to_known_error(sys_command, err);
-                    rx.send(LiveRunMessage::Error(known_error));
-                    return;
+
+        let arcreader = ArcReader(arc_reader_handle.clone());
+
+        let reader = BufReader::new(arcreader);
+
+        // TODO: send across, create live watcher?
+
+        std::thread::spawn(move || {
+
+            let mut lines_iter = reader.lines();
+
+            // NOTE: this thread can be stuck if any grandchildren keep stdout open
+            //       when this is killed. if that becomes a problem, pstree out all
+            //       child procs and kill them.
+            loop {
+                match lines_iter.next() {
+                    Some(Ok(st)) => crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.decktricks_print_inner(
+                        LogType::Log,
+                        second_sys_command.ctx.as_ctx(),
+                        st,
+                    ),
+                    Some(Err(err)) => {
+                        warn!(second_sys_command.ctx.as_ctx(), "Error while reading stdout/err: {err}");
+                        return;
+                    },
+                    // From the duct docs:
+                    // "if `ReaderHandle` has indicated EOF successfully, then it's guaranteed
+                    // that this method will return `Ok(Some(_))`",
+                    // so we can just return here and let try_wait handle completion for us.
+                    None => return,
                 }
-            };
-
-            let stdout = child.stdout.take();
-            let stderr = child.stderr.take();
-
-            if stdout.is_none() {
-                warn!(
-                    ctx,
-                    "Live command stdout could not be taken! Command: {sys_command:?}"
-                )
             }
-
-            if stderr.is_none() {
-                warn!(
-                    ctx,
-                    "Live command stderr could not be taken! Command: {sys_command:?}"
-                )
-            }
-
-            // TODO: use child.kill() instead of kludgy ps tracking elsewhere
-            child.kill
         });
 
-        // STARTHERE
-        // TODO:
-        // [] open channel
-        // [] spawn command in another thread
-        // [] watch command stdout/stderr
-        // [] report back liveness periodically if needed?
-        // [] return a SysCommandResult back across the channel when done (if large amounts of text
-        // over channel won't cause issues)
-        // [] on final loop, use child.wait_with_output() to get output for use with SysCommandResult
-        //
-        // ENDHERE
+        Ok(LiveSysCommandWatcher::new(final_sys_command, arc_reader_handle))
+
+        // HELPME: figure out the best way to wait for the program to exit here
+        //  1) how often will programs close stdout but keep running?
+        //  2) how often will programs close stdout and then reopen it? can they even do that?
+
     }
 
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult> {
@@ -124,7 +142,9 @@ impl ActualRunner for RealWorldActualRunner {
             command.env(var, val);
         }
 
-        let output = command.output().map_err(|e| sys_command_error_to_known_error(sys_command, e))?;
+        let output = command
+            .output()
+            .map_err(|e| sys_command_error_to_known_error(sys_command, e))?;
 
         if output.status.success() {
             info!(

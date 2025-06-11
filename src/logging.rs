@@ -183,6 +183,15 @@ macro_rules! outer_print {
 }
 
 #[macro_export(local_inner_macros)]
+macro_rules! print_single_line_in_channel {
+    ( $( $args:tt )* ) => {
+        outer_print!(
+            $crate::prelude::LogType::Info,
+            $($args)*)
+    };
+}
+
+#[macro_export(local_inner_macros)]
 macro_rules! info {
     ( $( $args:tt )* ) => {
         outer_print!(

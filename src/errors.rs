@@ -24,6 +24,8 @@ pub enum KnownError {
     //RawSystemFailure(std::io::Error),
     RemoteScriptError(String),
     SeriousError(SeriousError),
+    LiveSystemCommandKillError(std::io::Error),
+    LiveSystemCommandStatusCheckError(std::io::Error),
     SystemCommandFailed(Box<SysCommandResult>),
     SystemCommandParse(String),
     SystemCommandThreadError(String),
@@ -65,9 +67,12 @@ impl Display for KnownError {
             Self::SystemCommandFailed(output) => {
                 write!(f, "System command failed: {output:?}")
             }
-            //            Self::RawSystemFailure(output) => {
-            //                write!(f, "System command error: {output:?}")
-            //            }
+            Self::LiveSystemCommandKillError(sys_kill_err) => {
+                write!(f, "Error killing live process: {sys_kill_err:#?}")
+            }
+            Self::LiveSystemCommandStatusCheckError(sys_status_err) => {
+                write!(f, "Error checking status of live process: {sys_status_err:#?}")
+            }
             Self::RemoteScriptError(output) => {
                 write!(f, "Error while fetching remote script: {output}")
             }

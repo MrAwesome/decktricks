@@ -38,6 +38,7 @@ General:
         [] possibly?   pgrep kwin_x11 | xargs -I {} tr '\0' '\n' < /proc/{}/environ | grep DISPLAY
     [] test inputs in nested desktop mode
     [] design about page, settings page
+    [] print cumulative cpu/mem for a process: pstree -p "$pid" | grep -oP '\(\d+\)' | grep -oP '\d+' | xargs -r ps -o %cpu=,%mem= -p | awk '{a+=$1; b+=$2} END {print a, b}'
 
 Settings:
 [] "All Conditional Actions Always Available (Expert)" / "Allow force install / force uninstall"

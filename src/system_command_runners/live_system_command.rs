@@ -1,11 +1,10 @@
-use std::sync::Arc;
 use crate::prelude::*;
+use std::sync::Arc;
 
-use std::sync::mpsc;
-use std::process::Child;
-use std::sync::mpsc::{Receiver, TryRecvError};
-use std::thread;
-use std::time::Duration;
+// TODO: create the LiveSysCommandWatcher
+// TODO: add the necessary functions to logging logic
+
+const LIVE_COMMAND_WATCH_INTERVAL_MILLIS: u64 = 1000;
 
 #[derive(Debug)]
 pub enum LiveOutputLine {
@@ -13,59 +12,47 @@ pub enum LiveOutputLine {
     Stderr(String),
 }
 
-// TODO: determine where the logic that (does stuff to each line) should live
 pub enum LiveRunMessage {
-    Error(KnownError)
+    Error(KnownError),
+    Started,
+    Running,
 }
 
 pub enum LiveProcHandlingCommand {
-    Kill
+    Kill,
 }
 
 pub struct LiveSysCommandWatcher {
-    output_recv: mpsc::Receiver<LiveRunMessage>,
-    child: Arc<Child>,
     sys_command: SysCommand,
-    line_chan: Receiver<LiveOutputLine>,
-    completed_chan: Receiver<SysCommandResult>,
-    line_printing_func: Box<dyn Fn(LiveOutputLine) + Send + Sync + 'static>,
+
+    // NOTE: this reader handle is actively being checked via lines() and eventually
+    //       via try_wait(), so be careful to only call kill() and not lines() elsewhere
+    reader_handle: Arc<duct::ReaderHandle>,
+
 }
 
 impl LiveSysCommandWatcher {
-    #[must_use]
-    fn get_latest_lines(&self) -> Vec<LiveOutputLine> {
-        self.line_chan.try_iter().collect()
+    pub fn new(sys_command: SysCommand, reader_handle: Arc<duct::ReaderHandle>) -> Self {
+        Self { sys_command, reader_handle }
     }
 
-    #[must_use]
+    // NOTE: this kill is not recursive per the duct docs for kill(), so the stdout reader thread
+    // can be stuck if the grandchildren keep stdout open for the kill target
+    fn kill(&self) -> DeckResult<()> {
+        self.reader_handle.kill().map_err(|e| KnownError::LiveSystemCommandKillError(e))
+    }
+
+    fn pids(&self) -> Vec<u32> {
+        self.reader_handle.pids()
+    }
+
     fn get_is_completed(&self) -> DeckResult<Option<SysCommandResult>> {
-        match self.completed_chan.try_recv() {
-            Ok(res) => Ok(Some(res)),
-            Err(TryRecvError::Empty) => Ok(None),
-            Err(TryRecvError::Disconnected) => Err(KnownError::SystemCommandThreadError(format!(
-                "Received disconnect from live runner thread for command: {:?}",
-                self.sys_command
-            ))),
-        }
-    }
-}
+        match self.reader_handle.try_wait() {
+            // Process is still running
+            Ok(None) => Ok(None),
 
-fn WATCHME(watcher: LiveSysCommandWatcher) -> DeckResult<SysCommandResult> {
-    loop {
-        let result = watcher.get_is_completed();
-
-        let latest_lines = watcher.get_latest_lines();
-        for line in latest_lines {
-            todo!("print line {:?}", line);
-        }
-
-        // Handle result here, after you've handled any final lines that might have come through
-        // TODO
-
-        match result {
-            Ok(Some(sys_command_result)) => return Ok(sys_command_result),
-            Ok(None) => thread::sleep(Duration::from_millis(500)),
-            Err(err) => return Err(err),
+            Ok(Some(output)) => Ok(Some(SysCommandResult::new(self.sys_command.clone(), output.clone()))),
+            Err(err) => Err(KnownError::LiveSystemCommandStatusCheckError(err)),
         }
     }
 }
