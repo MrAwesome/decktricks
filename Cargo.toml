@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 daemonize = "0.5.0"
-duct = "1.0.0"
 mockall = "0.13.0"
 rayon = "1.10.0"
 serde = { version = "1.0", features = ["derive"] }

@@ -85,6 +85,7 @@ pub(crate) fn run_remote_script(
     }
 
     ctx.sys_command_no_args(local_filename)
+        .enable_live_logging()
         .run()?
         .as_success()
 }

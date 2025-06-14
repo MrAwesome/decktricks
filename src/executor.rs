@@ -609,13 +609,14 @@ mod tests {
         let (_ctx, results) = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         let res = &results[0];
-        assert!(res
-            .as_ref()
-            .unwrap()
-            .get_message()
-            .unwrap()
-            .lines()
-            .any(|l| l == "protonup-qt"));
+        assert!(
+            res.as_ref()
+                .unwrap()
+                .get_message()
+                .unwrap()
+                .lines()
+                .any(|l| l == "protonup-qt")
+        );
         Ok(())
     }
 
@@ -649,13 +650,14 @@ mod tests {
         let (_ctx, results) = executor.execute(&command, logger);
         assert_eq!(results.len(), 1);
         let res = &results[0];
-        assert!(res
-            .as_ref()
-            .unwrap()
-            .get_message()
-            .unwrap()
-            .lines()
-            .any(|l| l == "lutris"));
+        assert!(
+            res.as_ref()
+                .unwrap()
+                .get_message()
+                .unwrap()
+                .lines()
+                .any(|l| l == "lutris")
+        );
 
         Ok(())
     }

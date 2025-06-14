@@ -1,9 +1,6 @@
-use std::io::Read;
+use crate::system_command_runners::merge_stdouterr::live_log_child_and_wait_with_output;
 use super::system_command::*;
 use crate::prelude::*;
-use duct::cmd;
-use std::io::BufRead;
-use std::io::BufReader;
 use std::sync::Arc;
 
 // This file contains the actual logic for running commands.
@@ -20,7 +17,6 @@ pub type RunnerRc = Arc<dyn ActualRunner>;
 
 pub trait ActualRunner: Send + Sync + std::fmt::Debug {
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult>;
-    fn run_live(&self, sys_command: &SysCommand) -> DeckResult<LiveSysCommandWatcher>;
 }
 
 use mockall::mock;
@@ -30,7 +26,6 @@ mock! {
 
     impl ActualRunner for TestActualRunner {
         fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult>;
-        fn run_live(&self, sys_command: &SysCommand) -> DeckResult<LiveSysCommandWatcher>;
     }
 }
 
@@ -48,108 +43,59 @@ impl RealWorldActualRunner {
     }
 }
 
-// Helper struct: implements Read for Arc<T: Read>
-struct ArcReader<T>(Arc<T>);
-
-impl<T: Read> Read for ArcReader<T> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        // Arc does not provide interior mutability for Read, so you usually need to wrap in Mutex if you share it
-        // Here, we're just demoing reading from a ref, generally only safe if only used from one place at a time
-        Arc::get_mut(&mut self.0).unwrap().read(buf)
-    }
-}
-
 impl ActualRunner for RealWorldActualRunner {
-    fn run_live(&self, sys_command: &SysCommand) -> DeckResult<LiveSysCommandWatcher> {
-        if cfg!(test) {
-            eprintln!("Culprit command: {sys_command:?}");
-            panic!("Tried to run live real command in tests!");
-        }
-        let first_sys_command = sys_command.clone();
-        let second_sys_command = sys_command.clone();
-        let final_sys_command = sys_command.clone();
-
-        let mut c = cmd(first_sys_command.cmd, first_sys_command.args);
-        for (k, v) in first_sys_command.desired_env_vars {
-            c = c.env(k, v);
-        }
-
-        // NOTE: ".reader()" actually spawns off the command:
-        let reader_handle = c
-            .stderr_to_stdout()
-            .stdout_capture()
-            .reader()
-            .map_err(|err| sys_command_error_to_known_error(sys_command, err))?;
-
-        let arc_reader_handle = Arc::new(reader_handle);
-
-
-        let arcreader = ArcReader(arc_reader_handle.clone());
-
-        let reader = BufReader::new(arcreader);
-
-        // TODO: send across, create live watcher?
-
-        std::thread::spawn(move || {
-
-            let mut lines_iter = reader.lines();
-
-            // NOTE: this thread can be stuck if any grandchildren keep stdout open
-            //       when this is killed. if that becomes a problem, pstree out all
-            //       child procs and kill them.
-            loop {
-                match lines_iter.next() {
-                    Some(Ok(st)) => crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.decktricks_print_inner(
-                        LogType::Log,
-                        second_sys_command.ctx.as_ctx(),
-                        st,
-                    ),
-                    Some(Err(err)) => {
-                        warn!(second_sys_command.ctx.as_ctx(), "Error while reading stdout/err: {err}");
-                        return;
-                    },
-                    // From the duct docs:
-                    // "if `ReaderHandle` has indicated EOF successfully, then it's guaranteed
-                    // that this method will return `Ok(Some(_))`",
-                    // so we can just return here and let try_wait handle completion for us.
-                    None => return,
-                }
-            }
-        });
-
-        Ok(LiveSysCommandWatcher::new(final_sys_command, arc_reader_handle))
-
-        // HELPME: figure out the best way to wait for the program to exit here
-        //  1) how often will programs close stdout but keep running?
-        //  2) how often will programs close stdout and then reopen it? can they even do that?
-
-    }
-
     fn run(&self, sys_command: &SysCommand) -> DeckResult<SysCommandResult> {
         if cfg!(test) {
             eprintln!("Culprit command: {sys_command:?}");
             panic!("Tried to run real command in tests!");
         }
 
+        let ctx = sys_command.get_ctx();
         let cmd = &sys_command.cmd;
         let args = &sys_command.args;
 
         // NOTE: Here is where we finally create the actual Command to be run.
-        let mut command = std::process::Command::new(cmd);
-        command.args(args);
+
+        let mut command;
+        if sys_command.pty_needed {
+            // Because many commands will buffer stdout if they thing they're not running in a
+            // terminal, we force a pty with the script command. This is a hacky-hacky-hack,
+            // but it fixes the problem for now.
+            //
+            // TODO: fix this hack, preferably using the portable_pty crate
+            command = std::process::Command::new("/usr/bin/script");
+            command.args(&["-q", "-e", "--command", format!("{} {}", cmd, args.join(" ")).as_ref(), "/dev/null"]);
+        } else {
+            command = std::process::Command::new(cmd);
+            command.args(args);
+        }
+
+        command.stderr(std::process::Stdio::piped());
+        command.stdout(std::process::Stdio::piped());
 
         for (var, val) in &sys_command.desired_env_vars {
             command.env(var, val);
         }
 
-        let output = command
-            .output()
+        let mut child_handle = command
+            .spawn()
+            .map_err(|e| sys_command_error_to_known_error(sys_command, e))?;
+
+        // TODO: determine if this log level check is needed - should be redundant?
+        if sys_command.live_logging_desired {
+            let cmdline_for_logging = format!("{} {}", cmd, args.join(" "));
+            live_log_child_and_wait_with_output(ctx, cmdline_for_logging, &mut child_handle)
+                .map_err(|e| sys_command_error_to_known_error(sys_command, e))?;
+        }
+
+        let output = child_handle.wait_with_output()
             .map_err(|e| sys_command_error_to_known_error(sys_command, e))?;
 
         if output.status.success() {
             info!(
-                sys_command.get_ctx(),
-                "Command {sys_command:#?} ran successfully with output:\n\n{}",
+                ctx,
+                "Command {sys_command:#?} ran successfully with {}output:\n\n{}",
+                if sys_command.live_logging_desired { "additional " } else { "" },
                 String::from_utf8_lossy(&output.stdout)
             );
         } else {
@@ -159,8 +105,9 @@ impl ActualRunner for RealWorldActualRunner {
                 .map(|c| c.to_string())
                 .unwrap_or_else(|| "UNKNOWN".into());
             info!(
-                sys_command.get_ctx(),
-                "Command {sys_command:#?} exited with non-zero exit code {exit_code} with:\n\n\nSTDOUT:\n\n{}\n\nSTDERR:\n\n{}",
+                ctx,
+                "Command {sys_command:#?} exited with non-zero exit code {exit_code} with {}output:\n\n\nSTDOUT:\n\n{}\n\nSTDERR:\n\n{}",
+                if sys_command.live_logging_desired { "additional " } else { "" },
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr)
             );
@@ -198,13 +145,5 @@ mod tests {
         let r = RealWorldActualRunner {};
         let sys_command = GeneralExecutionContext::test().sys_command_no_args("echo");
         let _ = r.run(&sys_command);
-    }
-
-    #[test]
-    #[should_panic(expected = "Tried to run live real command in tests!")]
-    fn test_real_world_live_command_panics() {
-        let r = RealWorldActualRunner {};
-        let sys_command = GeneralExecutionContext::test().sys_command_no_args("echo");
-        let _ = r.run_live(&sys_command);
     }
 }

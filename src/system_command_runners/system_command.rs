@@ -17,6 +17,8 @@ pub struct SysCommand {
     pub cmd: String,
     pub args: Vec<String>,
     pub desired_env_vars: Vec<(String, String)>,
+    pub live_logging_desired: bool,
+    pub pty_needed: bool,
 }
 
 impl PartialEq for SysCommand {
@@ -40,7 +42,19 @@ impl SysCommand {
             cmd: cmd.to_string(),
             args: args.into_iter().map(|x| x.to_string()).collect(),
             desired_env_vars: Vec::default(),
+            live_logging_desired: false,
+            pty_needed: false,
         }
+    }
+
+    pub fn force_pty(&mut self) -> &mut Self {
+        self.pty_needed = true;
+        self
+    }
+
+    pub fn enable_live_logging(&mut self) -> &mut Self {
+        self.live_logging_desired = true;
+        self
     }
 }
 
@@ -53,11 +67,6 @@ pub trait SysCommandRunner {
     fn run(&self) -> DeckResult<SysCommandResult> {
         let sys_command = self.get_cmd();
         self.get_ctx().get_runner().run(sys_command)
-    }
-
-    fn run_live(&self) -> DeckResult<LiveSysCommandWatcher> {
-        let sys_command = self.get_cmd();
-        self.get_ctx().get_runner().run_live(sys_command)
     }
 }
 

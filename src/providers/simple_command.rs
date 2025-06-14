@@ -75,6 +75,7 @@ impl ProviderActions for SimpleCommandProvider {
 
     fn run(&self) -> DeckResult<ActionSuccess> {
         self.ctx.sys_command(&self.command, self.args.iter())
+            .enable_live_logging()
             .env(PID_ENV_STRING, &self.trick_id)
             .run()?
             .as_success()

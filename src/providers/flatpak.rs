@@ -69,6 +69,11 @@ impl FlatpakProvider {
     fn flatpak_run(&self) -> DeckResult<ActionSuccess> {
         self.ctx
             .sys_command(FLATPAK_SYSTEM_COMMAND, ["run", &self.id])
+            // NOTE: We have to force a pty here, since certain flatpak packages (protonup-qt)
+            //       will buffer stdout until they end, if they think they're not running
+            //       in an interactive terminal session.
+            .force_pty()
+            .enable_live_logging()
             .run()?
             .as_success()
     }
@@ -84,6 +89,7 @@ impl FlatpakProvider {
 
         self.ctx
             .sys_command(FLATPAK_SYSTEM_COMMAND, args)
+            .enable_live_logging()
             .env("DECKTRICKS_IS_INSTALLING", self.ctx.trick.id.as_ref())
             .run()?
             .as_success()
@@ -92,6 +98,7 @@ impl FlatpakProvider {
     fn flatpak_uninstall(&self) -> DeckResult<ActionSuccess> {
         self.ctx
             .sys_command(FLATPAK_SYSTEM_COMMAND, ["uninstall", "-y", &self.id])
+            .enable_live_logging()
             .run()?
             .as_success()
     }
@@ -99,6 +106,7 @@ impl FlatpakProvider {
     fn flatpak_kill(&self) -> DeckResult<ActionSuccess> {
         self.ctx
             .sys_command(FLATPAK_SYSTEM_COMMAND, ["kill", &self.id])
+            .enable_live_logging()
             .run()?
             .as_success()
     }
@@ -106,6 +114,7 @@ impl FlatpakProvider {
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
         self.ctx
             .sys_command(FLATPAK_SYSTEM_COMMAND, ["update", &self.id])
+            .enable_live_logging()
             .run()?
             .as_success()
     }

@@ -118,6 +118,7 @@ impl ProviderActions for EmuDeckInstallerProvider {
 
     fn run(&self) -> DeckResult<ActionSuccess> {
         self.ctx.sys_command_no_args(get_emudeck_binary_path())
+            .enable_live_logging()
             .run()?
             .as_success()
     }

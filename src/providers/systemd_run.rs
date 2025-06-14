@@ -79,6 +79,7 @@ impl ProviderActions for SystemdRunProvider {
 
         self.ctx
             .sys_command("/usr/bin/systemd-run", args)
+            .enable_live_logging()
             //.env(PID_ENV_STRING, &self.trick_id)
             .run()?
             .as_success()
@@ -90,6 +91,7 @@ impl ProviderActions for SystemdRunProvider {
                 "/usr/bin/systemctl",
                 ["stop", self.systemd_run_data.unit_id.as_ref()],
             )
+            .enable_live_logging()
             .run()?
             .as_success()
     }

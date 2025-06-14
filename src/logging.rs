@@ -127,6 +127,7 @@ impl DecktricksLogger for DecktricksConsoleLogger {
     }
 
     fn actual_print_warn(&self, text: String) {
+        // NOTE: as noted above, eprintln_for_gui_logs assumes that actual_print_warn uses eprintln/stderr
         eprintln!("{text}");
     }
 
@@ -233,6 +234,28 @@ macro_rules! log {
         outer_print!(
             $crate::prelude::LogType::Log,
             $($args)*)
+    };
+}
+
+#[macro_export(local_inner_macros)]
+macro_rules! stdout_println {
+    ( $ctx:expr, $arg:tt ) => {
+        $ctx.get_logger().decktricks_print_inner(
+            LogType::Log,
+            $ctx.as_ctx(),
+            $arg,
+        )
+    };
+}
+
+#[macro_export(local_inner_macros)]
+macro_rules! stdout_eprintln {
+    ( $ctx:expr, $arg:tt ) => {
+        $ctx.get_logger().decktricks_print_inner(
+            LogType::Warn,
+            $ctx.as_ctx(),
+            $arg,
+        )
     };
 }
 
