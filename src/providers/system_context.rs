@@ -1,3 +1,4 @@
+use crate::providers::geforce_now::GeForceSystemContext;
 use crate::prelude::*;
 use crate::providers::emudeck_installer::EmuDeckSystemContext;
 use crate::providers::systemd_run::SystemdRunUnitsContext;
@@ -12,6 +13,7 @@ pub struct FullSystemContext {
     pub flatpak_ctx: FlatpakSystemContext,
     pub decky_ctx: DeckySystemContext,
     pub emudeck_ctx: EmuDeckSystemContext,
+    pub geforce_ctx: GeForceSystemContext,
     pub procs_ctx: RunningProgramSystemContext,
     pub systemd_run_ctx: SystemdRunUnitsContext,
     pub added_to_steam_ctx: AllKnownSteamShortcutsContext,
@@ -20,7 +22,7 @@ pub struct FullSystemContext {
 // NOTE: we gather optimistically, don't fail the whole gather if some particular error is encountered.
 impl FullSystemContext {
     pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> Self {
-        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, systemd_run_ctx, added_to_steam_ctx) = join_all!(
+        let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, geforce_ctx, systemd_run_ctx, added_to_steam_ctx) = join_all!(
             || DeckySystemContext::gather_with(&ctx.clone()),
             || FlatpakSystemContext::gather_with(&ctx.clone())
                 .map_err(|e| {
@@ -40,6 +42,7 @@ impl FullSystemContext {
                     e
                 })
                 .unwrap_or_default(),
+            || GeForceSystemContext::gather_with(&ctx.clone()),
             || SystemdRunUnitsContext::gather_with(&ctx.clone(), tricks_loader)
                 .map_err(|e| {
                     error!(ctx, "Error gathering systemd-run context: {}", e);
@@ -58,6 +61,7 @@ impl FullSystemContext {
             flatpak_ctx,
             decky_ctx,
             emudeck_ctx,
+            geforce_ctx,
             procs_ctx,
             systemd_run_ctx,
             added_to_steam_ctx,

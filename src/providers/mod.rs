@@ -1,3 +1,4 @@
+use crate::providers::geforce_now::GeForceInstallerProvider;
 use crate::prelude::*;
 use crate::providers::decky_installer::DeckyInstallerProvider;
 use crate::providers::emudeck_installer::EmuDeckInstallerProvider;
@@ -11,6 +12,7 @@ use std::ops::DerefMut;
 
 pub mod decky_installer;
 pub mod emudeck_installer;
+pub mod geforce_now;
 pub mod flatpak;
 mod flatpak_helpers;
 pub mod simple_command;
@@ -90,6 +92,14 @@ impl DynTrickProvider {
                 prov: Box::new(EmuDeckInstallerProvider::new(
                     ctx.clone(),
                     full_ctx.emudeck_ctx.clone(),
+                )),
+                ctx: ctx.clone(),
+                full_ctx: full_ctx.clone(),
+            },
+            ProviderConfig::GeForceInstaller(_emudeck_installer) => DynTrickProvider {
+                prov: Box::new(GeForceInstallerProvider::new(
+                    ctx.clone(),
+                    full_ctx.geforce_ctx.clone(),
                 )),
                 ctx: ctx.clone(),
                 full_ctx: full_ctx.clone(),

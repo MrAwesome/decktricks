@@ -1,17 +1,22 @@
+use crate::prelude::geforce_now::GEFORCE_LOCAL_EXECUTABLE;
 use crate::prelude::*;
 use crate::providers::emudeck_installer::get_emudeck_binary_path;
 use crate::utils::{get_homedir, which};
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::sync::LazyLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 use steam_shortcuts_util::parse_shortcuts;
 use steam_shortcuts_util::shortcut::{Shortcut, ShortcutOwned};
 use steam_shortcuts_util::shortcuts_to_bytes;
 
 const DECKTRICKS_FULL_APPID_FILENAME: &str = "/tmp/decktricks_newest_full_steam_appid";
+const DECKTRICKS_NAME_STRING: &str = "decktricks";
 
-static DECKTRICKS_NAME_STRING: std::sync::LazyLock<String> =
-    std::sync::LazyLock::new(|| "decktricks".to_string());
+static STEAM_USERDATA_PATH: LazyLock<String> = LazyLock::new(|| {
+    let homedir = get_homedir();
+    format!("{homedir}/.local/share/Steam/userdata")
+});
 
 use std::ops::{Deref, DerefMut};
 
@@ -46,7 +51,7 @@ impl SteamShortcut {
     }
 
     fn is_decktricks_shortcut(&self) -> bool {
-        self.tags.contains(&DECKTRICKS_NAME_STRING)
+        self.tags.iter().any(|s| s == DECKTRICKS_NAME_STRING)
     }
 
     fn is_existing_trick_shortcut(&self, trick_id: &TrickID) -> bool {
@@ -88,7 +93,7 @@ pub(crate) fn get_steam_shortcuts_inner(
         let shortcuts = get_current_shortcuts_from_file(&filename, fail_if_not_found)?;
         Ok(HashMap::from([(filename, shortcuts)]))
     } else {
-        let userdata_path = &get_userdata_path();
+        let userdata_path = get_userdata_path();
         let mut map = HashMap::new();
         for ref steam_userid in get_steam_userids(userdata_path, fail_if_not_found)? {
             let filename = format!("{userdata_path}/{steam_userid}/config/shortcuts.vdf");
@@ -188,6 +193,21 @@ impl TryFrom<&Trick> for TrickAddToSteamContext {
                 }
             },
 
+            ProviderConfig::GeForceInstaller(_emudeck) => {
+                let exe = format!("\"{}\"", GEFORCE_LOCAL_EXECUTABLE.as_str());
+                let start_dir = "/usr/bin".into();
+                let launch_options = String::default();
+                TrickAddToSteamContext {
+                    trick_id,
+                    app_name,
+                    exe,
+                    start_dir,
+                    icon,
+                    shortcut_path,
+                    launch_options,
+                }
+            },
+
             ProviderConfig::SimpleCommand(cmd) => {
                 let exe_unwrapped = which(&cmd.command)?;
 
@@ -245,9 +265,8 @@ fn get_unix_time() -> u32 {
         .as_secs() as u32
 }
 
-fn get_userdata_path() -> String {
-    let homedir = get_homedir();
-    format!("{homedir}/.local/share/Steam/userdata")
+fn get_userdata_path() -> &'static str {
+    STEAM_USERDATA_PATH.as_str()
 }
 
 fn get_steam_userids(userdata_path: &str, fail_if_not_found: bool) -> DeckResult<Vec<String>> {

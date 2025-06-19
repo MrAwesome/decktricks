@@ -91,6 +91,25 @@
             "more_info": "If you encounter strange errors in your quick menu, try uninstalling or updating Decky."
         },
         {
+            "id": "geforce-now",
+            "provider_config": {
+                "type": "ge-force-installer"
+            },
+            "tags": [
+                "geforce",
+                "geforce_now",
+                "nvidia",
+                "streaming"
+            ],
+            "categories": [
+                "recommended",
+                "streaming"
+            ],
+            "icon": "XXX",
+            "display_name": "NVIDIA GeForce NOW",
+            "description": "NVIDIA's cloud gaming service, allowing you to play AAA games at high resolution over the Internet."
+        },
+        {
             "id": "moonlight",
             "provider_config": {
                 "type": "flatpak",

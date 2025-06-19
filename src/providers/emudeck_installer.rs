@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::utils::get_running_pids_exact;
 use crate::utils::kill_pids;
-use crate::utils::{exists_and_executable, get_homedir, run_remote_script};
+use crate::utils::{exists_and_executable, get_homedir, fetch_and_prep_remote_executable};
 
 // TODO: determine differences between "running" (games being played) and "running the installer"
 // TODO: "installed" is $HOME/Applications/EmuDeck.AppImage
@@ -108,11 +108,13 @@ impl ProviderActions for EmuDeckInstallerProvider {
     }
 
     fn install(&self) -> DeckResult<ActionSuccess> {
-        run_remote_script(
+        fetch_and_prep_remote_executable(
             &self.ctx,
             EMUDECK_DOWNLOAD_URL,
             EMUDECK_INSTALLER_TEMP_FILENAME,
-        )?;
+        )?
+        .env(INSTALLING_ENV_STRING, self.ctx.trick.id.as_ref())
+        .run()?;
         success!("EmuDeck installer installed successfully! Run now to fully install EmuDeck.")
     }
 

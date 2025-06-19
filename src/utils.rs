@@ -2,6 +2,11 @@ use crate::prelude::*;
 use std::fmt::Display;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
+
+static HOMEDIR: LazyLock<String> = LazyLock::new(||
+    std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
+);
 
 const KNOWN_CI_ENV_VARS: &[&str] = &["CI", "GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
 
@@ -26,26 +31,27 @@ pub fn running_in_ci_container() -> bool {
 
 #[allow(clippy::unnecessary_wraps)]
 #[cfg(test)]
-pub(crate) fn run_remote_script(
-    _ctx: &impl ExecCtx,
-    url: &str,
-    local_filename: &str,
-) -> DeckResult<ActionSuccess> {
-    warn!(
-        ExecutionContext::general_for_test(),
-        "Not running run_remote_script({url}, {local_filename}) from test..."
-    );
-    success!()
-}
-
-#[cfg(not(test))]
-pub(crate) fn run_remote_script(
+#[must_use]
+pub(crate) fn fetch_and_prep_remote_executable(
     ctx: &impl ExecCtx,
     url: &str,
     local_filename: &str,
-) -> DeckResult<ActionSuccess> {
+) -> DeckResult<SysCommand> {
+    warn!(
+        ExecutionContext::general_for_test(),
+        "Not running run_remote_executable({url}, {local_filename}) from test..."
+    );
+    Ok(ctx.sys_command_no_args("echo"))
+}
+
+#[cfg(not(test))]
+#[must_use]
+pub(crate) fn fetch_and_prep_remote_executable(
+    ctx: &impl ExecCtx,
+    url: &str,
+    local_filename: &str,
+) -> DeckResult<SysCommand> {
     use std::fs::File;
-    use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
     use ureq;
 
@@ -54,10 +60,6 @@ pub(crate) fn run_remote_script(
         .call()
         .map_err(|e| {
             KnownError::RemoteScriptError(format!("Failed downloading local script file: {e:#?}"))
-        })?
-        .into_string()
-        .map_err(|e| {
-            KnownError::RemoteScriptError(format!("Failed stringifying local script file: {e:#?}"))
         })?;
     // let response = reqwest::blocking::get(url).map_err(KnownError::from)?;
     // let data = response.bytes()?.as_ref();
@@ -65,10 +67,12 @@ pub(crate) fn run_remote_script(
     // These are in blocks to ensure that files are closed out
     // before attempting to do further changes
     {
+
         let mut dest = File::create(local_filename).map_err(|e| {
             KnownError::RemoteScriptError(format!("Failed to create local script file: {e:#?}"))
         })?;
-        write!(&mut dest, "{data}").map_err(|e| {
+
+        std::io::copy(&mut data.into_reader(), &mut dest).map_err(|e| {
             KnownError::RemoteScriptError(format!("Failed to write local script file: {e:#?}"))
         })?;
         //copy(&mut response.into_reader().take(10_000_000).?, &mut dest)?;
@@ -84,14 +88,17 @@ pub(crate) fn run_remote_script(
         )?;
     }
 
-    ctx.sys_command_no_args(local_filename)
-        .enable_live_logging()
-        .run()?
-        .as_success()
+    let mut sys_command = ctx.sys_command_no_args(local_filename);
+    sys_command
+        // TODO: is force_pty needed for geforce now to have live logs?
+        .force_pty()
+        .enable_live_logging();
+
+    Ok(sys_command)
 }
 
-pub fn get_homedir() -> String {
-    std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
+pub fn get_homedir() -> &'static str {
+    HOMEDIR.as_str()
 }
 
 pub fn get_decktricks_dir() -> PathBuf {
@@ -112,12 +119,27 @@ pub fn exists_and_executable(ctx: &impl ExecCtx, path: &str) -> bool {
     }
 }
 
+// NOTE: this only works with binary files! for scripts,
 pub(crate) fn get_running_pids_exact(
     ctx: &impl ExecCtx,
     binary_name: &str,
 ) -> DeckResult<Vec<String>> {
     Ok(ctx
         .sys_command("ps", ["-C", binary_name, "-o", "pid="])
+        .run()?
+        .as_success()?
+        .get_message_or_blank()
+        .split_whitespace()
+        .map(ToString::to_string)
+        .collect())
+}
+
+pub(crate) fn pgrep(
+    ctx: &impl ExecCtx,
+    pattern: &str,
+) -> DeckResult<Vec<String>> {
+    Ok(ctx
+        .sys_command("pgrep", ["-f", pattern])
         .run()?
         .as_success()?
         .get_message_or_blank()

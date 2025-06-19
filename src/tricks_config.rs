@@ -165,6 +165,7 @@ pub enum ProviderConfig {
     Flatpak(Flatpak),
     DeckyInstaller(DeckyInstaller),
     EmuDeckInstaller(EmuDeckInstaller),
+    GeForceInstaller(GeForceInstaller),
     SimpleCommand(SimpleCommand),
     SystemdRun(SystemdRun),
     //SystemPackage(SystemPackage)
@@ -176,6 +177,7 @@ impl std::fmt::Display for ProviderConfig {
             ProviderConfig::Flatpak(_) => write!(f, "Flatpak"),
             ProviderConfig::DeckyInstaller(_) => write!(f, "DeckyInstaller"),
             ProviderConfig::EmuDeckInstaller(_) => write!(f, "EmuDeckInstaller"),
+            ProviderConfig::GeForceInstaller(_) => write!(f, "GeForceInstaller"),
             ProviderConfig::SimpleCommand(_) => write!(f, "SimpleCommand"),
             ProviderConfig::SystemdRun(_) => write!(f, "SystemdRun"),
         }
@@ -231,6 +233,9 @@ pub struct DeckyInstaller;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct EmuDeckInstaller;
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct GeForceInstaller;
 
 //#[derive(Debug, Deserialize, Serialize)]
 //struct SystemPackage {

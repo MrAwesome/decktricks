@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::utils::run_remote_script;
+use crate::utils::fetch_and_prep_remote_executable;
 
 // TODO: detect if on steam deck or not, and *do not mark as installable if not on steam deck*
 
@@ -30,10 +30,12 @@ impl DeckySystemContext {
         let (is_installed, is_running) = join_all!(
             // We can rely on SysCommand to log if we encounter any errors during gather, and just
             // default to false if anything goes wrong.
-            || ctx.sys_command("/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
+            || ctx
+                .sys_command("/usr/bin/systemctl", ["is-enabled", "plugin_loader"])
                 .run()
                 .is_ok_and(|res| res.ran_successfully()),
-            || ctx.sys_command("/usr/bin/systemctl", ["is-active", "plugin_loader"])
+            || ctx
+                .sys_command("/usr/bin/systemctl", ["is-active", "plugin_loader"])
                 .run()
                 .is_ok_and(|res| res.ran_successfully())
         );
@@ -97,7 +99,13 @@ impl ProviderActions for DeckyInstallerProvider {
 
     fn install(&self) -> DeckResult<ActionSuccess> {
         let _ = &self.ctx.sys_command("xhost", vec!["+"]).run();
-        run_remote_script(&self.ctx, DECKY_DOWNLOAD_URL, DECKY_INSTALLER_TEMP_FILENAME)?;
+        fetch_and_prep_remote_executable(
+            &self.ctx,
+            DECKY_DOWNLOAD_URL,
+            DECKY_INSTALLER_TEMP_FILENAME,
+        )?
+        .env(INSTALLING_ENV_STRING, self.ctx.trick.id.as_ref())
+        .run()?;
         success!("Decky installed successfully!")
     }
 

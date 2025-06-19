@@ -90,7 +90,7 @@ impl FlatpakProvider {
         self.ctx
             .sys_command(FLATPAK_SYSTEM_COMMAND, args)
             .enable_live_logging()
-            .env("DECKTRICKS_IS_INSTALLING", self.ctx.trick.id.as_ref())
+            .env(INSTALLING_ENV_STRING, self.ctx.trick.id.as_ref())
             .run()?
             .as_success()
     }

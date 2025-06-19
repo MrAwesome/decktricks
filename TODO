@@ -2,10 +2,10 @@
     * "Decktricks: no more Desktop Mode!"
 
 
+[] "set sudo password". should be super easy, see decky installer
 [] Add precommit hook looking for triple X and do not commit
 [] clean up unwraps in src/dispatcher.rs
 [] codemod SpecificActionState into SpecificExecutionContext
-
 
 [] HANGING ON EXIT
     [] investigate why this is happening (figure out a repro case from lemuel's message and check over ssh on deck)
@@ -16,7 +16,7 @@ Documentation:
 
 Add to steam:
     [] make reboot to game mode only happen in SteamOS (or double-check that it works correctly on Chimera etc, or offer a cmdline flag)
-    [] look at /usr/bin/steamos-add-to-steam for clues on how to add to steam without needing to restart steam
+    [] look at /usr/bin/steamos-add-to-steam for clues on how to add to steam without needing to restart steam (can you use that, then edit the entry in the file?)
 
 General:
     [] implement general updates and make a button
@@ -68,7 +68,6 @@ Providers
 [] junk store
 [x?] "nested desktop" from the software center
 [] steamtinkerlaunch
-[] prism launcher (minecraft)
 [] mod: RDO lobby manager
 [] customscript, bash scripts which are compiled into the binary
 [] modorganizer2: https://github.com/rockerbacon/modorganizer2-linux-installer/

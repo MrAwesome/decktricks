@@ -68,7 +68,7 @@ fn flatpak_list(ctx: &impl ExecCtx) -> DeckResult<ActionSuccess> {
         .as_success()
 }
 
-fn flatpak_ps(ctx: &impl ExecCtx) -> DeckResult<ActionSuccess> {
+pub(crate) fn flatpak_ps(ctx: &impl ExecCtx) -> DeckResult<ActionSuccess> {
     // NOTE: when debugging, to see what this actually sees here, pipe flatpak ps to cat.
     ctx.sys_command("flatpak", ["ps", "--columns=application"])
         .run()?
