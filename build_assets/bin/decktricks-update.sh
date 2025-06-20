@@ -108,7 +108,9 @@ if ! curl -f -L --retry 7 --connect-timeout 60 -o "$downloaded_hash_filename" "$
     checksums_enabled=false
 fi
 
-if [[ ! -s "$downloaded_hash_filename" ]]; then
+if [[ -s "$downloaded_hash_filename" ]]; then
+    cat "$downloaded_hash_filename"
+else
     empty_downloaded_checksum_file_warning="[WARN] Remote checksum file was empty/missing! This is a serious bug, please report it at $issues_link
 Downloaded hash file:
 $(cat "$downloaded_hash_filename" || echo "Not found.")
@@ -126,6 +128,8 @@ if [[ ! -s "$installed_hash_filename" ]]; then
     echo "[WARN] Local checksum file was empty/missing! This is probably fine, as we will replace it below."
 
     local_hashfile_found=false
+else
+    cat "$installed_hash_filename"
 fi
 
 if "$checksums_enabled" && "$local_hashfile_found"; then
