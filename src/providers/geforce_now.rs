@@ -19,6 +19,10 @@ pub(crate) static GEFORCE_LOCAL_EXECUTABLE: LazyLock<String> = LazyLock::new(|| 
     )
 });
 
+static GEFORCE_PGREP_STRING: LazyLock<String> = LazyLock::new(|| {
+    format!("bash {}", GEFORCE_LOCAL_EXECUTABLE.as_str())
+});
+
 #[derive(Debug)]
 pub struct GeForceInstallerProvider {
     ctx: SpecificExecutionContext,
@@ -42,7 +46,7 @@ impl GeForceSystemContext {
     pub(crate) fn gather_with(ctx: &impl ExecCtx) -> Self {
         let (is_installed, running_pids) = join_all!(
             || exists_and_executable(ctx, GEFORCE_LOCAL_EXECUTABLE.as_str()),
-            || pgrep(ctx, GEFORCE_LOCAL_EXECUTABLE.as_str()).unwrap_or_default()
+            || pgrep(ctx, GEFORCE_PGREP_STRING.as_str()).unwrap_or_default()
         );
 
         Self {

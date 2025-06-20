@@ -2,6 +2,10 @@
     * "Decktricks: no more Desktop Mode!"
 
 
+NSL:
+    [] individual launchers: 
+        /bin/bash -c 'curl -Ls https://raw.githubusercontent.com/moraroy/NonSteamLaunchers-On-Steam-Deck/main/NonSteamLaunchers.sh | nohup /bin/bash -s -- "Epic Games"'
+
 [] "set sudo password". should be super easy, see decky installer
 [] Add precommit hook looking for triple X and do not commit
 [] clean up unwraps in src/dispatcher.rs
