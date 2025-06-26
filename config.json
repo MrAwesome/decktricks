@@ -3,7 +3,8 @@
 
     "known_categories": [
         "recommended",
-        "gaming",
+        "launchers",
+        "games",
         "entertainment",
         "streaming",
         "system",
@@ -69,7 +70,7 @@
                 "prism"
             ],
             "categories": [
-                "gaming"
+                "launchers"
             ],
             "display_name": "Prism Launcher (Minecraft)",
             "description": "A custom launcher for Minecraft that allows you to easily manage multiple installations of Minecraft at once."
@@ -187,7 +188,7 @@
             ],
             "categories": [
                 "recommended",
-                "gaming"
+                "launchers"
             ],
             "display_name": "RetroDeck",
             "description": "Easy setup tool for emulation. Has many, many different emulators available.\n(NOTE: May take a long time to install on a slower Internet connection.)"
@@ -205,7 +206,7 @@
                 "epic"
             ],
             "categories": [
-                "gaming"
+                "launchers"
             ],
             "icon": "XXX",
             "display_name": "Lutris",
@@ -218,7 +219,7 @@
                 "id": "org.DolphinEmu.dolphin-emu"
             },
             "categories": [
-                "gaming"
+                "launchers"
             ],
             "icon": "XXX",
             "display_name": "Dolphin Emulator (Gamecube/Wii)",
@@ -239,7 +240,7 @@
             ],
             "categories": [
                 "recommended",
-                "gaming"
+                "launchers"
             ],
             "icon": "XXX",
             "display_name": "Heroic Launcher (GOG, Epic, Amazon)",
@@ -412,6 +413,92 @@
             "icon": "XXX",
             "display_name": "Spotify",
             "description": "Online music streaming service."
+        },
+        {
+            "id": "supertuxkart",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "net.supertuxkart.SuperTuxKart"
+            },
+            "tags": [
+                "games",
+                "opensource"
+            ],
+            "categories": [
+                "games"
+            ],
+            "icon": "XXX",
+            "display_name": "Super Tux Kart",
+            "description": "Classic open-source racing game, inspired by Mario Kart."
+        },
+        {
+            "id": "astro-menace",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "com.viewizard.AstroMenace"
+            },
+            "tags": [
+                "games",
+                "opensource"
+            ],
+            "categories": [
+                "games"
+            ],
+            "icon": "XXX",
+            "display_name": "AstroMenace",
+            "description": "Scrolling space shoot-em-up, with 3d graphics."
+        },
+        {
+            "id": "stunt-rally",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "org.tuxfamily.StuntRally"
+            },
+            "tags": [
+                "games",
+                "opensource"
+            ],
+            "categories": [
+                "games"
+            ],
+            "icon": "XXX",
+            "display_name": "Stunt Rally",
+            "description": "3D racing game, with sci-fi elements and a track editor."
+        },
+        {
+            "id": "zeroad",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "com.play0ad.zeroad"
+            },
+            "tags": [
+                "games",
+                "opensource"
+            ],
+            "categories": [
+                "games"
+            ],
+            "icon": "XXX",
+            "display_name": "Zero A.D.",
+            "description": "Real-time strategy game set in ancient times, with 13 controllable factions."
+        },
+        {
+            "id": "warzone2100",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "net.wz2100.wz2100"
+            },
+            "tags": [
+                "games",
+                "opensource"
+            ],
+            "categories": [
+                "games"
+            ],
+            "icon": "XXX",
+            "notes": "May need manual download of video files: https://github.com/Warzone2100/warzone2100?tab=readme-ov-file#videos",
+            "display_name": "Warzone 2100",
+            "description": "Originally a real-time strategy game for Windows and PlayStation, it has been developed as an open-source project by a dedicated community for over two decades."
         }
     ]
 }
