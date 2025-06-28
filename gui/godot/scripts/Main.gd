@@ -29,6 +29,15 @@ func initialize_action_button(
 ):
 	action_button.button_original_color = action_button.modulate
 	action_button.focus_entered.connect(focus_button.bind(action_button))
+	action_button.focus_exited.connect(rejigger_focus_on_visibility_loss.bind(action_button).call_deferred)
+
+func rejigger_focus_on_visibility_loss(action_button: ActionButton):
+	if !action_button.is_visible_in_tree():
+		var sibs = action_button.get_parent().get_children()
+		for sib in sibs:
+			if sib.is_visible_in_tree():
+				sib.grab_focus.call_deferred()
+				break
 
 # On button focus, make sure that at least one row above can be focused (to fix scrolling up)
 func focus_button(button: Button):

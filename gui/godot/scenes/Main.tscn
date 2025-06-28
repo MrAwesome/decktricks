@@ -29,7 +29,7 @@ script = ExtResource("1")
 ; to keep track of all the subprocesses we start. Lowering this will make the UI more responsive to system events.
 
 [node name="UIRefreshTimer" type="Timer" parent="."]
-wait_time = 3
+wait_time = 3.0
 autostart = true
 
 [node name="LogRefreshTimer" type="Timer" parent="."]
