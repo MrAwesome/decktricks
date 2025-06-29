@@ -4,9 +4,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-static HOMEDIR: LazyLock<String> = LazyLock::new(||
-    std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string())
-);
+static HOMEDIR: LazyLock<String> =
+    LazyLock::new(|| std::env::var("HOME").unwrap_or_else(|_| "/home/deck".to_string()));
 
 const KNOWN_CI_ENV_VARS: &[&str] = &["CI", "GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
 
@@ -56,18 +55,15 @@ pub(crate) fn fetch_and_prep_remote_executable(
     use ureq;
 
     // TODO: make this and the operations below test-safe
-    let data = ureq::get(url)
-        .call()
-        .map_err(|e| {
-            KnownError::RemoteScriptError(format!("Failed downloading local script file: {e:#?}"))
-        })?;
+    let data = ureq::get(url).call().map_err(|e| {
+        KnownError::RemoteScriptError(format!("Failed downloading local script file: {e:#?}"))
+    })?;
     // let response = reqwest::blocking::get(url).map_err(KnownError::from)?;
     // let data = response.bytes()?.as_ref();
 
     // These are in blocks to ensure that files are closed out
     // before attempting to do further changes
     {
-
         let mut dest = File::create(local_filename).map_err(|e| {
             KnownError::RemoteScriptError(format!("Failed to create local script file: {e:#?}"))
         })?;
@@ -134,10 +130,7 @@ pub(crate) fn get_running_pids_exact(
         .collect())
 }
 
-pub(crate) fn pgrep(
-    ctx: &impl ExecCtx,
-    pattern: &str,
-) -> DeckResult<Vec<String>> {
+pub(crate) fn pgrep(ctx: &impl ExecCtx, pattern: &str) -> DeckResult<Vec<String>> {
     Ok(ctx
         .sys_command("pgrep", ["-f", pattern])
         .run()?
@@ -179,4 +172,29 @@ pub fn which<T: AsRef<std::ffi::OsStr> + Display>(binary_name: T) -> DeckResult<
         })?
         .to_string_lossy()
         .to_string())
+}
+
+pub fn is_running_under_steam() -> bool {
+    std::env::var("SteamEnv").is_ok_and(|v| v == "1")
+}
+
+pub fn get_steam_appid() -> Option<String> {
+    match std::env::var("STEAM_COMPAT_TRANSCODED_MEDIA_PATH") {
+        Ok(val) => {
+            if val.is_empty() {
+                None
+            } else {
+                let maybe_potential_appid: Option<&str> = val.rsplitn(2, '/').next();
+
+                if maybe_potential_appid.is_some_and(|potential_appid| {
+                    potential_appid.chars().all(|c| c.is_ascii_digit())
+                }) {
+                    maybe_potential_appid.map(Into::into)
+                } else {
+                    None
+                }
+            }
+        }
+        Err(_err) => None
+    }
 }

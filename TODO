@@ -1,6 +1,8 @@
 * Copy
     * "Decktricks: no more Desktop Mode!"
 
+to get appid: split STEAM_COMPAT_TRANSCODED_MEDIA_PATH by /, then take last and make sure it's a number
+
 
 NSL:
     [] individual launchers: 

@@ -7,6 +7,7 @@ decktricks_logging_init!(LogType::Warn);
 
 pub mod actions;
 pub mod add_to_steam;
+pub mod controller_layout;
 pub mod errors;
 //#[allow(refining_impl_trait)]
 pub mod prelude;
