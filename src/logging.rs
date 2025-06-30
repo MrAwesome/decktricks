@@ -70,7 +70,7 @@ pub trait DecktricksLogger: Send + Sync + Debug {
     fn actual_print_error(&self, text: String);
     fn actual_print_info(&self, text: String);
     fn actual_print_warn(&self, text: String);
-    fn store(&self, ctx: ExecutionContext, text: String);
+    fn store(&self, ctx: ExecutionContext, log_type: LogType, text: String);
 
     fn decktricks_print_inner(&self, log_type: LogType, ctx: ExecutionContext, text: String) {
         let to_print = text.clone();
@@ -82,7 +82,7 @@ pub trait DecktricksLogger: Send + Sync + Debug {
             LogType::Warn => self.actual_print_warn(to_print),
         };
 
-        self.store(ctx, text);
+        self.store(ctx, log_type, text);
     }
 }
 
@@ -137,7 +137,7 @@ impl DecktricksLogger for DecktricksConsoleLogger {
         eprintln!("{text}");
     }
 
-    fn store(&self, _ctx: ExecutionContext, _text: String) {}
+    fn store(&self, _ctx: ExecutionContext, _log_type: LogType, _text: String) {}
 }
 
 #[allow(clippy::crate_in_macro_def)] // This is desired, each crate should define its own logger

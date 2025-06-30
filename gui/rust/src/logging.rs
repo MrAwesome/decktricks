@@ -126,10 +126,19 @@ impl DecktricksLogger for DecktricksGodotLogger {
         godot_error!("{text}");
     }
 
-    fn store(&self, ctx: ExecutionContext, text: String) {
+    fn store(&self, ctx: ExecutionContext, log_type: LogType, text: String) {
         let channel = ctx.get_log_channel().clone();
+        let color = match log_type {
+            LogType::Debug => "darkgrey",
+            LogType::Info => "grey",
+            LogType::Log => "green",
+            LogType::Warn => "orange",
+            LogType::Error => "red",
+        };
         self.sender
-            .send((channel, text.to_string()))
+            .send((channel,
+                    format!("[color={color}]{text}[/color]")
+                    ))
             .unwrap_or_else(|e| {
                 self.actual_print_error(format!("Error sending to log storage: {e}"));
             });
