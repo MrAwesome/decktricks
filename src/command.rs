@@ -1,4 +1,4 @@
-use crate::steam::SteamSubcommand;
+use crate::{actions::SpecificAction, steam::SteamSubcommand};
 use clap::ValueEnum;
 use serde::Serialize;
 use crate::gui::GuiType;
@@ -165,5 +165,19 @@ impl Action {
         matches!(self, Self::Info { .. } | Self::GetConfig)
             || (gather_context_on_specific_actions
                 && matches!(TypedAction::from(self), TypedAction::Specific(_)))
+    }
+}
+
+impl From<SpecificAction> for Action {
+    fn from(a: SpecificAction) -> Self {
+        match a {
+            SpecificAction::Run { id } => Self::Run { id },
+            SpecificAction::Update { id } => Self::Update { id: Some(id) },
+            SpecificAction::Uninstall { id } => Self::Uninstall { id },
+            SpecificAction::Install { id } => Self::Install { id },
+            SpecificAction::Kill { id } => Self::Kill { id },
+            SpecificAction::AddToSteam { id } => Self::AddToSteam { id },
+            SpecificAction::Info { id } => Self::Info { id },
+        }
     }
 }

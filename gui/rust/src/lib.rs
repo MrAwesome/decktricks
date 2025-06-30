@@ -7,6 +7,7 @@ use decktricks::prelude::*;
 use godot::classes::Engine;
 use godot::prelude::*;
 mod action_button;
+mod initial_setup;
 pub mod dispatcher;
 mod gui;
 mod utils;
@@ -16,20 +17,6 @@ pub mod logs_container;
 pub(crate) const UI_REFRESH_DELAY_MILLIS: u64 = 200;
 
 decktricks_logging_init!(LogType::Log, DecktricksGodotLogger);
-
-// For use only within this crate, and not within logging.rs:
-pub(crate) static EARLY_LOGGING_CONTEXT: LazyLock<Arc<ExecutionContext>> =
-    LazyLock::new(|| {
-        Arc::new(ExecutionContext::internal_get_for_logging(
-            get_log_level(),
-            Arc::new(DecktricksGodotLogger::new()),
-        ))
-    });
-
-// For use only within this crate, and not within logging.rs:
-pub(crate) fn early_log_ctx() -> &'static ExecutionContext {
-    &EARLY_LOGGING_CONTEXT
-}
 
 struct DecktricksGui;
 

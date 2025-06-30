@@ -119,7 +119,7 @@ pub struct SystemdRunUnitsContext {
 }
 
 impl SystemdRunUnitsContext {
-    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> DeckResult<Self> {
+    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &LoadedConfig) -> DeckResult<Self> {
         // Find all of our detached commands
         let all_unit_ids: Vec<String> = tricks_loader
             .get_all_tricks()

@@ -21,7 +21,7 @@ pub struct FullSystemContext {
 
 // NOTE: we gather optimistically, don't fail the whole gather if some particular error is encountered.
 impl FullSystemContext {
-    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &TricksLoader) -> Self {
+    pub fn gather_with(ctx: &impl ExecCtx, tricks_loader: &LoadedConfig) -> Self {
         let (decky_ctx, flatpak_ctx, procs_ctx, emudeck_ctx, geforce_ctx, systemd_run_ctx, added_to_steam_ctx) = join_all!(
             || DeckySystemContext::gather_with(&ctx.clone()),
             || FlatpakSystemContext::gather_with(&ctx.clone())

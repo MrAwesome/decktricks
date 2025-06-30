@@ -1,6 +1,10 @@
-use std::sync::Arc;
-use std::fmt::Debug;
 use crate::prelude::*;
+use std::fmt::Debug;
+use std::sync::Arc;
+
+#[cfg(test)]
+pub static LOGGER_FOR_TESTS: std::sync::LazyLock<Arc<DecktricksConsoleLogger>> =
+    std::sync::LazyLock::new(|| Arc::new(DecktricksConsoleLogger::new()));
 
 #[macro_export(local_inner_macros)]
 macro_rules! decktricks_logging_init {
@@ -11,19 +15,25 @@ macro_rules! decktricks_logging_init {
         use std::sync::{Arc, LazyLock, RwLock};
         use $crate::prelude::LogType;
 
-        pub static CRATE_DECKTRICKS_DEFAULT_LOGGER: LazyLock<Arc<$logger>> = LazyLock::new(|| Arc::new(<$logger>::new()));
+        pub static CRATE_DECKTRICKS_LOGGER: LazyLock<Arc<$logger>> =
+            LazyLock::new(|| Arc::new(<$logger>::new()));
 
         pub const CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL: LogType = $min_log_level;
 
         pub static CRATE_DECKTRICKS_CURRENT_LOG_LEVEL: LazyLock<Arc<RwLock<LogType>>> =
-            LazyLock::new(|| Arc::new(RwLock::new(
-                        $crate::utils::check_log_level_env_var().unwrap_or($min_log_level)
-                        )));
+            LazyLock::new(|| {
+                Arc::new(RwLock::new(
+                    $crate::utils::check_log_level_env_var().unwrap_or($min_log_level),
+                ))
+            });
     };
 }
 
 pub fn get_log_level() -> LogType {
-    (*crate::CRATE_DECKTRICKS_CURRENT_LOG_LEVEL).try_read().map(|x| *x).unwrap_or(crate::CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL)
+    (*crate::CRATE_DECKTRICKS_CURRENT_LOG_LEVEL)
+        .try_read()
+        .map(|x| *x)
+        .unwrap_or(crate::CRATE_DECKTRICKS_DEFAULT_LOG_LEVEL)
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -62,12 +72,7 @@ pub trait DecktricksLogger: Send + Sync + Debug {
     fn actual_print_warn(&self, text: String);
     fn store(&self, ctx: ExecutionContext, text: String);
 
-    fn decktricks_print_inner(
-        &self,
-        log_type: LogType,
-        ctx: ExecutionContext,
-        text: String,
-    ) {
+    fn decktricks_print_inner(&self, log_type: LogType, ctx: ExecutionContext, text: String) {
         let to_print = text.clone();
         match log_type {
             LogType::Log => self.actual_print(to_print),
@@ -86,6 +91,7 @@ pub struct DecktricksConsoleLogger {
     log_level: LogType,
 }
 
+#[cfg(test)]
 impl Default for DecktricksConsoleLogger {
     fn default() -> Self {
         Self::new()
@@ -96,7 +102,7 @@ impl DecktricksConsoleLogger {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            log_level: get_log_level()
+            log_level: get_log_level(),
         }
     }
 }
@@ -240,22 +246,16 @@ macro_rules! log {
 #[macro_export(local_inner_macros)]
 macro_rules! stdout_println {
     ( $ctx:expr, $arg:tt ) => {
-        $ctx.get_logger().decktricks_print_inner(
-            LogType::Log,
-            $ctx.as_ctx(),
-            $arg,
-        )
+        $ctx.get_logger()
+            .decktricks_print_inner(LogType::Log, $ctx.as_ctx(), $arg)
     };
 }
 
 #[macro_export(local_inner_macros)]
 macro_rules! stdout_eprintln {
     ( $ctx:expr, $arg:tt ) => {
-        $ctx.get_logger().decktricks_print_inner(
-            LogType::Warn,
-            $ctx.as_ctx(),
-            $arg,
-        )
+        $ctx.get_logger()
+            .decktricks_print_inner(LogType::Warn, $ctx.as_ctx(), $arg)
     };
 }
 

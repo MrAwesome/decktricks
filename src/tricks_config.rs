@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -13,6 +14,7 @@ pub const DEFAULT_CONFIG_CONTENTS: &str = include_str!("../config.json");
 
 #[derive(Debug, Deserialize)]
 pub struct TricksConfig {
+    pub settings: DecktricksConfigSettings,
     pub known_categories: Vec<CategoryID>,
     pub tricks: Vec<Trick>,
 }
@@ -30,13 +32,21 @@ impl From<serde_json::Error> for KnownError {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct TricksLoader {
-    tricks: BTreeMap<TrickID, Trick>,
-    categories: Vec<CategoryID>,
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct DecktricksConfigSettings {
+    pub controller_layout_id: String,
 }
 
-impl TryFrom<&str> for TricksLoader {
+pub type SettingsRc = Arc<DecktricksConfigSettings>;
+
+#[derive(Debug, Clone)]
+pub struct LoadedConfig {
+    tricks: BTreeMap<TrickID, Trick>,
+    categories: Vec<CategoryID>,
+    settings: SettingsRc,
+}
+
+impl TryFrom<&str> for LoadedConfig {
     type Error = KnownError;
 
     fn try_from(text: &str) -> DeckResult<Self> {
@@ -53,11 +63,13 @@ impl TryFrom<&str> for TricksLoader {
 
         let categories = config.known_categories;
 
-        Ok(Self { tricks, categories })
+        let settings = Arc::new(config.settings);
+
+        Ok(Self { tricks, categories, settings })
     }
 }
 
-impl TricksLoader {
+impl LoadedConfig {
     // NOTE: Currently, this does *not* read from the config file at runtime!
     //       The config is read at compile time, so you need to cargo build/run
     //       to see changes to the config.
@@ -81,6 +93,7 @@ impl TricksLoader {
         Self {
             tricks: Default::default(),
             categories: Default::default(),
+            settings: Default::default(),
         }
     }
 
@@ -107,6 +120,11 @@ impl TricksLoader {
 
     pub fn get_all_categories(&self) -> Vec<CategoryID> {
         self.categories.clone()
+    }
+
+    // TODO: can wrap this in an Arc
+    pub fn get_settings(&self) -> SettingsRc {
+        self.settings.clone()
     }
 }
 
@@ -273,7 +291,7 @@ fn reconvert_providerconfig() -> DeckResult<()> {
 // Integration test of the actual config
 #[test]
 fn integration_check_default_config() -> DeckResult<()> {
-    let loader = TricksLoader::from_default_config()?;
+    let loader = LoadedConfig::from_default_config()?;
     let prov = &loader.get_trick("lutris")?.provider_config;
 
     match prov {

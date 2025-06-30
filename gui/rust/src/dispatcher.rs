@@ -1,9 +1,8 @@
 #![allow(clippy::needless_pass_by_value)]
 
 use crate::action_button::ActionButton;
-use crate::early_log_ctx;
 use crate::utils::gderr;
-use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
+use crate::CRATE_DECKTRICKS_LOGGER;
 use decktricks::controller_layout::load_controller_config;
 use decktricks::rayon::spawn;
 use decktricks::system_command_runners::SysCommandRunner;
@@ -23,19 +22,21 @@ use std::time::Duration;
 use std::time::Instant;
 
 // TODO: reduce bloat
-// TODO: clean up early_log_ctx
 
 const NUM_EXECUTOR_READ_RETRIES: u8 = 10;
 
-// TODO: just initialize an executor here (and panic/fail/log if it doesn't work?)
 static EXECUTOR_GUARD: LazyLock<RwLock<Arc<Executor>>> = LazyLock::new(|| {
     RwLock::new(Arc::new(Executor::create_with_gather(
         ExecutorMode::Continuous,
         get_log_level(),
-        CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
+        CRATE_DECKTRICKS_LOGGER.clone(),
         None,
     )))
 });
+
+pub(crate) fn get_ctx() -> GeneralExecutionContext {
+    DecktricksDispatcher::get_executor().get_new_general_execution_context(get_log_level())
+}
 
 static STARTUP: LazyLock<Instant> = LazyLock::new(Instant::now);
 
@@ -78,7 +79,8 @@ impl DecktricksDispatcher {
         let log_file_location = get_decktricks_update_log_file_location();
         if !log_file_location.exists() {
             warn!(
-                early_log_ctx(),
+                // Don't want to wait for the executor yet here
+                crate::initial_setup::early_log_ctx(),
                 "Updates log file not found at {}",
                 log_file_location.to_string_lossy()
             );
@@ -103,7 +105,8 @@ impl DecktricksDispatcher {
     fn get_time_passed_ms(section: GString) -> GString {
         let time_passed_ms = STARTUP.elapsed().as_millis();
         info!(
-            early_log_ctx(),
+            // Don't want this function to wait on the executor, since it is called before we initialize it
+            crate::initial_setup::early_log_ctx(),
             "[{section}] Time passed: {}", time_passed_ms
         );
         time_passed_ms.to_string().into()
@@ -112,7 +115,7 @@ impl DecktricksDispatcher {
     #[func]
     fn sync_run_with_decktricks(gargs: Array<GString>) -> GString {
         info!(
-            early_log_ctx(),
+            get_ctx(),
             "Running command synchronously with decktricks: {gargs}"
         );
         let args = gargs_to_args(gargs);
@@ -124,25 +127,25 @@ impl DecktricksDispatcher {
     fn restart_steam() {
         // TODO: move this into Command on the rust side
         // TODO: if in Desktop mode, actually restart steam
-        let _ = early_log_ctx().sys_command("steam", ["-shutdown"]).run();
+        let _ = get_ctx().sys_command("steam", ["-shutdown"]).run();
     }
 
     #[func]
     fn load_controller_config() {
-        load_controller_config(early_log_ctx());
+        load_controller_config(&get_ctx());
     }
 
     #[func]
     fn log(log_level: u8, message: GString) {
         let log_type = LogType::from(log_level);
-        inner_print!(log_type, early_log_ctx(), "{}", message);
+        inner_print!(log_type, get_ctx(), "{}", message);
     }
 
     #[func]
     fn populate_categories(categories_tabcontainer: Gd<TabContainer>) {
         if let Err(err) = Self::populate_categories_inner(categories_tabcontainer) {
             error!(
-                early_log_ctx(),
+                get_ctx(),
                 "Error encountered while populating categories! Error: {err:?}"
             );
         }
@@ -153,7 +156,7 @@ impl DecktricksDispatcher {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let executor = Self::get_executor();
 
-        let map = executor.get_full_map_for_all_categories(early_log_ctx().get_logger().clone());
+        let map = executor.get_full_map_for_all_categories();
 
         let trickslist_packed: Gd<PackedScene> =
             try_load::<PackedScene>("res://scenes/tricks_list.tscn")?;
@@ -260,7 +263,7 @@ impl DecktricksDispatcher {
     fn update_all_buttons(mut scene_tree: Gd<SceneTree>) {
         let executor = Self::get_executor();
         let all_tricks_status =
-            &executor.get_all_tricks_status(CRATE_DECKTRICKS_DEFAULT_LOGGER.clone());
+            &executor.get_all_tricks_status();
 
         let nodes = scene_tree.get_nodes_in_group("action_buttons");
         let buttons = nodes
@@ -323,11 +326,10 @@ impl DecktricksDispatcher {
 
     fn spawn_executor_refresh_inner() {
         let executor = Self::get_executor();
-        let logger = early_log_ctx().get_logger();
 
         // Do the work to gather context outside of the write lock, to
         // minimize the amount of time spent locked
-        let full_ctx = executor.get_new_system_context(logger);
+        let full_ctx = executor.gather_new_system_context();
 
         match EXECUTOR_GUARD.write() {
             Ok(mut executor) => {
@@ -337,7 +339,8 @@ impl DecktricksDispatcher {
             }
             Err(err) => {
                 error!(
-                        early_log_ctx(),
+                        // We don't have access to the executor here
+                        crate::initial_setup::early_log_ctx(),
                         "Failed to access executor while writing! This is a serious error, please report it at {}\n\nError: {:?}",
                         GITHUB_ISSUES_LINK,
                         err
@@ -363,7 +366,8 @@ impl DecktricksDispatcher {
             Ok(guard) => guard.clone(),
             Err(err) => {
                 error!(
-                    early_log_ctx(),
+                    // We don't have access to the executor here
+                    crate::initial_setup::early_log_ctx(),
                     "Failed to access executor while writing! This is a serious error, please report it at {}\n\nError: {:?}",
                     GITHUB_ISSUES_LINK,
                     err
@@ -385,14 +389,15 @@ fn run_with_decktricks(executor: Arc<Executor>, args: Vec<String>) -> Result<GSt
 
     match maybe_cmd {
         Ok(mut cmd) => {
-            // Explicitly show logs for commands we explicitly asked for
+            // Show logs for commands we explicitly asked for
             cmd.log_level = Some(LogType::Info);
 
             run_with_decktricks_inner(&executor, cmd)
         }
         Err(cmd_parse_err) => {
             error!(
-                early_log_ctx(),
+                // We already have the executor here so can just use it
+                executor.get_new_general_execution_context(LogType::Info),
                 "Decktricks command {args:?} encountered a parse error: {cmd_parse_err:?}"
             );
             Err(())
@@ -403,8 +408,8 @@ fn run_with_decktricks(executor: Arc<Executor>, args: Vec<String>) -> Result<GSt
 fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Result<GString, ()> {
     let mut experienced_error = false;
     let action = &cmd.action;
-    let (maybe_ctx, results) = executor.execute(&cmd, CRATE_DECKTRICKS_DEFAULT_LOGGER.clone());
-    let ctx = maybe_ctx.unwrap_or_else(|| early_log_ctx().clone());
+    let (maybe_ctx, results) = executor.execute(&cmd);
+    let ctx = maybe_ctx.unwrap_or_else(|| get_ctx().as_ctx());
 
     let mut outputs = vec![];
 

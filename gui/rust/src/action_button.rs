@@ -1,12 +1,11 @@
-use std::time::Duration;
-use godot::classes::Tween;
+use crate::dispatcher::get_ctx;
 use crate::dispatcher::DecktricksDispatcher;
-use crate::early_log_ctx;
-use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
 use decktricks::prelude::*;
 use decktricks::rayon::spawn;
 use decktricks::tricks_status::ActionDisplayStatus;
 use decktricks::tricks_status::AllTricksStatus;
+use godot::classes::Tween;
+use std::time::Duration;
 
 use godot::classes::{Button, IButton};
 use godot::obj::WithBaseField;
@@ -63,17 +62,23 @@ impl IButton for ActionButton {
         spawn(move || {
             // TODO: run DecktricksCommand instead of SpecificAction just to have access to flags?
             // TODO: move back into DecktricksDispatcher?
-            let (maybe_ctx, res) = action
-                .clone()
-                .do_with(
-                    &DecktricksDispatcher::get_executor().clone(),
-                    LogType::Info,
-                    CRATE_DECKTRICKS_DEFAULT_LOGGER.clone(),
-                );
+            let mut cmd = DecktricksCommand::new(action.clone().into());
+            // NOTE: this log level override is very important, as it is used to make sure
+            // we see output in the GUI logs
+            cmd.log_level = Some(LogType::Info);
+
+            let executor = &DecktricksDispatcher::get_executor().clone();
+            let (maybe_ctx, res) = executor.execute(&cmd);
 
             // Shared logic with debugging run code in src/dispatcher.rs
-            let ctx = maybe_ctx.map(|c| c.as_ctx()).unwrap_or_else(|| early_log_ctx().clone());
-            match res {
+            let ctx = maybe_ctx.map(|c| c.as_ctx()).unwrap_or_else(|| {
+                executor
+                    .get_new_general_execution_context(LogType::Info)
+                    .as_ctx()
+            });
+
+            // This unwrap is safe, as we know that SpecificActions will always have a single result
+            match res.iter().next().unwrap() {
                 Ok(action_success) => {
                     let msg = action_success.get_message().unwrap_or_else(String::default);
                     log!(
@@ -88,7 +93,6 @@ impl IButton for ActionButton {
                     );
                 }
             }
-
         });
 
         // Wait a short amount of time for the command to start running,
@@ -101,7 +105,9 @@ impl IButton for ActionButton {
 }
 
 impl ActionButton {
-    pub fn initialize_from_action_display_status(action_display_status: ActionDisplayStatus) -> Gd<Self> {
+    pub fn initialize_from_action_display_status(
+        action_display_status: ActionDisplayStatus,
+    ) -> Gd<Self> {
         let action_button = Gd::from_init_fn(|base: Base<_>| Self {
             base,
             info: action_display_status,
@@ -155,7 +161,7 @@ impl ActionButton {
         let action_id = &info.action_id;
         let Some(trick_status) = all_tricks_status.get(trick_id) else {
             error!(
-                early_log_ctx(),
+                get_ctx(),
                 "Trick \"{trick_id}\" not found! This is a serious error, please report it at {}!",
                 GITHUB_ISSUES_LINK
             );
@@ -169,7 +175,7 @@ impl ActionButton {
 
         let Some(action_display_status) = res else {
             error!(
-                early_log_ctx(),
+                get_ctx(),
                 "Action \"{action_id}\" status for \"{trick_id}\" not found! This is a serious error, please report it at {}!",
                 GITHUB_ISSUES_LINK
             );

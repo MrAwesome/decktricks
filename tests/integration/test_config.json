@@ -1,4 +1,7 @@
 {
+    "settings": {
+        "controller_layout_id": "111111111"
+    },
     "known_categories": ["poop", "butt"],
     "tricks": [
         {

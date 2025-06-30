@@ -1,8 +1,7 @@
 // TODO: improve performance when large amounts of log text is present!
 
 use decktricks::utils::get_decktricks_update_log_file_location;
-use crate::early_log_ctx;
-use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
+use crate::CRATE_DECKTRICKS_LOGGER;
 use decktricks::prelude::*;
 use godot::classes::ColorRect;
 use std::fmt::Display;
@@ -34,12 +33,12 @@ impl Logs {
     #[func]
     pub fn populate_logs(&mut self) {
         self.inner_populate_logs().unwrap_or_else(|err| {
-            error!(early_log_ctx(), "Failure when populating logs! {err:?}");
+            error!(crate::initial_setup::early_log_ctx(), "Failure when populating logs! {err:?}");
         });
     }
 
     fn inner_populate_logs(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let parsed = CRATE_DECKTRICKS_DEFAULT_LOGGER.clone().get_logs();
+        let parsed = CRATE_DECKTRICKS_LOGGER.clone().get_logs();
 
         let log_channel_scene: Gd<PackedScene> =
             try_load::<PackedScene>("res://scenes/log_channel.tscn")?;

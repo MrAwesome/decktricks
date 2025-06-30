@@ -54,15 +54,15 @@ impl TypedAction {
         self,
         executor: &Executor,
         current_log_level: LogType,
-        logger: LoggerRc,
     ) -> (Option<ExecutionContext>, Vec<DeckResult<ActionSuccess>>) {
         match self {
             Self::General(general_action) => {
-                let (ctx, results) = general_action.do_with(executor, current_log_level, &logger);
+                let (ctx, results) = general_action.do_with(executor, current_log_level);
                 (Some(ctx.as_ctx()), results)
             }
             Self::Specific(specific_action) => {
-                let (ctx, res) = specific_action.do_with(executor, current_log_level, logger);
+                let (ctx, res) = specific_action.do_with(executor, current_log_level);
+                // NOTE: we always want SpecificActions to have a single result
                 (ctx.map(|c| c.as_ctx()), vec![res])
             }
         }

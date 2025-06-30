@@ -140,25 +140,21 @@ impl SpecificAction {
         SpecificAction::Info { id: id.to_string() }
     }
 
-    pub fn do_with(
+    pub(crate) fn do_with(
         self,
         executor: &Executor,
         current_log_level: LogType,
-        logger: LoggerRc,
     ) -> (Option<SpecificExecutionContext>, DeckResult<ActionSuccess>) {
-        let (loader, _full_ctx, runner) = executor.get_pieces();
-
+        let config = executor.get_loaded_config();
         let trick_id = self.id();
-        let maybe_trick = loader.get_trick(trick_id.as_ref());
+        let maybe_trick = config.get_trick(trick_id.as_ref());
 
         match maybe_trick {
             Ok(trick) => {
-                let ctx = SpecificExecutionContext::new(
+                let ctx = executor.get_new_specific_execution_context(
+                    current_log_level,
                     trick.clone(),
                     self.clone(),
-                    runner.clone(),
-                    current_log_level,
-                    logger,
                     // In the context of actually taking an action, we don't care if we're installing
                     // or added to Steam, since at the moment these are purely for cosmetic purposes
                     // TODO: code smell

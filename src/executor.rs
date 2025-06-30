@@ -2,7 +2,6 @@ use crate::prelude::*;
 use crate::providers::system_context::FullSystemContext;
 use crate::tricks_status::AllTricksStatus;
 use crate::tricks_status::TrickStatus;
-use crate::utils::check_log_level_env_var;
 use std::sync::Arc;
 
 pub trait ExecCtx: Clone + Send + Sync {
@@ -11,6 +10,7 @@ pub trait ExecCtx: Clone + Send + Sync {
     fn get_log_channel(&self) -> &LogChannel;
     fn get_current_log_level(&self) -> LogType;
     fn get_logger(&self) -> LoggerRc;
+    fn get_settings(&self) -> SettingsRc;
 
     #[allow(clippy::needless_pass_by_value)]
     #[must_use]
@@ -70,6 +70,13 @@ impl ExecCtx for ExecutionContext {
         }
     }
 
+    fn get_settings(&self) -> SettingsRc {
+        match self {
+            Self::General(x) => x.get_settings(),
+            Self::Specific(x) => x.get_settings(),
+        }
+    }
+
     fn as_ctx(&self) -> ExecutionContext {
         self.clone()
     }
@@ -104,20 +111,15 @@ impl ExecCtx for &ExecutionContext {
         }
     }
 
+    fn get_settings(&self) -> SettingsRc {
+        match self {
+            ExecutionContext::General(x) => x.get_settings(),
+            ExecutionContext::Specific(x) => x.get_settings(),
+        }
+    }
+
     fn as_ctx(&self) -> ExecutionContext {
         (*self).clone()
-    }
-}
-
-impl ExecutionContext {
-    // TODO: code smell
-    #[must_use]
-    pub fn internal_get_for_logging(current_log_level: LogType, logger: LoggerRc) -> Self {
-        Self::General(GeneralExecutionContext::new(
-            get_runner(),
-            current_log_level,
-            logger,
-        ))
     }
 }
 
@@ -128,7 +130,8 @@ impl ExecutionContext {
         Self::General(GeneralExecutionContext::new(
             runner,
             LogType::Warn,
-            Arc::new(DecktricksConsoleLogger::new()),
+            crate::logging::LOGGER_FOR_TESTS.clone(),
+            Arc::new(DecktricksConfigSettings::default()),
         ))
     }
 
@@ -176,6 +179,7 @@ pub struct SpecificExecutionContext {
     pub current_log_level: LogType,
     pub runner: RunnerRc,
     pub logger: LoggerRc,
+    pub settings: SettingsRc,
 
     // There's a code smell here. This is essentially "information from
     // the full system context relevant to this action/trick"
@@ -192,16 +196,24 @@ pub struct GeneralExecutionContext {
     pub current_log_level: LogType,
     pub runner: RunnerRc,
     pub logger: LoggerRc,
+    pub settings: SettingsRc,
 }
 
 impl GeneralExecutionContext {
+    // You should be relying on Executor::get_new_specific_execution_context
     #[must_use]
-    pub fn new(runner: RunnerRc, current_log_level: LogType, logger: LoggerRc) -> Self {
+    pub(crate) fn new(
+        runner: RunnerRc,
+        current_log_level: LogType,
+        logger: LoggerRc,
+        settings: SettingsRc,
+    ) -> Self {
         Self {
             log_channel: LogChannel::General,
             current_log_level,
             runner,
             logger,
+            settings,
         }
     }
 
@@ -214,6 +226,7 @@ impl GeneralExecutionContext {
             log_channel: LogChannel::General,
             runner: Arc::new(MockTestActualRunner::new()),
             logger: Arc::new(DecktricksConsoleLogger::new()),
+            settings: Arc::new(DecktricksConfigSettings::default()),
         }
     }
 
@@ -224,7 +237,17 @@ impl GeneralExecutionContext {
             log_channel: LogChannel::General,
             runner,
             logger: Arc::new(DecktricksConsoleLogger::new()),
+            settings: Arc::new(DecktricksConfigSettings::default()),
         }
+    }
+
+    pub fn internal_for_gui_startup(current_log_level: LogType, logger: LoggerRc) -> Self {
+        Self::new(
+            get_runner(),
+            current_log_level,
+            logger,
+            Arc::new(DecktricksConfigSettings::default()),
+        )
     }
 }
 
@@ -248,6 +271,10 @@ impl ExecCtx for GeneralExecutionContext {
     fn get_logger(&self) -> LoggerRc {
         self.logger.clone()
     }
+
+    fn get_settings(&self) -> SettingsRc {
+        self.settings.clone()
+    }
 }
 
 impl ExecCtx for SpecificExecutionContext {
@@ -270,16 +297,22 @@ impl ExecCtx for SpecificExecutionContext {
     fn get_logger(&self) -> LoggerRc {
         self.logger.clone()
     }
+
+    fn get_settings(&self) -> SettingsRc {
+        self.settings.clone()
+    }
 }
 
 impl SpecificExecutionContext {
+    // You should be relying on Executor::get_new_specific_execution_context
     #[must_use]
-    pub fn new(
+    fn new(
         trick: Trick,
         action: SpecificAction,
         runner: RunnerRc,
         current_log_level: LogType,
         logger: LoggerRc,
+        settings: SettingsRc,
         // These should be moved into a more general state object (move SpecificActionState here?)
         is_installing: bool,
         is_added_to_steam: bool,
@@ -291,6 +324,7 @@ impl SpecificExecutionContext {
             current_log_level,
             runner,
             logger,
+            settings,
             is_installing,
             is_added_to_steam,
         }
@@ -305,6 +339,7 @@ impl SpecificExecutionContext {
             trick,
             action: SpecificAction::as_info(&"FAKE_FOR_TEST"),
             logger: Arc::new(DecktricksConsoleLogger::new()),
+            settings: Arc::new(DecktricksConfigSettings::default()),
             is_installing: false,
             is_added_to_steam: false,
         }
@@ -319,6 +354,7 @@ impl SpecificExecutionContext {
             trick,
             action: SpecificAction::as_info(&"FAKE_FOR_TEST"),
             logger: Arc::new(DecktricksConsoleLogger::new()),
+            settings: Arc::new(DecktricksConfigSettings::default()),
             is_installing: false,
             is_added_to_steam: false,
         }
@@ -334,14 +370,18 @@ pub enum ExecutorMode {
 #[derive(Debug, Clone)]
 pub struct Executor {
     pub mode: ExecutorMode,
-    pub loader: TricksLoader,
+    pub loader: LoadedConfig,
     pub full_ctx: FullSystemContext,
     pub runner: RunnerRc,
-    current_log_level: LogType,
+    pub logger: LoggerRc,
+    initial_log_level: LogType,
 }
 
 impl Executor {
     // In the context of this function, Command is used as "global action context"
+    //
+    // NOTE: This should only be run from OUTSIDE of this library, aka in calling code for
+    //       the CLI or GUI, since those are the only places where our Logger will be defined
     //
     /// # Errors
     ///
@@ -350,13 +390,21 @@ impl Executor {
     ///
     pub fn create_with_gather(
         mode: ExecutorMode,
-        current_log_level: LogType,
+        initial_log_level: LogType,
         logger: LoggerRc,
         maybe_command: Option<&DecktricksCommand>,
     ) -> Self {
         let runner = get_runner();
-        let gather_execution_ctx =
-            GeneralExecutionContext::new(runner.clone(), current_log_level, logger.clone());
+
+        // NOTE: don't put anything in "settings" in the config that would interfere with the
+        // behavior of this initial run, since we bootstrap the first gather without settings
+        // having been loaded yet (since the initial gather requires an execution context)
+        let gather_execution_ctx = GeneralExecutionContext::new(
+            runner.clone(),
+            initial_log_level,
+            logger.clone(),
+            Arc::new(DecktricksConfigSettings::default()),
+        );
 
         let loader = get_loader(&gather_execution_ctx, maybe_command);
         // TODO: unit test
@@ -370,15 +418,13 @@ impl Executor {
         let full_ctx =
             gather_full_system_context(mode, &gather_execution_ctx, &loader, maybe_command);
 
-        Self::with(mode, loader, full_ctx, runner, current_log_level)
+        Self::with(mode, loader, full_ctx, runner, logger, initial_log_level)
     }
 
-    pub fn get_new_system_context(&self, logger: LoggerRc) -> FullSystemContext {
-        let gather_execution_ctx = GeneralExecutionContext::new(
-            self.runner.clone(),
-            self.current_log_level,
-            logger.clone(),
-        );
+    // This is used by the GUI to gather a new system context outside of the write lock before
+    // taking the lock to write it with update_system_context
+    pub fn gather_new_system_context(&self) -> FullSystemContext {
+        let gather_execution_ctx = self.get_new_general_execution_context(self.initial_log_level);
 
         gather_full_system_context(self.mode, &gather_execution_ctx, &self.loader, None)
     }
@@ -390,18 +436,49 @@ impl Executor {
     #[must_use]
     pub fn with(
         mode: ExecutorMode,
-        loader: TricksLoader,
+        loader: LoadedConfig,
         full_ctx: FullSystemContext,
         runner: RunnerRc,
-        current_log_level: LogType,
+        logger: LoggerRc,
+        initial_log_level: LogType,
     ) -> Self {
         Self {
             mode,
             loader,
             full_ctx,
             runner,
-            current_log_level,
+            logger,
+            initial_log_level,
         }
+    }
+
+    pub fn get_new_general_execution_context(&self, log_level: LogType) -> GeneralExecutionContext {
+        GeneralExecutionContext::new(
+            self.runner.clone(),
+            log_level,
+            self.logger.clone(),
+            self.loader.get_settings(),
+        )
+    }
+
+    pub fn get_new_specific_execution_context(
+        &self,
+        current_log_level: LogType,
+        trick: Trick,
+        action: SpecificAction,
+        is_installing: bool,
+        is_added_to_steam: bool,
+    ) -> SpecificExecutionContext {
+        SpecificExecutionContext::new(
+            trick,
+            action,
+            self.runner.clone(),
+            current_log_level,
+            self.logger.clone(),
+            self.loader.get_settings().clone(),
+            is_installing,
+            is_added_to_steam,
+        )
     }
 
     // NOTE: if the initial full system check is too slow, you can have Specific check types do the
@@ -415,13 +492,10 @@ impl Executor {
     pub fn execute(
         &self,
         command: &DecktricksCommand,
-        logger: LoggerRc,
     ) -> (Option<ExecutionContext>, Vec<DeckResult<ActionSuccess>>) {
         let typed_action = TypedAction::from(&command.action);
-        // Use the log level env var, the log level cmdline flag, or the default, in that order:
-        let current_log_level = check_log_level_env_var()
-            .unwrap_or(command.log_level.unwrap_or(self.current_log_level));
-        typed_action.do_with(self, current_log_level, logger)
+        let current_log_level = command.log_level.unwrap_or(self.initial_log_level);
+        typed_action.do_with(self, current_log_level)
     }
 
     //    pub fn reload_config(&mut self) -> DeckResult<()> {
@@ -435,8 +509,18 @@ impl Executor {
     //    }
 
     #[must_use]
-    pub fn get_pieces(&self) -> (&TricksLoader, &FullSystemContext, &RunnerRc) {
+    pub fn get_pieces(&self) -> (&LoadedConfig, &FullSystemContext, &RunnerRc) {
         (&self.loader, &self.full_ctx, &self.runner)
+    }
+
+    #[must_use]
+    pub fn get_loaded_config(&self) -> &LoadedConfig {
+        &self.loader
+    }
+
+    #[must_use]
+    pub fn get_current_system_context(&self) -> &FullSystemContext {
+        &self.full_ctx
     }
 
     #[must_use]
@@ -444,17 +528,22 @@ impl Executor {
         &self.runner
     }
 
-    pub fn get_all_providers(&self, logger: &LoggerRc) -> Vec<DynTrickProvider> {
+    #[must_use]
+    pub fn get_logger(&self) -> &LoggerRc {
+        &self.logger
+    }
+
+    #[must_use]
+    pub fn get_all_providers(&self) -> Vec<DynTrickProvider> {
+        // TODO: see if this has any purpose?
         let current_log_level = LogType::Debug;
 
         let mut providers = vec![];
         for (trick_id, trick) in self.loader.get_all_tricks() {
-            let ctx = SpecificExecutionContext::new(
+            let ctx = self.get_new_specific_execution_context(
+                current_log_level,
                 trick.clone(),
                 SpecificAction::as_info(&trick_id),
-                self.runner.clone(),
-                current_log_level,
-                logger.clone(),
                 self.full_ctx.is_installing(trick_id),
                 self.full_ctx.is_added_to_steam(trick_id),
             );
@@ -464,16 +553,17 @@ impl Executor {
         providers
     }
 
-    pub fn get_all_tricks_status(&self, logger: LoggerRc) -> AllTricksStatus {
-        let providers = self.get_all_providers(&logger);
+    #[must_use]
+    pub fn get_all_tricks_status(&self) -> AllTricksStatus {
+        let providers = self.get_all_providers();
         AllTricksStatus::new(providers)
     }
 
+    #[must_use]
     pub fn get_full_map_for_all_categories(
         &self,
-        logger: LoggerRc,
     ) -> Vec<(CategoryID, Vec<(TrickID, TrickStatus)>)> {
-        let all_tricks_status = self.get_all_tricks_status(logger);
+        let all_tricks_status = self.get_all_tricks_status();
         let known_categories = self.loader.get_all_categories();
         all_tricks_status.get_full_map_for_categories(known_categories)
     }
@@ -482,7 +572,7 @@ impl Executor {
 fn gather_full_system_context(
     mode: ExecutorMode,
     gather_execution_ctx: &GeneralExecutionContext,
-    loader: &TricksLoader,
+    loader: &LoadedConfig,
     maybe_command: Option<&DecktricksCommand>,
 ) -> FullSystemContext {
     if let Some(command) = maybe_command {
@@ -501,10 +591,10 @@ fn gather_full_system_context(
 fn get_loader(
     gather_execution_ctx: &GeneralExecutionContext,
     maybe_command: Option<&DecktricksCommand>,
-) -> TricksLoader {
+) -> LoadedConfig {
     let maybe_config_path = maybe_command.and_then(|cmd| cmd.config.as_ref());
     if let Some(config_path) = maybe_config_path {
-        match TricksLoader::from_config(config_path) {
+        match LoadedConfig::from_config(config_path) {
             Ok(config) => return config,
             Err(err) => {
                 error!(
@@ -514,7 +604,7 @@ fn get_loader(
             }
         }
     };
-    match TricksLoader::from_default_config() {
+    match LoadedConfig::from_default_config() {
         Ok(config) => config,
         Err(err) => {
             // This should never, ever, ever happen because we will not pass tests with a
@@ -523,7 +613,7 @@ fn get_loader(
                 &gather_execution_ctx,
                 "Failed to load default config! This is an serious error, please report it at {GITHUB_ISSUES_LINK}\n\nError was: {err:?}"
             );
-            TricksLoader::empty_last_fallback_dangerous()
+            LoadedConfig::empty_last_fallback_dangerous()
         }
     }
 }
@@ -534,7 +624,7 @@ mod tests {
     use mockall::*;
 
     fn get_executor(maybe_mock: Option<MockTestActualRunner>) -> DeckResult<Executor> {
-        let loader = TricksLoader::from_default_config()?;
+        let loader = LoadedConfig::from_default_config()?;
 
         let mock = match maybe_mock {
             None => {
@@ -556,6 +646,7 @@ mod tests {
             loader,
             full_ctx,
             runner,
+            crate::logging::LOGGER_FOR_TESTS.clone(),
             LogType::Warn,
         );
         Ok(executor)
@@ -568,8 +659,7 @@ mod tests {
         });
 
         let executor = get_executor(None)?;
-        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let (_ctx, results) = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => assert_eq!(
@@ -588,8 +678,7 @@ mod tests {
         });
 
         let executor = get_executor(None)?;
-        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let (_ctx, results) = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command);
         assert_eq!(results.len(), 1);
         match &results[0] {
             Ok(action_success) => panic!(
@@ -606,8 +695,7 @@ mod tests {
         let command = DecktricksCommand::new(Action::List { installed: false });
 
         let executor = get_executor(None)?;
-        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let (_ctx, results) = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(
@@ -647,8 +735,7 @@ mod tests {
             .returning(|_| Ok(SysCommandResult::fake_success()));
 
         let executor = get_executor(Some(mock))?;
-        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let (_ctx, results) = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command);
         assert_eq!(results.len(), 1);
         let res = &results[0];
         assert!(
@@ -668,8 +755,7 @@ mod tests {
         let command = DecktricksCommand::new(Action::Version { verbose: false });
 
         let executor = get_executor(None)?;
-        let logger = crate::CRATE_DECKTRICKS_DEFAULT_LOGGER.clone();
-        let (_ctx, results) = executor.execute(&command, logger);
+        let (_ctx, results) = executor.execute(&command);
 
         assert_eq!(
             results[0].as_ref().unwrap().get_message().unwrap(),
