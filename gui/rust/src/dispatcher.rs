@@ -4,6 +4,7 @@ use crate::action_button::ActionButton;
 use crate::early_log_ctx;
 use crate::utils::gderr;
 use crate::CRATE_DECKTRICKS_DEFAULT_LOGGER;
+use decktricks::controller_layout::load_controller_config;
 use decktricks::rayon::spawn;
 use decktricks::system_command_runners::SysCommandRunner;
 use decktricks::utils::get_decktricks_update_log_file_location;
@@ -22,6 +23,7 @@ use std::time::Duration;
 use std::time::Instant;
 
 // TODO: reduce bloat
+// TODO: clean up early_log_ctx
 
 const NUM_EXECUTOR_READ_RETRIES: u8 = 10;
 
@@ -123,6 +125,11 @@ impl DecktricksDispatcher {
         // TODO: move this into Command on the rust side
         // TODO: if in Desktop mode, actually restart steam
         let _ = early_log_ctx().sys_command("steam", ["-shutdown"]).run();
+    }
+
+    #[func]
+    fn load_controller_config() {
+        load_controller_config(early_log_ctx());
     }
 
     #[func]

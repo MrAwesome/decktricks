@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://b0xahgf104in"]
+[gd_scene load_steps=16 format=3 uid="uid://b0xahgf104in"]
 
 [ext_resource type="Script" uid="uid://cg1fs1wft1car" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_0bbpv"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://chd8gtmntjj7i" path="res://scripts/log_container.gd" id="5_lhr70"]
 [ext_resource type="Texture2D" uid="uid://blrk67cx78eao" path="res://assets/buttons/steamdeck_button_l2_outline.svg" id="5_mwfav"]
 [ext_resource type="Script" uid="uid://duuotfvc6u8vj" path="res://scripts/fps_buttons.gd" id="5_vcsgt"]
+[ext_resource type="Script" uid="uid://bes8df4155bhc" path="res://scripts/load_controller_config_button.gd" id="8_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://dvwu1w8hbxqxg" path="res://assets/buttons/steamdeck_button_l1_outline.svg" id="11_bjd11"]
 [ext_resource type="Texture2D" uid="uid://cj2lytf83uois" path="res://assets/buttons/steamdeck_button_r1_outline.svg" id="12_qmy6f"]
 [ext_resource type="Texture2D" uid="uid://dynnrkyvf34hp" path="res://assets/buttons/steamdeck_button_r2_outline.svg" id="13_qmy6f"]
@@ -25,12 +26,10 @@ grow_vertical = 2
 theme = ExtResource("1_0bbpv")
 script = ExtResource("1")
 
-; This value should not be set to under a second, as it can cause steamwebhelper to freeze up trying
-; to keep track of all the subprocesses we start. Lowering this will make the UI more responsive to system events.
-
 [node name="UIRefreshTimer" type="Timer" parent="."]
 wait_time = 3.0
 autostart = true
+metadata/NOTE = "This value should not be set to under a second, as it can cause steamwebhelper to freeze up trying to keep track of all the subprocesses we start. Lowering this will make the UI more responsive to system events."
 
 [node name="LogRefreshTimer" type="Timer" parent="."]
 wait_time = 0.5
@@ -109,10 +108,32 @@ position = Vector2(1227, -6)
 scale = Vector2(0.786041, 0.786041)
 texture_normal = ExtResource("13_qmy6f")
 
-[node name="Exit" parent="MainTabs" instance=ExtResource("3_q8u5g")]
+[node name="Options" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="MainTabs/Options"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainTabs/Options/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="LoadControllerConfigButton" type="Button" parent="MainTabs/Options/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Load Custom Controller Config"
+script = ExtResource("8_3p2gp")
+
+[node name="Exit" parent="MainTabs" instance=ExtResource("3_q8u5g")]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 3
 
 [node name="CenterContainer" type="CenterContainer" parent="MainTabs/Exit"]
 layout_mode = 1
@@ -217,6 +238,7 @@ layout_mode = 2
 [connection signal="timeout" from="UIRefreshTimer" to="." method="_on_ui_refresh_timer_timeout"]
 [connection signal="timeout" from="LogRefreshTimer" to="." method="_on_log_refresh_timer_timeout"]
 [connection signal="timeout" from="UpdateCheckTimer" to="." method="_on_update_check_timer_timeout"]
+[connection signal="pressed" from="MainTabs/Options/CenterContainer/VBoxContainer/LoadControllerConfigButton" to="MainTabs/Options/CenterContainer/VBoxContainer/LoadControllerConfigButton" method="_on_pressed"]
 [connection signal="focus_entered" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_focus_entered"]
 [connection signal="pressed" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_pressed"]
 [connection signal="visibility_changed" from="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" to="MainTabs/Exit/CenterContainer/VBoxContainer/RestartSteamButton" method="_on_visibility_changed"]

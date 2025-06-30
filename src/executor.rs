@@ -13,6 +13,7 @@ pub trait ExecCtx: Clone + Send + Sync {
     fn get_logger(&self) -> LoggerRc;
 
     #[allow(clippy::needless_pass_by_value)]
+    #[must_use]
     fn sys_command<I, S, SS>(&self, cmd: S, args: I) -> SysCommand
     where
         I: IntoIterator<Item = SS>,

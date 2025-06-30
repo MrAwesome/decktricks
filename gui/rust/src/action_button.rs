@@ -17,6 +17,8 @@ use godot::prelude::*;
 //       https://github.com/godot-rust/gdext/issues/539
 //
 //       looks like adding "reloadable = true" to the gdextension file will fix that, from ^
+//
+//       TODO: now that that is added, check that this is fixed
 
 #[derive(GodotClass)]
 #[class(init,base=Button)]

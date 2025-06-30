@@ -21,7 +21,6 @@ var INFO_WINDOW = preload("res://scenes/info_window.tscn")
 signal restart_steam_hint
 
 func send_steam_restart_hint():
-	print("Sending restart hint")
 	emit_signal("restart_steam_hint")
 
 func initialize_action_button(
