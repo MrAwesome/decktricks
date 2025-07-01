@@ -135,6 +135,7 @@ impl DecktricksLogger for DecktricksGodotLogger {
             LogType::Warn => "orange",
             LogType::Error => "red",
         };
+
         self.sender
             .send((channel,
                     format!("[color={color}]{text}[/color]")

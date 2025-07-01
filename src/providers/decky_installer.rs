@@ -81,7 +81,12 @@ impl ProviderChecks for DeckyInstallerProvider {
     fn is_running(&self) -> bool {
         self.decky_ctx.is_running
     }
+
     fn is_addable_to_steam(&self) -> bool {
+        false
+    }
+
+    fn is_addable_to_steam_once_installed(&self) -> bool {
         false
     }
 }

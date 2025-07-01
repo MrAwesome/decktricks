@@ -199,7 +199,9 @@ pub trait ProviderChecks {
 
     fn is_updateable(&self) -> bool;
 
+    // NOTE: the "add to steam on install" functionality is in src/actions/specific.rs
     fn is_addable_to_steam(&self) -> bool;
+    fn is_addable_to_steam_once_installed(&self) -> bool;
     fn is_added_to_steam(&self) -> bool {
         self.get_execution_context().is_added_to_steam
     }
@@ -243,6 +245,7 @@ mod tests {
             fn is_killable(&self) -> bool;
             fn is_updateable(&self) -> bool;
             fn is_addable_to_steam(&self) -> bool;
+            fn is_addable_to_steam_once_installed(&self) -> bool;
             fn is_added_to_steam(&self) -> bool;
         }
 

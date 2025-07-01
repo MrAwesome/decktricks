@@ -158,6 +158,10 @@ impl ProviderChecks for FlatpakProvider {
     fn is_addable_to_steam(&self) -> bool {
         self.is_installed()
     }
+
+    fn is_addable_to_steam_once_installed(&self) -> bool {
+        true
+    }
 }
 
 impl ProviderActions for FlatpakProvider {

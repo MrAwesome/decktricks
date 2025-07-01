@@ -52,11 +52,41 @@ impl SpecificActionID {
     #[must_use]
     pub fn get_display_name(&self, is_ongoing: bool, is_completed: bool) -> &'static str {
         match self {
-            Self::Run => if is_ongoing { "Running" } else { "Run" },
-            Self::AddToSteam => if is_completed { "Added" } else { "Add To Steam" },
-            Self::Install => if is_ongoing { "Installing" } else { "Install" },
-            Self::Uninstall => if is_ongoing { "Uninstalling" } else { "Uninstall" },
-            Self::Update => if is_ongoing { "Updating" } else { "Update" },
+            Self::Run => {
+                if is_ongoing {
+                    "Running"
+                } else {
+                    "Run"
+                }
+            }
+            Self::AddToSteam => {
+                if is_completed {
+                    "Added"
+                } else {
+                    "Add To Steam"
+                }
+            }
+            Self::Install => {
+                if is_ongoing {
+                    "Installing"
+                } else {
+                    "Install"
+                }
+            }
+            Self::Uninstall => {
+                if is_ongoing {
+                    "Uninstalling"
+                } else {
+                    "Uninstall"
+                }
+            }
+            Self::Update => {
+                if is_ongoing {
+                    "Updating"
+                } else {
+                    "Update"
+                }
+            }
             Self::Kill => "Kill",
             Self::Info => "Info",
         }
@@ -167,7 +197,6 @@ impl SpecificAction {
             }
             Err(err) => (None, Err(err)),
         }
-
     }
 
     pub fn do_with_inner(
@@ -181,7 +210,29 @@ impl SpecificAction {
 
         if provider.can(&self) {
             match self {
-                Self::Install { .. } => provider.install(),
+                Self::Install { .. } => {
+                    let res = provider.install();
+
+                    dbg!(provider.is_addable_to_steam_once_installed());
+                    dbg!(provider.is_added_to_steam());
+
+                    if res.is_ok()
+                        && ctx.settings.add_to_steam_on_install_where_applicable
+                        // Since our system context is cached, is_addable_to_steam will
+                        // return false here for anything which relies on is_installed:
+                        && provider.is_addable_to_steam_once_installed()
+                        && !provider.is_added_to_steam()
+                    {
+                        if let Err(err) = provider.add_to_steam() {
+                            let trick_id = &trick.id;
+                            warn!(
+                                ctx,
+                                "{trick_id} successfully installed, but failed to add to steam: {err:?}"
+                            );
+                        }
+                    }
+                    res
+                }
                 Self::Run { .. } => provider.run(),
                 Self::Uninstall { .. } => provider.uninstall(),
                 Self::AddToSteam { .. } => provider.add_to_steam(),

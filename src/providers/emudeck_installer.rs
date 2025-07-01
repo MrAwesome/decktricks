@@ -91,8 +91,13 @@ impl ProviderChecks for EmuDeckInstallerProvider {
     fn is_running(&self) -> bool {
         !self.emu_ctx.running_pids.is_empty()
     }
+
     fn is_addable_to_steam(&self) -> bool {
         self.is_installed()
+    }
+
+    fn is_addable_to_steam_once_installed(&self) -> bool {
+        true
     }
 }
 

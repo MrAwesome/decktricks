@@ -1,6 +1,7 @@
 {
     "settings": {
-        "controller_layout_id": "111111111"
+        "controller_layout_id": "111111111",
+        "add_to_steam_on_install_where_applicable": true
     },
     "known_categories": ["poop", "butt"],
     "tricks": [

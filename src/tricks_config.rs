@@ -35,6 +35,7 @@ impl From<serde_json::Error> for KnownError {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct DecktricksConfigSettings {
     pub controller_layout_id: String,
+    pub add_to_steam_on_install_where_applicable: bool,
 }
 
 pub type SettingsRc = Arc<DecktricksConfigSettings>;

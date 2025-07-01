@@ -40,26 +40,37 @@ impl ProviderChecks for SimpleCommandProvider {
     fn is_installable(&self) -> bool {
         false
     }
+
     fn is_uninstallable(&self) -> bool {
         false
     }
+
     fn is_installed(&self) -> bool {
         true
     }
+
     fn is_runnable(&self) -> bool {
         true
     }
+
     fn is_running(&self) -> bool {
         !self.running_instances.is_empty()
     }
+
     fn is_killable(&self) -> bool {
         self.is_running()
     }
+
     fn is_updateable(&self) -> bool {
         false
     }
+
     fn is_addable_to_steam(&self) -> bool {
         self.is_installed()
+    }
+
+    fn is_addable_to_steam_once_installed(&self) -> bool {
+        true
     }
 }
 

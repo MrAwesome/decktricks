@@ -2,7 +2,8 @@
     "NOTE": "Changes to this file will not be reflected in the CLI or the GUI until you've run `cargo build` or `cargo build --release`, depending on mode.",
 
     "settings": {
-        "controller_layout_id": "3512516632"
+        "controller_layout_id": "3512516632",
+        "add_to_steam_on_install_where_applicable": true
     },
 
     "known_categories": [
