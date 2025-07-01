@@ -403,6 +403,24 @@
             "description": "Community-maintained launcher for Discord that adds vencord and makes updates less intrusive."
         },
         {
+            "id": "vacuumtube",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "rocks.shy.VacuumTube"
+            },
+            "tags": [
+                "youtube",
+                "video"
+            ],
+            "categories": [
+                "entertainment",
+                "recommended"
+            ],
+            "icon": "XXX",
+            "display_name": "YouTube (VacuumTube)",
+            "description": "An app that allows you to use the controller-friendly TV app for YouTube."
+        },
+        {
             "id": "spotify",
             "provider_config": {
                 "type": "flatpak",
