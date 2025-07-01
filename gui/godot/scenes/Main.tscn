@@ -191,6 +191,7 @@ script = ExtResource("4_c01mt")
 [node name="UpdateButton" type="Button" parent="."]
 visible = false
 modulate = Color(0, 0.999404, 0.511962, 1)
+layout_mode = 0
 offset_left = 131.0
 offset_top = 2.0
 offset_right = 316.324

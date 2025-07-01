@@ -190,8 +190,7 @@ func _ready():
 	if first_button:
 		first_button.grab_focus.call_deferred()
 
-	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])
-
+	dd.sync_run_with_decktricks(["version", "--verbose"])
 	dd.log(2, "Decktricks GUI initialization complete!")
 
 	# NOTE: This line should be last before exit, otherwise integration tests will fail:
