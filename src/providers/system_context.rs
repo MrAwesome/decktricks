@@ -140,6 +140,7 @@ impl RunningProgramSystemContext {
 
 fn get_procs_with_env(ctx: &impl ExecCtx) -> Option<String> {
     // XXX: NOTE: we do not run this inside of containers in CI, as ps eww errors there.
+    // TODO: check if this now works with ps axeww
     if running_in_ci_container() {
         return None;
     }

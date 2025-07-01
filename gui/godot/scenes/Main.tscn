@@ -53,6 +53,8 @@ current_tab = 0
 
 [node name="Home" parent="MainTabs" instance=ExtResource("3_q8u5g")]
 layout_mode = 2
+focus_neighbor_left = NodePath("../../UpdateButton")
+focus_previous = NodePath("../../UpdateButton")
 metadata/_tab_index = 0
 
 [node name="Categories" type="TabContainer" parent="MainTabs/Home"]
@@ -189,14 +191,16 @@ script = ExtResource("4_c01mt")
 [node name="UpdateButton" type="Button" parent="."]
 visible = false
 modulate = Color(0, 0.999404, 0.511962, 1)
-layout_mode = 0
-offset_left = 899.0
-offset_top = 4.0
-offset_right = 1268.32
-offset_bottom = 83.251
+offset_left = 131.0
+offset_top = 2.0
+offset_right = 316.324
+offset_bottom = 86.251
 scale = Vector2(0.755279, 0.755279)
-focus_previous = NodePath("../MainTabs")
-text = "Click To Update!"
+focus_neighbor_right = NodePath("../MainTabs/Home")
+focus_next = NodePath("../MainTabs/Home")
+theme_override_font_sizes/font_size = 34
+text = "Update Ready,
+Click Me!"
 
 [node name="L1Hint" type="TouchScreenButton" parent="."]
 modulate = Color(0.321728, 0.321728, 0.321728, 1)

@@ -83,13 +83,13 @@ impl IButton for ActionButton {
                     let msg = action_success.get_message().unwrap_or_else(String::default);
                     log!(
                         &ctx,
-                        "Decktricks command {action:?} finished with success: '{msg}'"
+                        "Decktricks command {action:?} finished with success:\n\n{msg}"
                     );
                 }
                 Err(known_error) => {
                     error!(
                         &ctx,
-                        "Decktricks command {action:?} encountered an error: '{known_error}'"
+                        "Decktricks command {action:?} encountered an error:\n\n{known_error}"
                     );
                 }
             }

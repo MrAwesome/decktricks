@@ -418,7 +418,7 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
             let msg = action_success.get_message().unwrap_or_else(String::default);
             info!(
                 &ctx,
-                "Decktricks command {action:?} finished with success: '{msg}'"
+                "Decktricks command {action:?} finished with success:\n\n{msg}"
             );
             outputs.push(msg);
         }
@@ -426,7 +426,7 @@ fn run_with_decktricks_inner(executor: &Executor, cmd: DecktricksCommand) -> Res
             experienced_error = true;
             error!(
                 &ctx,
-                "Decktricks command {action:?} encountered an error: '{known_error}'"
+                "Decktricks command {action:?} encountered an error:\n\n{known_error}"
             );
         }
     });

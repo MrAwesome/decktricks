@@ -139,17 +139,17 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_exit_decktricks"):
 		get_tree().quit()
 
+	# Handle L1/R1 moving among the main tabs and update button
 	# NOTE: could focus the first element of the first subtab here if desired
-	if event.is_action_pressed("ui_next_main_tab"):
-		var did_change_tab = %MainTabs.select_next_available()
+	if event.is_action_pressed("ui_prev_main_tab"):
+		var did_change_tab = %MainTabs.select_previous_available()
 		if did_change_tab:
 			%MainTabs.get_tab_bar().grab_focus()
 		elif $UpdateButton.visible:
 			$UpdateButton.grab_focus()
-
-	if event.is_action_pressed("ui_prev_main_tab"):
+	if event.is_action_pressed("ui_next_main_tab"):
 		if not $UpdateButton.has_focus():
-			%MainTabs.select_previous_available()
+			%MainTabs.select_next_available()
 		%MainTabs.get_tab_bar().grab_focus()
 
 func _init():
@@ -182,19 +182,19 @@ func _ready():
 	%Categories.select_next_available()
 
 	var main_tab_bar: TabBar = %MainTabs.get_tab_bar()
-	main_tab_bar.set_focus_neighbor(SIDE_RIGHT, $UpdateButton.get_path())
-	$UpdateButton.set_focus_neighbor(SIDE_LEFT, main_tab_bar.get_path())
-	$UpdateButton.set_focus_neighbor(SIDE_RIGHT, '')
+	main_tab_bar.set_focus_neighbor(SIDE_LEFT, $UpdateButton.get_path())
+	$UpdateButton.set_focus_neighbor(SIDE_RIGHT, main_tab_bar.get_path())
+	$UpdateButton.set_focus_neighbor(SIDE_LEFT, '')
 
 	var first_button = get_tree().get_nodes_in_group("first_button").pop_front()
 	if first_button:
 		first_button.grab_focus.call_deferred()
 
 	var version_info = dd.sync_run_with_decktricks(["version", "--verbose"])
-	dd.log(2, "Version info:\n" + version_info)
 
 	dd.log(2, "Decktricks GUI initialization complete!")
-	# This line should be last, otherwise integration tests will fail:
+
+	# NOTE: This line should be last before exit, otherwise integration tests will fail:
 	print("Decktricks GUI initialization complete!")
 
 	if should_exit:
