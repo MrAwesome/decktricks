@@ -47,7 +47,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 60
+theme_override_font_sizes/font_size = 50
 tab_alignment = 1
 current_tab = 0
 
@@ -65,7 +65,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 36
 tab_alignment = 1
 script = ExtResource("4_lhr70")
 
@@ -192,16 +192,15 @@ script = ExtResource("4_c01mt")
 visible = false
 modulate = Color(0, 0.999404, 0.511962, 1)
 layout_mode = 0
-offset_left = 131.0
-offset_top = 2.0
-offset_right = 316.324
-offset_bottom = 86.251
+offset_left = 100.0
+offset_top = 9.0
+offset_right = 441.324
+offset_bottom = 65.251
 scale = Vector2(0.755279, 0.755279)
 focus_neighbor_right = NodePath("../MainTabs/Home")
 focus_next = NodePath("../MainTabs/Home")
-theme_override_font_sizes/font_size = 34
-text = "Update Ready,
-Click Me!"
+theme_override_font_sizes/font_size = 37
+text = "Update Ready, Click Here!"
 
 [node name="L1Hint" type="TouchScreenButton" parent="."]
 modulate = Color(0.321728, 0.321728, 0.321728, 1)
