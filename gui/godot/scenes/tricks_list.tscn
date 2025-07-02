@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://do4v7dct1d2rl"]
+[gd_scene load_steps=3 format=3 uid="uid://do4v7dct1d2rl"]
 
 [ext_resource type="Theme" uid="uid://bb6vwl0h1flws" path="res://themes/kennyUI/kenneyUI-blue.tres" id="1_fgxhd"]
+[ext_resource type="Script" uid="uid://bheo7b7dmqqmi" path="res://scripts/TouchScrollContainer.gd" id="2_g7org"]
 
 [node name="ColorRect" type="ColorRect"]
 color = Color(0, 0, 0, 1)
@@ -14,6 +15,8 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_fgxhd")
 follow_focus = true
+script = ExtResource("2_g7org")
+metadata/_custom_type_script = "uid://bheo7b7dmqqmi"
 
 [node name="TricksList" type="VBoxContainer" parent="TricksScroller"]
 unique_name_in_owner = true
