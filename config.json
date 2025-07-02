@@ -166,6 +166,7 @@
                 "openmw",
                 "daggerfall-unity",
                 "protonup",
+                "luxtorpeda",
                 "compatibility",
                 "stalker"
             ],
@@ -174,6 +175,27 @@
             ],
             "display_name": "ProtonUp-Qt",
             "description": "Installer for Steam compatibility layers (for running old games with new engines, such as OpenMW for Morrowind, or Daggerfall Unity)."
+        },
+        {
+            "id": "protonplus",
+            "provider_config": {
+                "type": "flatpak",
+                "id": "com.vysp3r.ProtonPlus"
+            },
+            "icon": "XXX",
+            "tags": [
+                "openmw",
+                "daggerfall-unity",
+                "protonup",
+                "luxtorpeda",
+                "compatibility",
+                "stalker"
+            ],
+            "categories": [
+                "utilities"
+            ],
+            "display_name": "ProtonPlus",
+            "description": "Modern installer for Steam compatibility layers, such as Luxtorpeda and Proton-GE."
         },
         {
             "id": "retrodeck",
