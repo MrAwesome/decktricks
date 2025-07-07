@@ -178,6 +178,11 @@ pub fn is_running_under_steam() -> bool {
     std::env::var("SteamEnv").is_ok_and(|v| v == "1")
 }
 
+pub fn is_running_under_deck_game_mode() -> bool {
+    std::env::var("SteamOS").is_ok_and(|v| v == "1")
+        && std::env::var("SteamGamepadUI").is_ok_and(|v| v == "1")
+}
+
 pub fn get_steam_appid() -> Option<String> {
     match std::env::var("STEAM_COMPAT_TRANSCODED_MEDIA_PATH") {
         Ok(val) => {
@@ -195,6 +200,6 @@ pub fn get_steam_appid() -> Option<String> {
                 }
             }
         }
-        Err(_err) => None
+        Err(_err) => None,
     }
 }
