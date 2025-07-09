@@ -20,6 +20,7 @@ pub mod gui;
 #[macro_use]
 pub mod logging;
 pub mod system_command_runners;
+pub mod tail_watcher;
 pub mod tricks_config;
 pub mod tricks_status;
 pub mod utils;

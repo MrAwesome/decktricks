@@ -2,11 +2,11 @@
 
 use crate::logging::StoredLogEntry;
 use crate::logging::log_type_to_godot_color;
-use decktricks::utils::get_decktricks_update_log_file_location;
 use crate::CRATE_DECKTRICKS_LOGGER;
 use decktricks::prelude::*;
 use godot::classes::ColorRect;
 use std::fmt::Display;
+use std::time::Instant;
 
 use godot::classes::RichTextLabel;
 use godot::classes::TabContainer;
@@ -48,12 +48,9 @@ impl Logs {
         self.make_or_update_log_channel(&log_channel_scene, "all".into(), parsed.all)?;
         self.make_or_update_log_channel(&log_channel_scene, "general".into(), parsed.general)?;
 
-        let todo = "add updates back";
-//        let log_file_location = get_decktricks_update_log_file_location();
-//        if log_file_location.exists() {
-//            let updates_text = std::fs::read_to_string(log_file_location)?;
-//            self.make_or_update_log_channel(&log_channel_scene, "updates".into(), updates_text)?;
-//        }
+        if let Some(updates_text) = parsed.updates {
+            self.make_or_update_log_channel(&log_channel_scene, "updates".into(), vec![StoredLogEntry(Instant::now(), LogType::Info, updates_text)])?;
+        }
         for (trick_id, trick_logtext) in parsed.tricks {
             self.make_or_update_log_channel(&log_channel_scene, trick_id, trick_logtext)?;
         }

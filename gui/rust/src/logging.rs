@@ -1,3 +1,4 @@
+use std::sync::Mutex;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::{mpsc, Arc, LazyLock, RwLock};
@@ -6,6 +7,8 @@ use std::time::Instant;
 
 use decktricks::logging::DecktricksLogger;
 use decktricks::prelude::*;
+use decktricks::tail_watcher::TailWatcher;
+use decktricks::utils::get_decktricks_update_log_file_location;
 use godot::prelude::*;
 
 // NOTE: the logic in this file is not godot-specific, and could easily be reused in another gui
@@ -14,10 +17,20 @@ const NUM_LOG_STORAGE_READ_RETRIES: u8 = 10;
 const DEFAULT_GODOT_LOG_LEVEL: LogType = LogType::Info;
 
 type LogsWithTimestamps = HashMap<LogChannel, Vec<StoredLogEntry>>;
-#[derive(Default)]
 pub struct LogStorage {
     pending_logs: LogsWithTimestamps,
     all_stored_logs: LogsWithTimestamps,
+    updates_watcher: Mutex<TailWatcher>,
+}
+
+impl LogStorage {
+    pub fn new() -> Self {
+        LogStorage {
+            pending_logs: Default::default(),
+            all_stored_logs: Default::default(),
+            updates_watcher: Mutex::new(TailWatcher::new(&get_decktricks_update_log_file_location().to_string_lossy())),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -25,6 +38,7 @@ pub struct ParsedLogsLatest {
     pub all: Vec<StoredLogEntry>,
     pub general: Vec<StoredLogEntry>,
     pub tricks: Vec<(TrickID, Vec<StoredLogEntry>)>,
+    pub updates: Option<String>,
 }
 
 #[derive(Debug)]
@@ -45,7 +59,7 @@ impl Display for StoredLogEntry {
 }
 
 static LOG_STORAGE: LazyLock<Arc<RwLock<LogStorage>>> =
-    LazyLock::new(|| Arc::new(RwLock::new(LogStorage::default())));
+    LazyLock::new(|| Arc::new(RwLock::new(LogStorage::new())));
 
 // TODO: see if LOG_STORAGE can just live on this directly?
 #[derive(Debug)]
@@ -87,8 +101,13 @@ impl DecktricksGodotLogger {
 
     #[allow(clippy::unused_self)]
     pub fn get_latest_logs_and_wipe(&self) -> ParsedLogsLatest {
-        let logs_with_timestamps: LogsWithTimestamps = match LOG_STORAGE.write() {
-            Ok(mut hm) => std::mem::take(&mut hm.pending_logs),
+        let (logs_with_timestamps, updates) = match LOG_STORAGE.write() {
+            Ok(mut hm) => (
+                std::mem::take(&mut hm.pending_logs),
+                // We know this unwrap is safe, since this is the only place we take the lock for updates
+                hm.updates_watcher.lock().unwrap().get_latest(),
+            ),
+
             Err(err) => {
                 let error_msg = format!("Error: {err}\n\nWrite lock poisoned while trying to get latest logs! This is a serious error, please report it.");
                 godot_error!("{error_msg}");
@@ -100,10 +119,10 @@ impl DecktricksGodotLogger {
                         error_msg.to_string(),
                     )],
                 )]);
-                logs
+                (logs, None)
             }
         };
-        prep_logs_for_display(logs_with_timestamps)
+        prep_logs_for_display(logs_with_timestamps, updates)
     }
 
     #[allow(clippy::unused_self)]
@@ -221,7 +240,10 @@ fn prep_logs_for_dump(unparsed: LogsWithTimestamps) -> ParsedLogsForDumps {
     }
 }
 
-fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogsLatest {
+fn prep_logs_for_display(
+    unparsed: LogsWithTimestamps,
+    updates: Option<String>,
+) -> ParsedLogsLatest {
     let mut all_entries = vec![];
     let mut general_entries = vec![];
     let mut trickid_to_log_entries = vec![];
@@ -246,6 +268,7 @@ fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogsLatest {
         all: all_entries,
         general: general_entries,
         tricks: trickid_to_log_entries,
+        updates,
     }
 }
 
