@@ -1,5 +1,7 @@
 // TODO: improve performance when large amounts of log text is present!
 
+use crate::logging::StoredLogEntry;
+use crate::logging::log_type_to_godot_color;
 use decktricks::utils::get_decktricks_update_log_file_location;
 use crate::CRATE_DECKTRICKS_LOGGER;
 use decktricks::prelude::*;
@@ -38,7 +40,7 @@ impl Logs {
     }
 
     fn inner_populate_logs(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let parsed = CRATE_DECKTRICKS_LOGGER.clone().get_logs();
+        let parsed = CRATE_DECKTRICKS_LOGGER.clone().get_latest_logs_and_wipe();
 
         let log_channel_scene: Gd<PackedScene> =
             try_load::<PackedScene>("res://scenes/log_channel.tscn")?;
@@ -46,11 +48,12 @@ impl Logs {
         self.make_or_update_log_channel(&log_channel_scene, "all".into(), parsed.all)?;
         self.make_or_update_log_channel(&log_channel_scene, "general".into(), parsed.general)?;
 
-        let log_file_location = get_decktricks_update_log_file_location();
-        if log_file_location.exists() {
-            let updates_text = std::fs::read_to_string(log_file_location)?;
-            self.make_or_update_log_channel(&log_channel_scene, "updates".into(), updates_text)?;
-        }
+        let todo = "add updates back";
+//        let log_file_location = get_decktricks_update_log_file_location();
+//        if log_file_location.exists() {
+//            let updates_text = std::fs::read_to_string(log_file_location)?;
+//            self.make_or_update_log_channel(&log_channel_scene, "updates".into(), updates_text)?;
+//        }
         for (trick_id, trick_logtext) in parsed.tricks {
             self.make_or_update_log_channel(&log_channel_scene, trick_id, trick_logtext)?;
         }
@@ -62,7 +65,7 @@ impl Logs {
         &mut self,
         scene: &Gd<PackedScene>,
         name: String,
-        text: String,
+        entries: Vec<StoredLogEntry>,
     ) -> Result<Gd<ColorRect>, Box<dyn std::error::Error>> {
         // find_child() didn't seem to work, so do it by hand:
         let found_child: Option<Gd<Node>> = self
@@ -97,11 +100,11 @@ impl Logs {
         {
             Some(child) => match child.try_cast::<RichTextLabel>() {
                 Ok(mut textedit) => {
-                    // Given that logs are always appends, just checking length should be enough always:
-                    if textedit.get_text().len() != text.len() {
-                        // NOTE: modifications to GDScript strings always return a new string, so it
-                        // seems unlikely there's a way to just append updated log text here
-                        textedit.set_text(&text);
+                    for StoredLogEntry(_time, log_type, text) in entries {
+                        textedit.push_color(log_type_to_godot_color(log_type));
+                        textedit.append_text(&text);
+                        textedit.append_text("\n");
+                        textedit.pop();
                     }
                 }
                 Err(err) => Err(Box::new(LogLoadingError(format!(

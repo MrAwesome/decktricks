@@ -1,7 +1,7 @@
-use std::time::Duration;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::{mpsc, Arc, LazyLock, RwLock};
+use std::time::Duration;
 use std::time::Instant;
 
 use decktricks::logging::DecktricksLogger;
@@ -12,46 +12,65 @@ use godot::prelude::*;
 
 const NUM_LOG_STORAGE_READ_RETRIES: u8 = 10;
 const DEFAULT_GODOT_LOG_LEVEL: LogType = LogType::Info;
+
 type LogsWithTimestamps = HashMap<LogChannel, Vec<StoredLogEntry>>;
+#[derive(Default)]
+pub struct LogStorage {
+    pending_logs: LogsWithTimestamps,
+    all_stored_logs: LogsWithTimestamps,
+}
 
 #[derive(Debug)]
-pub struct ParsedLogs {
+pub struct ParsedLogsLatest {
+    pub all: Vec<StoredLogEntry>,
+    pub general: Vec<StoredLogEntry>,
+    pub tricks: Vec<(TrickID, Vec<StoredLogEntry>)>,
+}
+
+#[derive(Debug)]
+pub struct ParsedLogsForDumps {
     pub all: String,
     pub general: String,
     pub tricks: Vec<(TrickID, String)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct StoredLogEntry(Instant, String);
+pub struct StoredLogEntry(pub Instant, pub LogType, pub String);
 
 impl Display for StoredLogEntry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // At the moment, we don't display timestamps when we print out a log entry
-        write!(f, "{}", self.1)
+        write!(f, "{}", self.2)
     }
 }
 
-static LOG_STORAGE: LazyLock<Arc<RwLock<LogsWithTimestamps>>> =
-    LazyLock::new(|| Arc::new(RwLock::new(HashMap::new())));
+static LOG_STORAGE: LazyLock<Arc<RwLock<LogStorage>>> =
+    LazyLock::new(|| Arc::new(RwLock::new(LogStorage::default())));
 
+// TODO: see if LOG_STORAGE can just live on this directly?
 #[derive(Debug)]
 pub struct DecktricksGodotLogger {
     log_level: LogType,
-    sender: mpsc::Sender<(LogChannel, String)>,
+    sender: mpsc::Sender<(LogChannel, LogType, String)>,
 }
 
 impl DecktricksGodotLogger {
     #[must_use]
     pub fn new() -> Self {
-        let (sender, receiver) = mpsc::channel();
+        let (sender, receiver) = mpsc::channel::<(LogChannel, LogType, String)>();
         std::thread::spawn(move || {
-            for (log_channel, text) in receiver {
+            for (log_channel_id, log_type, text) in receiver {
                 let now = Instant::now();
                 match LOG_STORAGE.write() {
                     Ok(mut hm) => {
-                        hm.entry(log_channel)
+                        hm.pending_logs
+                            .entry(log_channel_id.clone())
                             .or_default()
-                            .push(StoredLogEntry(now, text));
+                            .push(StoredLogEntry(now, log_type, text.clone()));
+                        hm.all_stored_logs
+                            .entry(log_channel_id)
+                            .or_default()
+                            .push(StoredLogEntry(now, log_type, text));
                     }
                     Err(err) => {
                         godot_error!("Write lock poisoned! Error: {err}");
@@ -67,7 +86,28 @@ impl DecktricksGodotLogger {
     }
 
     #[allow(clippy::unused_self)]
-    pub fn get_logs(&self) -> ParsedLogs {
+    pub fn get_latest_logs_and_wipe(&self) -> ParsedLogsLatest {
+        let logs_with_timestamps: LogsWithTimestamps = match LOG_STORAGE.write() {
+            Ok(mut hm) => std::mem::take(&mut hm.pending_logs),
+            Err(err) => {
+                let error_msg = format!("Error: {err}\n\nWrite lock poisoned while trying to get latest logs! This is a serious error, please report it.");
+                godot_error!("{error_msg}");
+                let logs = HashMap::from([(
+                    LogChannel::General,
+                    vec![StoredLogEntry(
+                        Instant::now(),
+                        LogType::Error,
+                        error_msg.to_string(),
+                    )],
+                )]);
+                logs
+            }
+        };
+        prep_logs_for_display(logs_with_timestamps)
+    }
+
+    #[allow(clippy::unused_self)]
+    pub fn get_all_logs_for_dump(&self) -> ParsedLogsForDumps {
         let mut read_result = LOG_STORAGE.try_read();
         let mut delay_ms = 1;
         for _ in 0..NUM_LOG_STORAGE_READ_RETRIES {
@@ -80,14 +120,14 @@ impl DecktricksGodotLogger {
                 break;
             }
         }
-        let unprepped_logs = match LOG_STORAGE.try_read() {
-            Ok(unprepped) => (*unprepped).clone(),
+        let unprepped_logs = match read_result {
+            Ok(unprepped) => (*unprepped).all_stored_logs.clone(),
             Err(err) => {
                 godot_error!("Failed to get read lock on logs! This is a serious error, please report it: {err}");
                 HashMap::default()
             }
         };
-        prep_logs_for_display(unprepped_logs)
+        prep_logs_for_dump(unprepped_logs)
     }
 }
 
@@ -128,25 +168,16 @@ impl DecktricksLogger for DecktricksGodotLogger {
 
     fn store(&self, ctx: ExecutionContext, log_type: LogType, text: String) {
         let channel = ctx.get_log_channel().clone();
-        let color = match log_type {
-            LogType::Debug => "darkgrey",
-            LogType::Info => "grey",
-            LogType::Log => "green",
-            LogType::Warn => "orange",
-            LogType::Error => "red",
-        };
 
         self.sender
-            .send((channel,
-                    format!("[color={color}]{text}[/color]")
-                    ))
+            .send((channel, log_type, text))
             .unwrap_or_else(|e| {
                 self.actual_print_error(format!("Error sending to log storage: {e}"));
             });
     }
 }
 
-fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogs {
+fn prep_logs_for_dump(unparsed: LogsWithTimestamps) -> ParsedLogsForDumps {
     let mut all_entries = vec![];
     let mut general_log_text = String::new();
     let mut trickid_to_log_text = Vec::new();
@@ -183,17 +214,55 @@ fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogs {
         .collect::<Vec<_>>()
         .join("\n");
 
-    ParsedLogs {
+    ParsedLogsForDumps {
         all,
         general: general_log_text,
         tricks: trickid_to_log_text,
     }
 }
 
+fn prep_logs_for_display(unparsed: LogsWithTimestamps) -> ParsedLogsLatest {
+    let mut all_entries = vec![];
+    let mut general_entries = vec![];
+    let mut trickid_to_log_entries = vec![];
+
+    for (log_channel, entries) in unparsed {
+        all_entries.extend(entries.clone());
+        match log_channel {
+            LogChannel::General => {
+                general_entries = entries;
+            }
+            LogChannel::TrickID(trick_id) => {
+                trickid_to_log_entries.push((trick_id, entries));
+            }
+            LogChannel::IgnoreCompletelyAlways => {}
+        }
+    }
+
+    trickid_to_log_entries.sort();
+    all_entries.sort();
+
+    ParsedLogsLatest {
+        all: all_entries,
+        general: general_entries,
+        tricks: trickid_to_log_entries,
+    }
+}
+
+pub fn log_type_to_godot_color(log_type: LogType) -> Color {
+    match log_type {
+        LogType::Debug => Color::DARK_GRAY,
+        LogType::Info => Color::GRAY,
+        LogType::Log => Color::GREEN,
+        LogType::Warn => Color::ORANGE,
+        LogType::Error => Color::RED,
+    }
+}
+
 #[test]
 fn log_entry_display() {
     let teapot = "I am... a little teapot.";
-    assert!(StoredLogEntry(Instant::now(), teapot.into())
+    assert!(StoredLogEntry(Instant::now(), LogType::Log, teapot.into())
         .to_string()
         .contains(teapot));
 }

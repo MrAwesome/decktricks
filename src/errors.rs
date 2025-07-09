@@ -59,7 +59,13 @@ impl Display for KnownError {
                 write!(f, "Error parsing system command: {sys_parse_err:#?}")
             }
             Self::SystemCommandRunFailure(sys_run_err) => {
-                write!(f, "Error running system command: {sys_run_err:#?}")
+                let command = &sys_run_err.cmd.cmd;
+                let args = sys_run_err.cmd.args.join(" ");
+                let sep = if sys_run_err.cmd.args.len() > 0 { " " } else { "" };
+                let command_string = format!("{command}{sep}{args}");
+                let err_msg = sys_run_err.error.to_string();
+
+                write!(f, "Error running system command: `{command_string}`: \"{err_msg}\"")
             }
             Self::SystemCommandThreadError(sys_run_err) => {
                 write!(f, "Error in system command thread: {sys_run_err:#?}")
