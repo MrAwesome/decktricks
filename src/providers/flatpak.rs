@@ -113,7 +113,7 @@ impl FlatpakProvider {
 
     fn flatpak_update(&self) -> DeckResult<ActionSuccess> {
         self.ctx
-            .sys_command(FLATPAK_SYSTEM_COMMAND, ["update", &self.id])
+            .sys_command(FLATPAK_SYSTEM_COMMAND, ["update", "-y", &self.id])
             .enable_live_logging()
             .run()?
             .as_success()
