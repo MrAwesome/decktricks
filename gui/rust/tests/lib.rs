@@ -19,14 +19,7 @@ const GUI_MAXIMUM_STARTUP_TIME_MS: u64 = 5000;
 const GUI_MINIMUM_STARTUP_TIME_MS: u64 = 500;
 
 static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
-    // Tests use debug or release based on build mode
-    let is_debug = cfg!(debug_assertions);
-    let build_dir = if is_debug {
-        Path::new(GODOT_BUILD_BASE_DIR).join("debug")
-    } else {
-        Path::new(GODOT_BUILD_BASE_DIR).join("release")
-    };
-    build_dir.join("decktricks-gui")
+    Path::new(GODOT_BUILD_BASE_DIR).join("decktricks-gui")
 });
 
 #[ctor]

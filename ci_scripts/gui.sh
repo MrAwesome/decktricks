@@ -21,9 +21,9 @@ popd
 
 # Put the Godot dylib and the binary into our target build dir
 pushd gui/godot/
-test -x build/release/decktricks-gui
-test -f build/release/libdecktricks_godot_gui.so
-cp build/release/decktricks-gui "$REPOBUILD"/inside_tar/bin/
-cp build/release/libdecktricks_godot_gui.so "$REPOBUILD"/inside_tar/bin/
+test -x build/decktricks-gui
+test -f build/libdecktricks_godot_gui.so
+cp build/decktricks-gui "$REPOBUILD"/inside_tar/bin/
+cp build/libdecktricks_godot_gui.so "$REPOBUILD"/inside_tar/bin/
 popd
 # }}}
