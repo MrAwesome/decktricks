@@ -140,14 +140,14 @@ fn godot_export(is_debug_build: bool) {
     cmd.current_dir(GODOT_BASE_DIR)
         .arg("--headless");
     if is_debug_build {
-        cmd.args(["--export-debug", "linux-debug", &output_path.to_string_lossy()]);
+        cmd.args(["--export-debug", "Linux", &output_path.to_string_lossy()]);
     } else {
-        cmd.args(["--export-release", "linux-release", &output_path.to_string_lossy()]);
+        cmd.args(["--export-release", "Linux", &output_path.to_string_lossy()]);
     }
     let human = if is_debug_build {
-        format!("{} --headless --export-debug linux-debug", godot_bin)
+        format!("{} --headless --export-debug Linux", godot_bin)
     } else {
-        format!("{} --headless --export-release linux-release", godot_bin)
+        format!("{} --headless --export-release Linux", godot_bin)
     };
     let output = run_cmd_capture(cmd, &human);
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -187,16 +187,12 @@ fn resolve_godot_bin() -> String {
     "godot".to_string()
 }
 
-fn get_exported_binary_path(is_debug_build: bool) -> PathBuf {
-    get_build_dir(is_debug_build).join("decktricks-gui")
+fn get_exported_binary_path(_is_debug_build: bool) -> PathBuf {
+    Path::new(GODOT_BUILD_BASE_DIR).join("decktricks-gui")
 }
 
-fn get_build_dir(is_debug_build: bool) -> PathBuf {
-    if is_debug_build {
-        Path::new(GODOT_BUILD_BASE_DIR).join("debug")
-    } else {
-        Path::new(GODOT_BUILD_BASE_DIR).join("release")
-    }
+fn get_build_dir(_is_debug_build: bool) -> PathBuf {
+    Path::new(GODOT_BUILD_BASE_DIR).to_path_buf()
 }
 
 fn run_cmd(mut cmd: Command, human: &str) {
