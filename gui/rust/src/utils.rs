@@ -24,7 +24,7 @@ pub(crate) trait NodeExt {
     where
         TTarget: GodotClass + Inherits<Node>;
 
-    fn get_unique_as<TTarget>(&self, unique_name: &str) -> Result<Gd<TTarget>, String>
+    fn _get_unique_as<TTarget>(&self, unique_name: &str) -> Result<Gd<TTarget>, String>
     where
         TTarget: GodotClass + Inherits<Node>;
 }
@@ -58,7 +58,7 @@ where
             .map_err(|_e| format!("Cast failed at {}", path))
     }
 
-    fn get_unique_as<TTarget>(&self, unique_name: &str) -> Result<Gd<TTarget>, String>
+    fn _get_unique_as<TTarget>(&self, unique_name: &str) -> Result<Gd<TTarget>, String>
     where
         TTarget: GodotClass + Inherits<Node>,
     {

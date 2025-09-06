@@ -110,7 +110,7 @@ impl LoadedConfig {
     }
 
     #[must_use]
-    pub fn get_all_tricks(&self) -> Iter<TrickID, Trick> {
+    pub fn get_all_tricks(&self) -> Iter<'_, TrickID, Trick> {
         self.tricks.iter()
     }
 

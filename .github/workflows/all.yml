@@ -65,6 +65,7 @@ jobs:
 
       # These are separate so that if-no-files-found actually errors if just one is missing {{{
       - name: Upload tarball
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-tar
@@ -72,6 +73,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload installer desktop
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-installer-desktop
@@ -79,6 +81,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload installer script
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-installer-script
@@ -86,6 +89,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload update script
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-update-script
@@ -93,6 +97,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload tarball checksum
+        if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
           name: verified-gui-tar-checksum
