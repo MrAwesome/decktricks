@@ -3,6 +3,7 @@
 set -euxo pipefail
 
 cd "$(dirname "$0")"
+
 pushd ../rust
-cargo run --bin gui-tool -- build-and-export
+cargo test --release
 popd

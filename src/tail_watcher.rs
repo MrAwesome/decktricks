@@ -38,7 +38,7 @@ pub struct TailWatcherInner {
 }
 
 impl TailWatcherInner {
-    fn new(file: &str) -> TailWatcher {
+    pub fn new(file: &str) -> TailWatcher {
         match Self::new_inner(file) {
             Ok(x) => TailWatcher::Real(x),
             Err(err) => {
@@ -46,7 +46,8 @@ impl TailWatcherInner {
             }
         }
     }
-    fn new_inner(file: &str) -> std::io::Result<Self> {
+
+    pub fn new_inner(file: &str) -> std::io::Result<Self> {
         let mut child = Command::new("tail")
             .arg("-F")
             .arg("-n")

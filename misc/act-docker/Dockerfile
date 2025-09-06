@@ -46,7 +46,9 @@ RUN cargo build --release
 RUN cargo test
 RUN cargo test --release
 WORKDIR /work/decktricks/gui/rust
-# This handles actually building and placing the gui binary:
+RUN cargo build
+RUN cargo build --release
+RUN cargo test
 RUN cargo test --release
 WORKDIR /work/decktricks
 

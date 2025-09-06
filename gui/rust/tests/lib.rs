@@ -4,12 +4,11 @@ use std::time::Instant;
 use std::process::Stdio;
 use std::{process::Command, time::Duration};
 use wait_timeout::ChildExt;
+use ctor::ctor;
 use std::sync::LazyLock;
-use std::fs;
 
 const GODOT_BASE_DIR: &str = "../godot";
-const GODOT_BUILD_DIR: &str = "../godot/build";
-const GODOT_CACHE_DIR: &str = "../godot/.godot";
+const GODOT_BUILD_BASE_DIR: &str = "../godot/build";
 
 // If the GUI hasn't started in 5 seconds on a decently-fast system,
 // something is wrong
@@ -19,78 +18,30 @@ const GUI_MAXIMUM_STARTUP_TIME_MS: u64 = 5000;
 // something is wrong
 const GUI_MINIMUM_STARTUP_TIME_MS: u64 = 500;
 
-// The pre-test build steps.
-//
-// You MUST access this variable, using &*GODOT_BINARY_PATH, in each test here to ensure that
-// the dylib/binary is actually built and placed, since test ordering is not guaranteed.
-// `get_godot_cmd()` will do this for you.
-//
-// NOTE: the first test to run will trigger this, and will be much slower as a result.
 static GODOT_BINARY_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
-    if cfg!(debug_assertions) {
-        panic!("GUI tests should not be run in debug mode! Use `cargo test --release`.");
-    }
-
-    let build_path = Path::new(GODOT_BUILD_DIR);
-    if build_path.is_dir() {
-        fs::remove_dir_all(build_path).unwrap();
-    }
-    fs::create_dir_all(build_path).unwrap();
-
-    let cache_path = Path::new(GODOT_CACHE_DIR);
-    if cache_path.is_dir() {
-        fs::remove_dir_all(cache_path).unwrap();
-    }
-
-
-    // NOTE: for production builds, you want to delete the ../godot/.godot directory
-    //       as well. That is handled in gui.sh in CI, but if you're encountering
-    //       weird behavior in local builds after major changes you can try that as well.
-
-    Command::new("cargo")
-        .args(["build", "--release"])
-        .output()
-        .unwrap();
-
-    let tmp_path = Path::join(build_path, Path::new("libdecktricks_godot_gui.so.new"));
-    fs::copy(
-        "target/release/libdecktricks_godot_gui.so",
-        &tmp_path,
-    )
-    .unwrap();
-
-    // Do a mv instead of a cp to avoid overwriting a running file
-    fs::rename(
-        tmp_path,
-        Path::join(build_path, Path::new("libdecktricks_godot_gui.so")),
-    ).unwrap();
-
-    Command::new("godot")
-        .current_dir(GODOT_BASE_DIR)
-        .args(["--import"])
-        .args(["--headless"])
-        .output()
-        .unwrap();
-
-    let output = Command::new("godot")
-        .current_dir(GODOT_BASE_DIR)
-        .args(["--headless", "--export-release", "Linux"])
-        .output()
-        .unwrap();
-
-    // We can't trust Godot to exit on an error, so we manually check for ERROR
-    // in the output of the build, as well as a run of the binary below
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if stdout.contains("ERROR") || stderr.contains("ERROR") {
-        println!("STDOUT: {}", stdout);
-        println!("STDERR: {}", stderr);
-    }
-    assert!(!stdout.contains("ERROR"));
-    assert!(!stderr.contains("ERROR"));
-
-    Path::join(build_path, Path::new("decktricks-gui"))
+    // Tests use debug or release based on build mode
+    let is_debug = cfg!(debug_assertions);
+    let build_dir = if is_debug {
+        Path::new(GODOT_BUILD_BASE_DIR).join("debug")
+    } else {
+        Path::new(GODOT_BUILD_BASE_DIR).join("release")
+    };
+    build_dir.join("decktricks-gui")
 });
+
+#[ctor]
+fn build_gui_once() {
+    // Build/export the GUI once before any tests run.
+    let is_debug = cfg!(debug_assertions);
+    let mut build_cmd = Command::new("cargo");
+    build_cmd.arg("run");
+    if !is_debug {
+        build_cmd.arg("--release");
+    }
+    build_cmd.args(["--bin", "gui-tool", "--", "build-and-export"]);
+    let status = build_cmd.status().expect("failed to run gui-tool");
+    assert!(status.success(), "gui-tool build/export failed");
+}
 
 fn get_godot_cmd() -> Command {
     let path = &*GODOT_BINARY_PATH;

@@ -20,7 +20,11 @@ build_assets/ - The static installer/runner files (.sh and .desktop)
 # Testing
 For changes to the core library, run `cargo test`.
 
-To test changes to the GUI, run `cd gui/rust/ && cargo test --release`.
+For GUI builds/exports during development, run:
+
+```
+./gui/godot/dev_test.sh
+```
 
 To run the GitHub Actions flow locally, run `act`.
 

@@ -1,10 +1,12 @@
 #!/bin/bash
 
 DECKTRICKS_REPO_ROOT="$(realpath "$(dirname "${BASH_SOURCE[0]}")"/..)"
+GUIBUILD="$DECKTRICKS_REPO_ROOT"/gui/godot/build
 REPOBUILD="$DECKTRICKS_REPO_ROOT"/build
 REPOTAR="$DECKTRICKS_REPO_ROOT"/inside_tar
 
 export RUST_BACKTRACE=1
 export DECKTRICKS_REPO_ROOT
+export GUIBUILD
 export REPOBUILD
 export REPOTAR

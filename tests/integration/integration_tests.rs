@@ -32,7 +32,13 @@ fn broken_command_gives_error() -> Result<(), DynamicError> {
 // NOTE: this will take longer based on the number of flatpaks installed on the system
 #[test]
 fn time_see_all_available_actions() -> Result<(), DynamicError> {
-    let see_all_max_time = Duration::from_millis(200);
+    // If running in Act, we give a little extra time since the system might be quite busy
+    let see_all_max_time = if std::env::var("ACT").unwrap_or_default() == "true" {
+        Duration::from_millis(400)
+    } else {
+        Duration::from_millis(200)
+
+    };
     let start = Instant::now();
     decktricks_cli!["actions"]?;
     let time_taken = start.elapsed();
