@@ -18,21 +18,12 @@ enum Action {
 }
 
 fn main() {
-    let mut args = env::args().skip(1).collect::<Vec<String>>();
-    let mut clean = false;
+    let args = env::args().skip(1).collect::<Vec<String>>();
 
     // Minimal arg parsing to avoid extra deps.
     // Usage:
-    //   gui-tool [--clean] [build-and-export|build-lib|export|print-binary-path]
+    //   gui-tool [build-and-export|build-lib|export|print-binary-path]
     // Defaults to build-and-export.
-    args.retain(|a| {
-        if a == "--clean" {
-            clean = true;
-            false
-        } else {
-            true
-        }
-    });
 
     let action = match args.get(0).map(|s| s.as_str()) {
         None => Action::BuildAndExport,
@@ -42,16 +33,14 @@ fn main() {
         Some("print-binary-path") => Action::PrintBinaryPath,
         Some(other) => {
             eprintln!(
-                "Unknown subcommand: {}\nUsage: gui-tool [--clean] [build-and-export|build-lib|export|print-binary-path]",
+                "Unknown subcommand: {}\nUsage: gui-tool [build-and-export|build-lib|export|print-binary-path]",
                 other
             );
             std::process::exit(2);
         }
     };
 
-    if clean {
-        clean_build_dirs();
-    }
+    clean_build_dirs();
 
     let is_debug_build = cfg!(debug_assertions);
     match action {
