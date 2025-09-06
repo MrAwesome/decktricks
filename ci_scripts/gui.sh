@@ -15,7 +15,7 @@ popd
 
 # GUI Rust libs {{{
 pushd gui/rust/
-cargo run --release --bin gui-tool -- --clean build-and-export | tee /tmp/decktricks_gui_build
+cargo run --release --bin gui-tool -- build-and-export | tee /tmp/decktricks_gui_build
 popd
 # }}}
 
