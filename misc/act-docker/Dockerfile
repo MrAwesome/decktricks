@@ -3,7 +3,7 @@ ENV CI=true
 ENV GODOT4_BIN=/usr/bin/godot
 ARG GODOT_RELEASE=4.4.1.stable
 ENV GODOT_RELEASE=${GODOT_RELEASE}
-RUN pacman -Syu --noconfirm git flatpak fontconfig p7zip rustup vim
+RUN pacman -Syu --noconfirm git flatpak fontconfig p7zip rustup vim nodejs
 RUN rustup default stable
 #RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
 #RUN ln -sf /root/.cargo/bin/cargo /usr/bin/cargo

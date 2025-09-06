@@ -9,3 +9,5 @@ docker buildx build --no-cache-filter="gitclone" -t decktricks-act .
 
 scripts/build_local_docker_image.sh
 scripts/push_local_docker_image.sh
+
+# Please note! The docker build relies on *the code in github* for building, so any code changes that would affect the build should be committed upstream before caching into the new image.
