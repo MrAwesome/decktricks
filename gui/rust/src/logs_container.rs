@@ -2,6 +2,7 @@
 
 use crate::logging::StoredLogEntry;
 use crate::logging::log_type_to_godot_color;
+use crate::utils::NodeExt;
 use crate::CRATE_DECKTRICKS_LOGGER;
 use decktricks::prelude::*;
 use godot::classes::ColorRect;
@@ -90,28 +91,17 @@ impl Logs {
             },
         };
 
-        match color_rect
-            .get_child(0)
-            .and_then(|scroll_container| scroll_container.get_child(0))
-            .and_then(|margin_container| margin_container.get_child(0))
-        {
-            Some(child) => match child.try_cast::<RichTextLabel>() {
-                Ok(mut textedit) => {
-                    for StoredLogEntry(_time, log_type, text) in entries {
-                        textedit.push_color(log_type_to_godot_color(log_type));
-                        textedit.append_text(&text);
-                        textedit.append_text("\n");
-                        textedit.pop();
-                    }
-                }
-                Err(err) => Err(Box::new(LogLoadingError(format!(
-                    "Failed to cast to RichTextLabel: {err}"
-                ))))?,
-            },
-            None => Err(Box::new(LogLoadingError(
-                "Failed to get child of ScrollContainer!".into(),
-            )))?,
-        };
+        let mut textedit: Gd<RichTextLabel> = color_rect.clone()
+            .upcast::<Node>()
+            .get_as("ScrollContainer/MarginContainer/TextEdit")
+            .map_err(|e| Box::new(LogLoadingError(e)) as Box<dyn std::error::Error>)?;
+
+        for StoredLogEntry(_time, log_type, text) in entries {
+            textedit.push_color(log_type_to_godot_color(log_type));
+            textedit.append_text(&text);
+            textedit.append_text("\n");
+            textedit.pop();
+        }
         Ok(color_rect)
     }
 }

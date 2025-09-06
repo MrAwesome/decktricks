@@ -1,7 +1,7 @@
 #![allow(clippy::needless_pass_by_value)]
 
 use crate::action_button::ActionButton;
-use crate::utils::gderr;
+use crate::utils::{gderr, NodeExt};
 use crate::CRATE_DECKTRICKS_LOGGER;
 use decktricks::controller_layout::load_controller_config;
 use decktricks::rayon::spawn;
@@ -178,16 +178,14 @@ impl DecktricksDispatcher {
                 .try_instantiate_as::<ColorRect>()
                 .ok_or("background not found")?;
             trickslist_background.set_name(&category_id);
-            let trickslist_scroller: Gd<ScrollContainer> = trickslist_background
-                .get_child(0)
-                .ok_or("scroller not found")?
-                .try_cast::<ScrollContainer>()
-                .map_err(gderr)?;
+            let trickslist_scroller: Gd<ScrollContainer> = trickslist_background.clone()
+                .upcast::<Node>()
+                .get_as("TricksScroller")
+                .map_err(|e| gderr(e))?;
             let mut trickslist: Gd<VBoxContainer> = trickslist_scroller
-                .get_child(0)
-                .ok_or("vboxcontainer not found")?
-                .try_cast::<VBoxContainer>()
-                .map_err(gderr)?;
+                .upcast::<Node>()
+                .get_as("TricksList")
+                .map_err(|e| gderr(e))?;
 
             // NOTE: it's inefficient to do this sort here, but for clarity of mind
             //       easier to not worry about sort order until we sort here by
@@ -201,22 +199,18 @@ impl DecktricksDispatcher {
                     .try_instantiate_as::<PanelContainer>()
                     .ok_or("panelcontainer not found")?;
                 row_outer.set_name(&trick_status.trick.id);
-                let mut row_outer_vbox: Gd<VBoxContainer> = row_outer
-                    .get_child(1)
-                    .ok_or("vboxcontainer second child not found")?
-                    .get_child(0)
-                    .ok_or("inner vboxcontainer not found")?
-                    .try_cast::<VBoxContainer>()
-                    .map_err(gderr)?;
+                let mut row_outer_vbox: Gd<VBoxContainer> = row_outer.clone()
+                    .upcast::<Node>()
+                    .get_as("RowOuterMargin/VBoxContainer")
+                    .map_err(|e| gderr(e))?;
 
                 let label_outer: Gd<PanelContainer> = label_outer_packed
                     .try_instantiate_as::<PanelContainer>()
                     .ok_or("label_outer not found")?;
-                let mut label: Gd<Label> = label_outer
-                    .get_child(1)
-                    .ok_or("label not found")?
-                    .try_cast::<Label>()
-                    .map_err(gderr)?;
+                let mut label: Gd<Label> = label_outer.clone()
+                    .upcast::<Node>()
+                    .get_as("Label")
+                    .map_err(|e| gderr(e))?;
                 label.set_text(&trick_status.trick.display_name);
 
                 row_outer_vbox.add_child(&label_outer);
@@ -224,13 +218,10 @@ impl DecktricksDispatcher {
                 let actions_row_outer: Gd<PanelContainer> = actions_row_outer_packed
                     .try_instantiate_as::<PanelContainer>()
                     .ok_or("actions_row_outer not found")?;
-                let mut actions_row: Gd<HBoxContainer> = actions_row_outer
-                    .get_child(1)
-                    .ok_or("actions_row_outer second child not found")?
-                    .get_child(0)
-                    .ok_or("actions_row hbox not found")?
-                    .try_cast::<HBoxContainer>()
-                    .map_err(gderr)?;
+                let mut actions_row: Gd<HBoxContainer> = actions_row_outer.clone()
+                    .upcast::<Node>()
+                    .get_as("ActionsRowMargin/ActionsInner")
+                    .map_err(|e| gderr(e))?;
 
                 for action in trick_status.actions {
                     let is_available = action.is_available;
