@@ -193,8 +193,38 @@ func _ready():
 	dd.sync_run_with_decktricks(["version", "--verbose"])
 	dd.log(2, "Decktricks GUI initialization complete!")
 
-	# NOTE: This line should be last before exit, otherwise integration tests will fail:
+	# NOTE: This line should be the last non-testing output before exit, otherwise integration tests will fail:
 	print("Decktricks GUI initialization complete!")
 
+	# If requested by tests, emulate user inputs via action presses
+	var test_inputs = OS.get_environment("DECKTRICKS_GUI_TEST_INPUTS")
+	if test_inputs:
+		var actions: Array[String]
+		actions.assign(test_inputs.split("|DELIM|"))
+		var exit_after_inputs = OS.get_environment("DECKTRICKS_GUI_EXIT_AFTER_INPUTS")
+		var post_delay_ms = OS.get_environment("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS")
+		call_deferred("_perform_test_actions", actions, exit_after_inputs, post_delay_ms)
+
 	if should_exit:
+		get_tree().quit()
+
+func _perform_test_actions(actions: Array[String], exit_after_inputs: String, post_delay_ms: String) -> void:
+	for action_name in actions:
+		var ev_press := InputEventAction.new()
+		ev_press.action = action_name
+		ev_press.pressed = true
+		Input.parse_input_event(ev_press)
+		await get_tree().create_timer(0.05).timeout
+
+		var ev_release := InputEventAction.new()
+		ev_release.action = action_name
+		ev_release.pressed = false
+		Input.parse_input_event(ev_release)
+		await get_tree().create_timer(0.05).timeout
+
+	if exit_after_inputs:
+		var delay_ms := 300
+		if post_delay_ms:
+			delay_ms = int(post_delay_ms)
+		await get_tree().create_timer(float(delay_ms) / 1000.0).timeout
 		get_tree().quit()

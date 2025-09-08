@@ -1,3 +1,5 @@
+use std::io::BufRead;
+use std::io::BufReader;
 use std::path::PathBuf;
 use std::path::Path;
 use std::time::Instant;
@@ -120,3 +122,157 @@ fn test_dispatcher_e2e() {
     assert!(stdout.trim_end().ends_with("Decktricks GUI initialization complete!"));
     assert_eq!(output.status.code().unwrap(), 0);
 }
+
+// Smoke tests using an override config via DECKTRICKS_CONFIG.
+#[test]
+fn smoke_bbb_writevar() {
+    use tempfile::NamedTempFile;
+    let mut cmd = get_godot_cmd();
+    let tmp = NamedTempFile::new().unwrap();
+    let dest_path = tmp.path().to_string_lossy().to_string();
+    let unique = format!("decktricks-smoke-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+    let output = cmd
+        .env("DECKTRICKS_CONFIG", "../../config-smoke.json")
+        .env("DECKTRICKS_GUI_EXIT_AFTER_INPUTS", "true")
+        .env("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS", "600")
+        .env("DECKTRICKS_GUI_TEST_INPUTS", "ui_down|DELIM|ui_accept")
+        .env("DECKTRICKS_BBB_WRITEVAR_CONTENTS", &unique)
+        .env("DECKTRICKS_BBB_WRITEVAR_DESTINATION", &dest_path)
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let written = std::fs::read_to_string(&dest_path).expect("failed to read destination file");
+    assert_eq!(written, unique);
+    assert!(!stdout.contains("ERROR"));
+    assert!(!stderr.contains("ERROR"));
+}
+
+#[test]
+fn smoke_aaa_fail_direct_path() {
+    let mut cmd = get_godot_cmd();
+    let output = cmd
+        .arg("--verbose")
+        .env("DECKTRICKS_CONFIG", "../../config-smoke.json")
+        .env("DECKTRICKS_GUI_EXIT_AFTER_INPUTS", "true")
+        .env("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS", "400")
+        .env("DECKTRICKS_GUI_TEST_INPUTS", "ui_accept")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!stdout.contains("BBB"));
+    assert!(!stderr.contains("BBB"));
+    assert!(!stdout.contains("ZZZ"));
+    assert!(!stderr.contains("ZZZ"));
+    assert!(stdout.contains("AAA-fail ran, alright"));
+    assert!(!stdout.contains("ERROR"));
+    assert!(stderr.contains("ERROR"));
+}
+
+#[test]
+fn smoke_aaa_fail_down_up() {
+    let mut cmd = get_godot_cmd();
+    let output = cmd
+        .arg("--verbose")
+        .env("DECKTRICKS_CONFIG", "../../config-smoke.json")
+        .env("DECKTRICKS_GUI_EXIT_AFTER_INPUTS", "true")
+        .env("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS", "400")
+        .env("DECKTRICKS_GUI_TEST_INPUTS", "ui_down|DELIM|ui_up|DELIM|ui_accept")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!stdout.contains("BBB"));
+    assert!(!stderr.contains("BBB"));
+    assert!(!stdout.contains("ZZZ"));
+    assert!(!stderr.contains("ZZZ"));
+    assert!(stdout.contains("AAA-fail ran, alright"));
+    assert!(!stdout.contains("ERROR"));
+    assert!(stderr.contains("ERROR"));
+}
+
+#[test]
+fn smoke_zzz_fail_direct_path() {
+    let mut cmd = get_godot_cmd();
+    let output = cmd
+        .env("DECKTRICKS_CONFIG", "../../config-smoke.json")
+        .env("DECKTRICKS_GUI_EXIT_AFTER_INPUTS", "true")
+        .env("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS", "400")
+        .env("DECKTRICKS_GUI_TEST_INPUTS", "ui_down|DELIM|ui_down|DELIM|ui_accept")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!stdout.contains("AAA"));
+    assert!(!stderr.contains("AAA"));
+    assert!(!stdout.contains("BBB"));
+    assert!(!stderr.contains("BBB"));
+    assert!(stdout.contains("ZZZ-fail ran, alright"));
+    assert!(!stdout.contains("ERROR"));
+    assert!(stderr.contains("ERROR"));
+}
+
+#[test]
+fn smoke_zzz_fail_many_downs() {
+    let mut cmd = get_godot_cmd();
+    let output = cmd
+        .env("DECKTRICKS_CONFIG", "../../config-smoke.json")
+        .env("DECKTRICKS_GUI_EXIT_AFTER_INPUTS", "true")
+        .env("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS", "400")
+        .env("DECKTRICKS_GUI_TEST_INPUTS", "ui_down|DELIM|ui_down|DELIM|ui_down|DELIM|ui_down|DELIM|ui_down|DELIM|ui_down|DELIM|ui_down|DELIM|ui_down|DELIM|ui_accept")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!stdout.contains("AAA"));
+    assert!(!stderr.contains("AAA"));
+    assert!(!stdout.contains("BBB"));
+    assert!(!stderr.contains("BBB"));
+    assert!(stdout.contains("ZZZ-fail ran, alright"));
+    assert!(!stdout.contains("ERROR"));
+    assert!(stderr.contains("ERROR"));
+}
+
+#[test]
+fn smoke_many_cancels_plus_accept_hits_exit_button() {
+    let mut cmd = get_godot_cmd();
+    let mut child = cmd
+        .env("DECKTRICKS_CONFIG", "../../config-smoke.json")
+        .env("DECKTRICKS_GUI_EXIT_AFTER_INPUTS", "false")
+        .env("DECKTRICKS_GUI_INPUTS_POST_DELAY_MS", "400")
+        .env("DECKTRICKS_GUI_TEST_INPUTS", "ui_down|DELIM|ui_cancel|DELIM|ui_cancel|DELIM|ui_cancel|DELIM|ui_cancel|DELIM|ui_cancel|DELIM|ui_cancel|DELIM|ui_cancel|DELIM|ui_accept")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    match child.wait_timeout(Duration::from_secs(GUI_MAXIMUM_STARTUP_TIME_MS)).unwrap() {
+        Some(status) => {
+            let stdout_reader = BufReader::new(child.stdout.take().expect("taking stdout"));
+            let stderr_reader = BufReader::new(child.stderr.take().expect("taking stderr"));
+            let stdout_lines: Vec<String> = stdout_reader.lines().map(|x| x.unwrap()).collect();
+            let did_exit_with_exit_button = stdout_lines.iter().any(|l| l == "EXITING BY PRESSING EXIT BUTTON");
+            assert!(did_exit_with_exit_button);
+            let saw_error = stdout_lines.iter().any(|l| l.contains("ERROR")) ||
+                stderr_reader.lines().any(|l| l.unwrap().contains("ERROR"));
+            assert!(!saw_error);
+            assert!(status.success());
+        },
+        None => {
+            child.kill().unwrap();
+            child.wait().unwrap();
+            panic!("Did not press exit button in time, or exit button did not work!");
+        }
+    };
+}
+
+// TODO: Future tests:
+// 1) CCC-pass, same logic but without any ERROR in logs
+// 2) multiple tabs/categories, using ui_next_subtab to switch categories
+// 3) switching back and forth on main tabs and categories, and then running a known prog

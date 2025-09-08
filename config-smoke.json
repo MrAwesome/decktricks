@@ -1,0 +1,53 @@
+{
+    "settings": {
+        "controller_layout_id": "test-layout",
+        "add_to_steam_on_install_where_applicable": false
+    },
+    "known_categories": ["smoke"],
+    "tricks": [
+        {
+            "id": "AAA-fail",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "/bin/bash",
+                "args": [
+                    "-c",
+                    "echo 'AAA-fail ran, alright' && false"
+                ]
+            },
+            "categories": ["smoke"],
+            "display_name": "AAA Fail",
+            "description": "Always fails, for testing"
+        },
+        {
+            "id": "BBB-writevar",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "/bin/bash",
+                "args": [
+                    "-c",
+                    "echo -n \"$DECKTRICKS_BBB_WRITEVAR_CONTENTS\" > \"$DECKTRICKS_BBB_WRITEVAR_DESTINATION\""
+                ]
+            },
+            "categories": ["smoke"],
+            "display_name": "BBB Write Var",
+            "description": "Writes the contents of an env var to a destination file"
+        },
+        {
+            "id": "ZZZ-fail",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "/bin/bash",
+                "args": [
+                    "-c",
+                    "echo 'ZZZ-fail ran, alright' && false"
+                ]
+            },
+            "categories": ["smoke"],
+            "display_name": "ZZZ Fail",
+            "description": "Always fails, for testing"
+        }
+    ]
+}
+
+

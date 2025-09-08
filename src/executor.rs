@@ -592,9 +592,13 @@ fn get_loader(
     gather_execution_ctx: &GeneralExecutionContext,
     maybe_command: Option<&DecktricksCommand>,
 ) -> LoadedConfig {
-    let maybe_config_path = maybe_command.and_then(|cmd| cmd.config.as_ref());
-    if let Some(config_path) = maybe_config_path {
-        match LoadedConfig::from_config(config_path) {
+    // Prefer an explicit command line override, then fall back to an env var.
+    // This allows the GUI to override the config via environment (e.g., in integration tests)
+    let cli_override: Option<String> = maybe_command.and_then(|cmd| cmd.config.clone());
+    let env_override: Option<String> = std::env::var("DECKTRICKS_CONFIG").ok();
+
+    if let Some(config_path) = cli_override.or(env_override) {
+        match LoadedConfig::from_config(&config_path) {
             Ok(config) => return config,
             Err(err) => {
                 error!(

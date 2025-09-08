@@ -311,6 +311,7 @@ dependencies = [
  "ctor",
  "decktricks",
  "godot",
+ "tempfile",
  "wait-timeout",
 ]
 
