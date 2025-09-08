@@ -3,7 +3,7 @@
         "controller_layout_id": "test-layout",
         "add_to_steam_on_install_where_applicable": false
     },
-    "known_categories": ["smoke"],
+    "known_categories": ["smoke", "smoke2"],
     "tricks": [
         {
             "id": "AAA-fail",
@@ -43,9 +43,23 @@
                     "echo 'ZZZ-fail ran, alright' && false"
                 ]
             },
-            "categories": ["smoke"],
+            "categories": ["smoke", "smoke2"],
             "display_name": "ZZZ Fail",
             "description": "Always fails, for testing"
+        },
+        {
+            "id": "CCC-pass",
+            "provider_config": {
+                "type": "simple-command",
+                "command": "/bin/bash",
+                "args": [
+                    "-c",
+                    "echo 'CCC-pass ran, alright'"
+                ]
+            },
+            "categories": ["smoke"],
+            "display_name": "CCC Pass",
+            "description": "Always passes, for testing"
         }
     ]
 }

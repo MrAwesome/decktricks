@@ -113,13 +113,41 @@ fn copy_cdylib_into_godot_build(is_debug_build: bool) {
 
 fn godot_import() {
     let godot_bin = resolve_godot_bin();
-    let mut cmd = Command::new(&godot_bin);
-    cmd.current_dir(GODOT_BASE_DIR)
-        .args(["--import"]) // ensure import database updated
-        .args(["--headless"]) // run without GUI for CI
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit());
-    run_cmd(cmd, &format!("{} --import --headless", godot_bin));
+    let human = format!("{} --import --headless", godot_bin);
+    for attempt in 1..=2 {
+        let mut cmd = Command::new(&godot_bin);
+        cmd.current_dir(GODOT_BASE_DIR)
+            .args(["--import"]) // ensure import database updated
+            .args(["--headless"]) // run without GUI for CI
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit());
+
+        match cmd.status() {
+            Ok(status) if status.success() => {
+                return;
+            }
+            Ok(status) => {
+                eprintln!(
+                    "Import attempt {} failed ({}): exit status {:?}",
+                    attempt, human, status
+                );
+            }
+            Err(e) => {
+                eprintln!(
+                    "Failed to run {} (attempt {}): {}",
+                    human, attempt, e
+                );
+            }
+        }
+
+        if attempt == 1 {
+            eprintln!("Retrying Godot import once due to transient failure...");
+            std::thread::sleep(std::time::Duration::from_millis(300));
+            continue;
+        }
+    }
+    eprintln!("Godot import failed after retry.");
+    std::process::exit(1);
 }
 
 fn godot_export(is_debug_build: bool) {
